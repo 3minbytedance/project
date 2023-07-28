@@ -21,6 +21,7 @@
 go.work
 
 # IDE
+/.idea/
 .idea/
 /go_build_*
 out/
