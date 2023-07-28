@@ -19,3 +19,16 @@
 
 # Go workspace file
 go.work
+/.idea/
+
+# IDE
+.idea/
+/go_build_*
+out/
+.vscode/
+.vscode/settings.json
+*.sublime*
+__debug_bin
+.project
+tmp/
+.tmp/
