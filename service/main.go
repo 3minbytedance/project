@@ -7,4 +7,5 @@ import (
 
 func main() {
 	fmt.Println(model.User{})
+	fmt.Println("Hello")
 }
