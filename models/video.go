@@ -32,7 +32,7 @@ func (*Video) TableName() string {
 	return "video"
 }
 
-func FindVideoByVideoId(db *gorm.DB, videoId int) (Video, bool) {
+func FindVideoByVideoId(db *gorm.DB, videoId int64) (Video, bool) {
 	video := Video{}
 	return video, db.Where("id = ?", videoId).First(&video).RowsAffected != 0
 }

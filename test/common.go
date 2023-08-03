@@ -6,7 +6,8 @@ import (
 	"testing"
 )
 
-var serverAddr = "${paas_url}"
+// var serverAddr = "${paas_url}"
+var serverAddr = "http://127.0.0.1:8080/"
 var testUserA = "douyinTestUserA"
 var testUserB = "douyinTestUserB"
 

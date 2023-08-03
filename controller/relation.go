@@ -3,8 +3,8 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"project/dao/mysql"
 	"project/models"
-	"project/utils"
 )
 
 type UserListResponse struct {
@@ -18,11 +18,11 @@ func RelationAction(c *gin.Context) {
 	token := c.Query("token_my")
 	token2 := c.Query("token_other")
 	actionType := c.Query("action_type")
-	if user, exist := models.FindUserByToken(utils.DB, token); !exist {
+	if user, exist := models.FindUserByToken(mysql.DB, token); !exist {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "当前用户不存在"})
 		return
 	} else {
-		userOther, exist := models.FindUserByToken(utils.DB, token2)
+		userOther, exist := models.FindUserByToken(mysql.DB, token2)
 		if !exist {
 			c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
 			return
@@ -32,11 +32,11 @@ func RelationAction(c *gin.Context) {
 			// 关注
 			otherId := int64(userOther.ID)
 			userId := int64(user.ID)
-			utils.DB.Create(&models.Relations{
+			mysql.DB.Create(&models.Relations{
 				UserId:      userId,
 				FollowingId: &otherId,
 			})
-			utils.DB.Create(&models.Relations{
+			mysql.DB.Create(&models.Relations{
 				UserId:     otherId,
 				FollowedId: &userId,
 			})
