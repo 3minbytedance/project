@@ -32,7 +32,6 @@ func main() {
 		fmt.Printf("Init redis failed, err:%v\n", err)
 		return
 	}
-	defer redis.Close()
 
 	// 准备数据
 	controller.PrepareData()

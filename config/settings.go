@@ -8,7 +8,7 @@ import (
 
 var (
 	Conf      = new(AppConfig)
-	LocalMode = "local"
+	LocalMode = "remote"
 )
 
 type AppConfig struct {
@@ -41,7 +41,9 @@ type RedisConfig struct {
 	Address      string `mapstructure:"address"`
 	Port         int    `mapstructure:"port"`
 	Password     string `mapstructure:"password"`
-	DB           int    `mapstructure:"db"`
+	VCIdDB       int    `mapstructure:"vcid_db"`
+	CVIdDB       int    `mapstructure:"cvid_db"`
+	CIdCommentDB int    `mapstructure:"cid_comment_db"`
 	PoolSize     int    `mapstructure:"pool_size"`
 	MinIdleConns int    `mapstructure:"min_idle_conns"`
 }
@@ -68,7 +70,5 @@ func Init() (err error) {
 			fmt.Printf("Viper unmarshal failed, err: %v\n", err)
 		}
 	})
-
 	return
-
 }
