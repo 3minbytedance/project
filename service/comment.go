@@ -44,7 +44,6 @@ func AddComment(videoId, userId int64, content string) (models.CommentResponse, 
 	//	mysql.DB.Model(&video).Update("comment_count", strconv.Itoa(int(num)))
 	//}
 	return commentResp, nil
-
 }
 
 func GetCommentList(videoId int64) ([]models.CommentResponse, error) {
