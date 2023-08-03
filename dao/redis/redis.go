@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"project/config"
+	"time"
 )
 
 var RedisCtx = context.Background()
@@ -18,6 +19,9 @@ var RdbCVId *redis.Client
 // RdbCIdComment key: commentId value: comment
 var RdbCIdComment *redis.Client
 
+// RdbExpireTime key的过期时间
+var RdbExpireTime time.Duration
+
 func Init(appConfig *config.AppConfig) (err error) {
 	var conf *config.RedisConfig
 	if appConfig.Mode == config.LocalMode {
@@ -25,6 +29,8 @@ func Init(appConfig *config.AppConfig) (err error) {
 	} else {
 		conf = appConfig.Remote.RedisConfig
 	}
+	// 获取conf中的过期时间, 单位为s
+	RdbExpireTime = time.Duration(conf.ExpireTime) * time.Second
 
 	RdbVCId = redis.NewClient(&redis.Options{
 		Addr:         fmt.Sprintf("%s:%d", conf.Address, conf.Port),

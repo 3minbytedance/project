@@ -19,6 +19,7 @@ local:
     cid_comment_db: 2   # commentId 到 comment 的一对一映射
     pool_size: 30
     min_idle_conns: 30
+    expire_time: 1800   # 30分钟
 remote:
   mysql:
     username: root
@@ -36,3 +37,4 @@ remote:
     cid_comment_db: 2   # commentId 到 comment 的一对一映射
     pool_size: 30
     min_idle_conns: 30
+    expire_time: 1800   # 30分钟

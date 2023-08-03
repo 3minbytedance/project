@@ -46,6 +46,7 @@ type RedisConfig struct {
 	CIdCommentDB int    `mapstructure:"cid_comment_db"`
 	PoolSize     int    `mapstructure:"pool_size"`
 	MinIdleConns int    `mapstructure:"min_idle_conns"`
+	ExpireTime   int64  `mapstructure:"expire_time"`
 }
 
 func Init() (err error) {
