@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"math/rand"
 	"project/dao/mysql"
 	"project/models"
 	"time"
@@ -102,4 +103,10 @@ func DeleteComment(videoId, userId, commentId int64) (models.CommentResponse, er
 
 	return commentResp, nil
 
+}
+
+// GetCommentCount 根据视频ID获取视频的评论数
+func GetCommentCount(videoId int64) (int64, error) {
+	// TODO 从redis中获取评论数
+	return int64(rand.Int()), nil
 }
