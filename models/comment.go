@@ -57,3 +57,10 @@ func TranslateTime(createTime int64, currentTime int64) string {
 	}
 	return res
 }
+
+func GetCommentCnt(db *gorm.DB, videoId int64) (int64, bool) {
+	var cnt int64
+	err := db.Model(&Comment{}).Where("video_id = ?", videoId).Count(&cnt).Error
+	// 返回评论数和是否查询成功
+	return cnt, err == nil
+}
