@@ -4,34 +4,33 @@ port: 8080
 version: "v0.0.1"
 local:
   mysql:
-    username: root
-    password: 12345678
     address: "127.0.0.1"
     port: 3306
+    username: root
+    password: 12345678
     database: douyin
     timeout: 10
   redis:
-    addrevideoIdb: 0          # videoId 到 commentId 的一对多映射, commentId 存放在zset中
-    cvid_db: 1          # commentId 到 videoId 的一对一映射
-    cid_comment_db: 2   # commentId 到 comment 的一对一映射
+    address: "127.0.0.1"
+    port: 6379
+    password: ""
+    comment_db: 0
     pool_size: 30
     min_idle_conns: 30
     expire_time: 1800   # 30分钟
 remote:
   mysql:
-    username: root
-    password: "a1253767085"
     address: "127.0.0.1"
     port: 3306
+    username: root
+    password: a1253767085
     database: douyin
     timeout: 10
   redis:
     address: "172.27.161.27"
     port: 6379
     password: ""
-    vcid_db: 0          # videoId 到 commentId 的一对多映射, commentId 存放在zset中
-    cvid_db: 1          # commentId 到 videoId 的一对一映射
-    cid_comment_db: 2   # commentId 到 comment 的一对一映射
+    comment_db: 0
     pool_size: 30
     min_idle_conns: 30
     expire_time: 1800   # 30分钟

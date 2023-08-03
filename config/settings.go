@@ -8,7 +8,7 @@ import (
 
 var (
 	Conf      = new(AppConfig)
-	LocalMode = "remote"
+	LocalMode = "local"
 )
 
 type AppConfig struct {
@@ -41,9 +41,7 @@ type RedisConfig struct {
 	Address      string `mapstructure:"address"`
 	Port         int    `mapstructure:"port"`
 	Password     string `mapstructure:"password"`
-	VCIdDB       int    `mapstructure:"vcid_db"`
-	CVIdDB       int    `mapstructure:"cvid_db"`
-	CIdCommentDB int    `mapstructure:"cid_comment_db"`
+	CommentDB    int    `mapstructure:"comment_db"`
 	PoolSize     int    `mapstructure:"pool_size"`
 	MinIdleConns int    `mapstructure:"min_idle_conns"`
 	ExpireTime   int64  `mapstructure:"expire_time"`
