@@ -109,7 +109,7 @@ func DeleteComment(videoId, userId, commentId int64) (models.CommentResponse, er
 // GetCommentCount 根据视频ID获取视频的评论数
 func GetCommentCount(videoId int64) (int64, error) {
 	// 从redis中获取评论数
-	count, err := redis.GetCommentCountByViedoId(videoId)
+	count, err := redis.GetCommentCountByVideoId(videoId)
 	if err != nil {
 		log.Println("从redis中获取评论数失败：", err)
 		return 0, err
@@ -120,9 +120,10 @@ func GetCommentCount(videoId int64) (int64, error) {
 		return count, nil
 	}
 	// 缓存中没有数据，从数据库中获取
-	count, exist := models.GetCommentCnt(mysql.DB, videoId)
-	if !exist {
-		log.Println("从数据库中获取评论数失败：数据库中不存在该视频的评论")
+	count, err = mysql.GetCommentCnt(videoId)
+	if err != nil {
+		log.Println("从数据库中获取评论数失败：", err.Error())
+		return 0, nil
 	}
 	log.Println("从数据库中获取评论数成功：", count)
 	// FIXME 按道理, 这里获取评论数时, 不应该把评论的内容放在redis中,
