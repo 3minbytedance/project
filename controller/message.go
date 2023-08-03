@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"project/dao/mysql"
 	"project/models"
-	"project/utils"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -26,7 +26,7 @@ func MessageAction(c *gin.Context) {
 	toUserId := c.Query("to_user_id")
 	content := c.Query("content")
 
-	if user, exist := models.FindUserByToken(utils.DB, token); exist {
+	if user, exist := models.FindUserByToken(mysql.DB, token); exist {
 		userIdB, _ := strconv.Atoi(toUserId)
 		chatKey := genChatKey(int64(user.ID), int64(userIdB))
 
@@ -53,7 +53,7 @@ func MessageChat(c *gin.Context) {
 	token := c.Query("token")
 	toUserId := c.Query("to_user_id")
 
-	if user, exist := models.FindUserByToken(utils.DB, token); exist {
+	if user, exist := models.FindUserByToken(mysql.DB, token); exist {
 		userIdB, _ := strconv.Atoi(toUserId)
 		chatKey := genChatKey(int64(user.ID), int64(userIdB))
 
