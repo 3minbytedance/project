@@ -1,11 +1,14 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"project/dao/mysql"
 	"project/dao/redis"
 	"project/models"
+	"strconv"
+	"sync"
 	"time"
 )
 
@@ -22,6 +25,51 @@ func AddComment(videoId, userId int64, content string) (models.CommentResponse, 
 	if err != nil {
 		return commentResp, err
 	}
+	log.Println("===========CommentID: " + strconv.Itoa(int(commentData.ID)))
+
+	// 插入comment相关信息添加到redis
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	// video_comments:12345 => [10001, 10002, 10003]
+	go func() {
+		defer wg.Done()
+		err := redis.AddMappingVideoIdToCommentId(videoId, int64(commentData.ID), commentData.CreatedAt.Unix())
+		if err != nil {
+			log.Println("插入video_id -> comments_id 进redis失败：", err.Error())
+		}
+	}()
+
+	// comment_video:10001 => 12345
+	go func() {
+		defer wg.Done()
+		err := redis.AddMappingCommentIdToVideoId(int64(commentData.ID), videoId)
+		if err != nil {
+			log.Println("插入comment_id -> video_id 失败：", err.Error())
+		}
+	}()
+
+	// comment_data:10001 => {"id": "123", "author": "user123", "timestamp": "1679921230" }
+	go func() {
+		defer wg.Done()
+		b, err := json.Marshal(commentData)
+		if err != nil {
+			log.Println("序列化commentData失败：", err)
+		}
+		err = redis.AddCommentByCommentId(int64(commentData.ID), string(b))
+		if err != nil {
+			log.Println("插入comment_id -> comment_data", err.Error())
+		}
+	}()
+
+	wg.Wait()
+
+	//err = redis.AddCommentByCommentId(int64(commentData.ID), commentData.Content)
+	//if err != nil {
+	//	log.Println("插入comment进redis失败：", err.Error())
+	//	return commentResp, err
+	//}
+
 	// 查询user
 	user, exist := models.FindUserByID(mysql.DB, int(userId))
 	if !exist {
