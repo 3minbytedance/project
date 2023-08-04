@@ -6,7 +6,11 @@ import (
 	"project/config"
 )
 
-var RDB *redis.Client
+var (
+	RDB               *redis.Client
+	UserFavoriteRDB   *redis.Client
+	VideoFavoritedRDB *redis.Client
+)
 
 func Init(appConfig *config.AppConfig) (err error) {
 	var conf *config.RedisConfig

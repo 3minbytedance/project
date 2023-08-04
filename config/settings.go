@@ -38,12 +38,14 @@ type MySQLConfig struct {
 }
 
 type RedisConfig struct {
-	Address      string `mapstructure:"address"`
-	Port         int    `mapstructure:"port"`
-	Password     string `mapstructure:"password"`
-	DB           int    `mapstructure:"db"`
-	PoolSize     int    `mapstructure:"pool_size"`
-	MinIdleConns int    `mapstructure:"min_idle_conns"`
+	Address           string `mapstructure:"address"`
+	Port              int    `mapstructure:"port"`
+	Password          string `mapstructure:"password"`
+	DB                int    `mapstructure:"db"`
+	UerFavoriteRDB    int    `mapstructure:"ufvdb"`
+	VideoFavoritedRDB int    `mapstructure:"vfudb"`
+	PoolSize          int    `mapstructure:"pool_size"`
+	MinIdleConns      int    `mapstructure:"min_idle_conns"`
 }
 
 func Init() (err error) {
