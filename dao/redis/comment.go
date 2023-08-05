@@ -9,7 +9,7 @@ const (
 	KeyVideoToComments = "video_comments:" // videoId 到 commentId 的一对多映射, commentId 存放在zset中
 	KeyCommentToVideo  = "comment_video:"  // commentId 到 videoId 的一对一映射
 	KeyCommentData     = "comment_data:"   // commentId 到 comment 的一对一映射
-
+	KeyCommentCount    = "comment_count:"  // videoId 到 commentCount 的一对一映射
 	// TODO 评论点赞存放redis
 )
 
@@ -113,4 +113,13 @@ func GetCommentByCommentId(commentId int64) (string, error) {
 		return "", err
 	}
 	return comment, err
+}
+
+// IncrementCommentCountByVideoId 给videoId对应的评论数加一
+func IncrementCommentCountByVideoId(videoId int64) error {
+	// 封装key：comment_count:12345 => 100
+	key := KeyCommentCount + strconv.FormatInt(videoId, 10)
+	// 给videoId对应的评论数加一
+	err := RdbComment.Incr(Ctx, key).Err()
+	return err
 }
