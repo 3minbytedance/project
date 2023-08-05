@@ -50,10 +50,9 @@ func GetCommentIdListByVideoId(videoId int64) ([]string, error) {
 
 // GetCommentCountByVideoId 根据videoId获取对应视频的评论数
 func GetCommentCountByVideoId(videoId int64) (int64, error) {
-	// 将videoId转为string，封装成key：video_comments:12345 => [10001, 10002, 10003]
-	key := KeyVideoToComments + strconv.FormatInt(videoId, 10)
-	count, err := RdbComment.ZCard(Ctx, key).Result()
-	return count, err
+	key := KeyCommentCount + strconv.FormatInt(videoId, 10)
+	commentCount, err := RdbComment.Get(Ctx, key).Int64()
+	return commentCount, err
 }
 
 // AddMappingCommentIdToVideoId 添加commentId到videoId的一对一映射
@@ -121,5 +120,13 @@ func IncrementCommentCountByVideoId(videoId int64) error {
 	key := KeyCommentCount + strconv.FormatInt(videoId, 10)
 	// 给videoId对应的评论数加一
 	err := RdbComment.Incr(Ctx, key).Err()
+	return err
+}
+
+func SetCommentCountByVideoId(videoId int64, commentCount int64) error {
+	// 封装key：comment_count:12345 => 100
+	key := KeyCommentCount + strconv.FormatInt(videoId, 10)
+	// 给videoId对应的评论数加一
+	err := RdbComment.Set(Ctx, key, commentCount, RdbExpireTime).Err()
 	return err
 }

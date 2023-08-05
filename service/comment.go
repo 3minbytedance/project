@@ -29,7 +29,7 @@ func AddComment(videoId, userId int64, content string) (models.CommentResponse, 
 
 	// 插入comment相关信息添加到redis
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
 
 	// video_comments:12345 => [10001, 10002, 10003]
 	go func() {
@@ -62,18 +62,19 @@ func AddComment(videoId, userId int64, content string) (models.CommentResponse, 
 		}
 	}()
 
+	go func() {
+		defer wg.Done()
+		err := redis.IncrementCommentCountByVideoId(videoId)
+		if err != nil {
+			log.Printf("更新videoId为%v的评论数失败  %v\n", videoId, err.Error())
+		}
+	}()
 	wg.Wait()
-
-	//err = redis.AddCommentByCommentId(int64(commentData.ID), commentData.Content)
-	//if err != nil {
-	//	log.Println("插入comment进redis失败：", err.Error())
-	//	return commentResp, err
-	//}
 
 	// 查询user
 	user, exist := models.FindUserByID(mysql.DB, int(userId))
 	if !exist {
-		fmt.Println("根据评论中的user_id找用户失败")
+		fmt.Println("根据评论中的user_id找用户失败, 评论ID为：", commentData.ID)
 	}
 
 	// 封装返回数据
@@ -82,19 +83,7 @@ func AddComment(videoId, userId int64, content string) (models.CommentResponse, 
 	commentResp.Content = content
 	commentResp.CreateDate = models.TranslateTime(commentData.CreatedAt.Unix(), time.Now().Unix())
 
-	//commentResp.User
-	//commentResp.Content
-	//commentResp.CreateDate
-	// TODO 更新视频信息，由于未确定视频表设计，延后再写
-	//video, b := models.FindVideoByVideoId(videoId, content)
-	//if !b {
-	//	fmt.Println("未找到对应的视频")
-	//} else {
-	//	num := video.CommentCount + 1
-	//	mysql.DB.Model(&video).Update("comment_count", strconv.Itoa(int(num)))
-	//}
 	return commentResp, nil
-
 }
 
 func GetCommentList(videoId int64) ([]models.CommentResponse, error) {
@@ -151,7 +140,6 @@ func DeleteComment(videoId, userId, commentId int64) (models.CommentResponse, er
 	}
 
 	return commentResp, nil
-
 }
 
 // GetCommentCount 根据视频ID获取视频的评论数
@@ -174,9 +162,12 @@ func GetCommentCount(videoId int64) (int64, error) {
 		return 0, nil
 	}
 	log.Println("从数据库中获取评论数成功：", count)
-	// FIXME 按道理, 这里获取评论数时, 不应该把评论的内容放在redis中,
-	// 但是能够从redis获取评论数的前提是评论内容在redis中，
-	// 这就会导致如果评论内容一直没在redis中, 那么每次都要从数据库中计算评论数
-	// 所以，应该在redis中存储评论数，而不仅仅是评论内容
+	// 将评论数写入redis
+	go func() {
+		err = redis.SetCommentCountByVideoId(videoId, count)
+		if err != nil {
+			log.Println("将评论数写入redis失败：", err.Error())
+		}
+	}()
 	return count, nil
 }
