@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"project/models"
 	"project/service"
+	"project/utils"
 	"strconv"
 )
 
@@ -18,9 +19,7 @@ func CommentAction(c *gin.Context) {
 	actionType := c.Query("action_type")
 	commentId, _ := strconv.ParseInt(c.Query("comment_id"), 10, 64)
 	videoId, _ := strconv.ParseInt(c.Query("video_id"), 10, 64)
-	// FIXME JWT完成后取消评论
-	// userId, _ := utils.GetCurrentUserID(c)
-	userId := int64(1)
+	userId, _ := utils.GetCurrentUserID(c)
 
 	switch actionType {
 	// 新增评论

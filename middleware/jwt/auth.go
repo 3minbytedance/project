@@ -40,7 +40,7 @@ func Auth() gin.HandlerFunc {
 			} else {
 				log.Println("token correct")
 			}
-			c.Set("userId", claims.ID)
+			c.Set(utils.ContextUserIDKey, claims.ID)
 			c.Next()
 
 		}
@@ -53,7 +53,7 @@ func AuthWithoutLogin() gin.HandlerFunc {
 		token := c.Query("token")
 		var userId int64
 		if len(token) == 0 {
-			// 没有token, 阻止后面函数执行
+			// 没有token, 设置userId为0
 			userId = 0
 		} else {
 			claims, err := utils.ParseToken(token)
@@ -68,7 +68,7 @@ func AuthWithoutLogin() gin.HandlerFunc {
 				log.Println("token correct")
 				userId = claims.ID
 			}
-			c.Set("userId", userId)
+			c.Set(utils.ContextUserIDKey, userId)
 			c.Next()
 		}
 	}
@@ -98,7 +98,7 @@ func AuthBody() gin.HandlerFunc {
 			} else {
 				log.Println("token correct")
 			}
-			c.Set("userId", claims.ID)
+			c.Set(utils.ContextUserIDKey, claims.ID)
 			c.Next()
 		}
 	}
