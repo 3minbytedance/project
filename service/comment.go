@@ -53,7 +53,7 @@ func AddComment(videoId, userId int64, content string) (models.CommentResponse, 
 	}()
 
 	// 查询user
-	user, exist := models.FindUserByID(mysql.DB, int(userId))
+	user, exist := mysql.FindUserByID(int(userId))
 	if !exist {
 		fmt.Println("根据评论中的user_id找用户失败, 评论ID为：", commentData.ID)
 		return models.CommentResponse{}, err
@@ -76,10 +76,20 @@ func GetCommentList(videoId int64) ([]models.CommentResponse, error) {
 		fmt.Println("根据视频ID取评论失败")
 		return nil, err
 	}
-	// 2、空则直接返回
-	if len(comments) == 0 {
-		fmt.Println("评论区为空")
-		return nil, err
+
+	commentList := make([]models.CommentResponse, 0)
+	for _, comment := range comments {
+		user, exist := mysql.FindUserByID(int(comment.UserId))
+		if !exist {
+			fmt.Println("根据评论中的user_id找用户失败")
+		}
+		commentResp := models.CommentResponse{
+			Id:         int64(comment.ID),
+			User:       user,
+			Content:    comment.Content,
+			CreateDate: models.TranslateTime(comment.CreatedAt.Unix(), time.Now().Unix()),
+		}
+		commentList = append(commentList, commentResp)
 	}
 
 	commentRespList := make([]models.CommentResponse, len(comments), len(comments))
@@ -94,7 +104,7 @@ func GetCommentList(videoId int64) ([]models.CommentResponse, error) {
 
 			// 4、根据comment.userId，获取user信息
 			userId := comment.UserId
-			user, exist := models.FindUserByID(mysql.DB, int(userId))
+			user, exist := mysql.FindUserByID(int(userId))
 			if exist {
 				commentResp.User = user
 			}
@@ -116,7 +126,7 @@ func DeleteComment(videoId, userId, commentId int64) (models.CommentResponse, er
 	}
 
 	// 查询user
-	user, exist := models.FindUserByID(mysql.DB, int(comment.UserId))
+	user, exist := mysql.FindUserByID(int(comment.UserId))
 	if !exist {
 		log.Println("根据评论中的user_id找用户失败")
 	}

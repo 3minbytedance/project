@@ -9,8 +9,7 @@ import (
 )
 
 func CommentAction(c *gin.Context) {
-
-	// TODO 在鉴权中间件完成, 并保存user信息到ctx中, 不在这里重新实现
+	// TODO 在鉴权中间件完成, 并保存userId信息到ctx中, 不在这里重新实现
 	//token := c.Query("token")
 	//if user, exist := models.FindUserByToken(utils.DB, token); !exist {
 	//	c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})

@@ -1,9 +1,11 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type User struct {
-	// 这是刷到的用户的信息，不是当前用户的信息
+	// 用户的信息社交平台信息， todo 作为常用个人信息，如果获取过于复杂可以考虑在redis中储存
 	gorm.Model
 	//Id              int64  `json:"id,omitempty"`               // 用户id
 	Name            string `json:"name,omitempty"`             // 用户名称
@@ -34,35 +36,4 @@ type UserStates struct {
 
 func (*UserStates) TableName() string {
 	return "user_states"
-}
-
-func FindUserByName(db *gorm.DB, name string) (User, bool) {
-	user := User{}
-	return user, db.Where("name = ?", name).First(&user).RowsAffected != 0
-}
-
-func FindUserStateByName(db *gorm.DB, name string) (UserStates, bool) {
-	userState := UserStates{}
-	return userState, db.Where("name = ?", name).First(&userState).RowsAffected != 0
-}
-
-func FindUserByID(db *gorm.DB, id int) (User, bool) {
-	user := User{}
-	return user, db.Where("id = ?", id).First(&user).RowsAffected != 0
-}
-
-func FindUserStateByID(db *gorm.DB, id int) (UserStates, bool) {
-	userState := UserStates{}
-	return userState, db.Where("id = ?", id).First(&userState).RowsAffected != 0
-}
-
-func FindUserByToken(db *gorm.DB, token string) (User, bool) {
-	user := User{}
-	userState := UserStates{}
-	row := db.Where("token = ?", token).First(&userState).RowsAffected
-	if row == 0 || userState.IsLogOut {
-		return user, false
-	}
-	// 应该在userStates表里面加id，而不是name
-	return user, db.Where("name = ?", userState.Name).First(&user).RowsAffected != 0
 }

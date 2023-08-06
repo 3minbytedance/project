@@ -18,11 +18,11 @@ func RelationAction(c *gin.Context) {
 	token := c.Query("token_my")
 	token2 := c.Query("token_other")
 	actionType := c.Query("action_type")
-	if user, exist := models.FindUserByToken(mysql.DB, token); !exist {
+	if user, exist := mysql.FindUserByToken(token); !exist {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "当前用户不存在"})
 		return
 	} else {
-		userOther, exist := models.FindUserByToken(mysql.DB, token2)
+		userOther, exist := mysql.FindUserByToken(token2)
 		if !exist {
 			c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
 			return
