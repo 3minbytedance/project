@@ -90,7 +90,7 @@ func PrepareData() {
 
 	// 新建数据
 	videoId := int64(1)
-	if _, b := models.FindVideoByVideoId(mysql.DB, videoId); !b {
+	if _, b := mysql.FindVideoByVideoId(videoId); !b {
 		// 没数据的时候
 		videos := []models.Video{
 			{

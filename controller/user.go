@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"project/dao/mysql"
 	"project/models"
 	"project/utils"
 	"time"
@@ -40,7 +41,7 @@ func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
 	// todo 用户名密码检测是否合法且不冲突
-	statusCode, msg := models.CheckUserRegisterInfo(username, password)
+	statusCode, msg := mysql.CheckUserRegisterInfo(username, password)
 	if statusCode != 0 {
 		c.JSON(http.StatusOK, UserLoginResponse{
 			Response: models.Response{
@@ -52,7 +53,7 @@ func Register(c *gin.Context) {
 	}
 
 	// todo token 和加密密码
-	statusCode, msg, userId, token := models.RegisterUserInfo(username, password)
+	statusCode, msg, userId, token := mysql.RegisterUserInfo(username, password)
 
 	c.JSON(http.StatusOK, UserLoginResponse{
 		Response: models.Response{
@@ -89,7 +90,7 @@ func Login(c *gin.Context) {
 	password := c.Query("password")
 	fmt.Println("<<<<<<<<username: ", username)
 
-	user, b := models.FindUserByName(utils.DB, username)
+	user, b := mysql.FindUserByName(username)
 	if !b {
 		// 就是用户不存在
 		c.JSON(http.StatusOK, UserLoginResponse{
@@ -102,7 +103,7 @@ func Login(c *gin.Context) {
 	}
 
 	// todo 判断是否重复登录
-	userState, _ := models.FindUserStateByName(utils.DB, username)
+	userState, _ := mysql.FindUserStateByName(username)
 	// 判断密码是否正确
 	checkPassword := utils.CheckPassword(password, userState.Salt, userState.Password)
 	if !checkPassword {
@@ -118,7 +119,7 @@ func Login(c *gin.Context) {
 	userState.Token = utils.GenerateToken(int64(user.ID), username)
 	userState.LoginTime = time.Now().Unix()
 	userState.IsLogOut = false
-	utils.DB.Model(&userState).Updates(models.UserStates{})
+	mysql.DB.Model(&userState).Updates(models.UserStates{})
 
 	c.JSON(http.StatusOK, UserLoginResponse{
 		Response: models.Response{StatusCode: 0, StatusMsg: "登录成功"},
@@ -139,7 +140,7 @@ func UserInfo(c *gin.Context) {
 	// 根据token来寻找用户
 	token := c.Query("token")
 	//fmt.Println("token: ", token)
-	userByToken, b := models.FindUserByToken(utils.DB, token)
+	userByToken, b := mysql.FindUserByToken(token)
 	if b {
 		c.JSON(http.StatusOK, UserResponse{
 			Response: models.Response{StatusCode: 0},
@@ -156,7 +157,7 @@ func UserInfo(c *gin.Context) {
 // UploadAvatar 上传头像（Apifox已测，不知道提供的apk里面有没有对应的接口）
 func UploadAvatar(c *gin.Context) {
 	token := c.Query("token")
-	if user, exist := models.FindUserByToken(utils.DB, token); exist {
+	if user, exist := mysql.FindUserByToken(token); exist {
 		url, err := UploadPic(token, c.Request)
 		if err != nil {
 			c.JSON(http.StatusOK, models.Response{
@@ -165,7 +166,7 @@ func UploadAvatar(c *gin.Context) {
 			})
 			return
 		}
-		utils.DB.Model(&user).Update("avatar", url)
+		mysql.DB.Model(&user).Update("avatar", url)
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: 0,
 			StatusMsg:  "上传头像成功",
@@ -179,7 +180,7 @@ func UploadAvatar(c *gin.Context) {
 // UploadBackGround 上传背景（Apifox已测，不知道提供的apk里面有没有对应的接口）
 func UploadBackGround(c *gin.Context) {
 	token := c.Query("token")
-	if user, exist := models.FindUserByToken(utils.DB, token); exist {
+	if user, exist := mysql.FindUserByToken(token); exist {
 		url, err := UploadPic(token, c.Request)
 		if err != nil {
 			c.JSON(http.StatusOK, models.Response{
@@ -188,7 +189,7 @@ func UploadBackGround(c *gin.Context) {
 			})
 			return
 		}
-		utils.DB.Model(&user).Update("background_image", url)
+		mysql.DB.Model(&user).Update("background_image", url)
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: 0,
 			StatusMsg:  "上传背景成功",

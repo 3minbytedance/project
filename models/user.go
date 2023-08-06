@@ -1,10 +1,7 @@
 package models
 
 import (
-	"fmt"
 	"gorm.io/gorm"
-	"math/rand"
-	"project/utils"
 )
 
 type User struct {
@@ -39,78 +36,4 @@ type UserStates struct {
 
 func (*UserStates) TableName() string {
 	return "user_states"
-}
-
-func FindUserByName(db *gorm.DB, name string) (User, bool) {
-	user := User{}
-	return user, db.Where("name = ?", name).First(&user).RowsAffected != 0
-}
-
-func FindUserStateByName(db *gorm.DB, name string) (UserStates, bool) {
-	userState := UserStates{}
-	return userState, db.Where("name = ?", name).First(&userState).RowsAffected != 0
-}
-
-func FindUserByID(db *gorm.DB, id int) (User, bool) {
-	user := User{}
-	return user, db.Where("id = ?", id).First(&user).RowsAffected != 0
-}
-
-func FindUserStateByID(db *gorm.DB, id int) (UserStates, bool) {
-	userState := UserStates{}
-	return userState, db.Where("id = ?", id).First(&userState).RowsAffected != 0
-}
-
-// todo 废弃，jwt解析自带信息
-func FindUserByToken(db *gorm.DB, token string) (User, bool) {
-	user := User{}
-	userState := UserStates{}
-	row := db.Where("token = ?", token).First(&userState).RowsAffected
-	if row == 0 || userState.IsLogOut {
-		return user, false
-	}
-	// 应该在userStates表里面加id，而不是name
-	return user, db.Where("name = ?", userState.Name).First(&user).RowsAffected != 0
-}
-
-func CheckUserRegisterInfo(username string, password string) (int32, string) {
-
-	if len(username) == 0 || len(username) > 32 {
-		return 1, "用户名不合法"
-	}
-
-	if len(password) <= 6 || len(password) > 32 {
-		return 2, "密码不合法"
-	}
-
-	if _, ok := FindUserByName(utils.DB, username); ok {
-		return 3, "用户已注册"
-	}
-
-	return 0, "合法"
-}
-
-func RegisterUserInfo(username string, password string) (int32, string, int64, string) {
-
-	// todo 对密码加密
-	user := User{}
-	user.Name = username
-
-	// 生成token，id
-	//user.ID = uuid.New()
-	// 将信息存储到数据库中
-
-	// salt密码加密
-	userStates := UserStates{}
-	userStates.Name = username
-	salt := fmt.Sprintf("%06d", rand.Int())
-	userStates.Salt = salt
-	userStates.Password = utils.MakePassword(password, salt)
-	userStates.Token = utils.GenerateToken(int64(user.ID), username)
-
-	// 数据入库
-	utils.DB.Create(&userStates)
-	utils.DB.Create(&user)
-	fmt.Println("<<<<<<<<<id: ", user.ID)
-	return 0, "注册成功", int64(user.ID), userStates.Token
 }

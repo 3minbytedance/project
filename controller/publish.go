@@ -19,7 +19,7 @@ type VideoListResponse struct {
 func Publish(c *gin.Context) {
 	token := c.Query("token")
 
-	if user, exist := models.FindUserByToken(mysql.DB, token); !exist {
+	if user, exist := mysql.FindUserByToken(token); !exist {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
 		return
 	} else {
@@ -64,11 +64,11 @@ func Publish(c *gin.Context) {
 func PublishList(c *gin.Context) {
 	token := c.Query("token")
 
-	if user, exist := models.FindUserByToken(mysql.DB, token); !exist {
+	if user, exist := mysql.FindUserByToken(token); !exist {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
 		return
 	} else {
-		videos, b := models.FindVideosByAuthor(mysql.DB, int(user.ID))
+		videos, b := mysql.FindVideosByAuthor(int(user.ID))
 		if !b {
 			c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户未发布过作品"})
 			return

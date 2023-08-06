@@ -21,7 +21,7 @@ func AddComment(videoId, userId int64, content string) (models.CommentResponse, 
 		return commentResp, err
 	}
 	// 查询user
-	user, exist := models.FindUserByID(mysql.DB, int(userId))
+	user, exist := mysql.FindUserByID(int(userId))
 	if !exist {
 		fmt.Println("根据评论中的user_id找用户失败")
 	}
@@ -54,7 +54,7 @@ func GetCommentList(videoId int64) ([]models.CommentResponse, error) {
 	}
 	commentList := make([]models.CommentResponse, 0)
 	for _, comment := range comments {
-		user, exist := models.FindUserByID(mysql.DB, int(comment.UserId))
+		user, exist := mysql.FindUserByID(int(comment.UserId))
 		if !exist {
 			fmt.Println("根据评论中的user_id找用户失败")
 		}
@@ -81,7 +81,7 @@ func DeleteComment(videoId, userId, commentId int64) (models.CommentResponse, er
 	}
 
 	// 查询user
-	user, exist := models.FindUserByID(mysql.DB, int(comment.UserId))
+	user, exist := mysql.FindUserByID(int(comment.UserId))
 	if !exist {
 		fmt.Println("根据评论中的user_id找用户失败")
 	}
