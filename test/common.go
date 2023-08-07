@@ -6,7 +6,8 @@ import (
 	"testing"
 )
 
-var serverAddr = "${paas_url}"
+// var serverAddr = "${paas_url}"
+var serverAddr = "http://127.0.0.1:8080/"
 var testUserA = "douyinTestUserA"
 var testUserB = "douyinTestUserB"
 
@@ -23,8 +24,10 @@ func newExpect(t *testing.T) *httpexpect.Expect {
 
 func getTestUserToken(user string, e *httpexpect.Expect) (int, string) {
 	registerResp := e.POST("/douyin/user/register/").
-		WithQuery("username", user).WithQuery("password", user).
-		WithFormField("username", user).WithFormField("password", user).
+		WithQuery("username", user).
+		WithQuery("password", user).
+		WithFormField("username", user).
+		WithFormField("password", user).
 		Expect().
 		Status(http.StatusOK).
 		JSON().Object()

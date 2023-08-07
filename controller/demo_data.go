@@ -2,9 +2,11 @@ package controller
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"os"
+	"project/dao/mysql"
 	"project/models"
-	"project/utils"
+	"project/service"
 	"time"
 )
 
@@ -23,7 +25,7 @@ var DemoVideos = []models.VideoRes{
 	},
 }
 
-var DemoComments = []models.Comment{
+var DemoComments = []models.CommentResponse{
 	{
 		Id:         1,
 		User:       DemoUser,
@@ -49,46 +51,46 @@ var DemoUser = models.User{
 
 func PrepareData() {
 	// 建表
-	table := utils.DB.Migrator().HasTable(&models.User{})
+	table := mysql.DB.Migrator().HasTable(&models.User{})
 	if !table {
-		err := utils.DB.AutoMigrate(&models.User{})
+		err := mysql.DB.AutoMigrate(&models.User{})
 		if err != nil {
 			fmt.Println("create user table failed.")
 		}
 	}
-	table = utils.DB.Migrator().HasTable(&models.UserStates{})
+	table = mysql.DB.Migrator().HasTable(&models.UserStates{})
 	if !table {
-		err := utils.DB.AutoMigrate(&models.UserStates{})
+		err := mysql.DB.AutoMigrate(&models.UserStates{})
 		if err != nil {
 			fmt.Println("create user_states table failed.")
 		}
 	}
-	table = utils.DB.Migrator().HasTable(&models.Comments{})
+	table = mysql.DB.Migrator().HasTable(&models.Comment{})
 	if !table {
-		err := utils.DB.AutoMigrate(&models.Comments{})
+		err := mysql.DB.AutoMigrate(&models.Comment{})
 		if err != nil {
 			fmt.Println("create comments table failed.")
 		}
 	}
-	table = utils.DB.Migrator().HasTable(&models.Video{})
+	table = mysql.DB.Migrator().HasTable(&models.Video{})
 	if !table {
-		err := utils.DB.AutoMigrate(&models.Video{})
+		err := mysql.DB.AutoMigrate(&models.Video{})
 		if err != nil {
 			fmt.Println("create video table failed.")
 		}
 	}
 
-	table = utils.DB.Migrator().HasTable(&models.Relations{})
+	table = mysql.DB.Migrator().HasTable(&models.Relations{})
 	if !table {
-		err := utils.DB.AutoMigrate(&models.Relations{})
+		err := mysql.DB.AutoMigrate(&models.Relations{})
 		if err != nil {
 			fmt.Println("create relations table failed.")
 		}
 	}
 
 	// 新建数据
-	videoId := 1
-	if _, b := models.FindVideoByVideoId(utils.DB, videoId); !b {
+	videoId := int64(1)
+	if _, b := mysql.FindVideoByVideoId(videoId); !b {
 		// 没数据的时候
 		videos := []models.Video{
 			{
@@ -101,24 +103,25 @@ func PrepareData() {
 				PublishTime:   time.Now().Unix(),
 			},
 		}
-		utils.DB.Model(&models.Video{}).Create(&videos)
+		mysql.DB.Model(&models.Video{}).Create(&videos)
 	}
-	if _, b := models.FindCommentsByVideoId(utils.DB, videoId); !b {
+	if _, err := service.GetCommentList(videoId); err == nil {
 		// 没数据的时候
-		comments := []models.Comments{
+		comments := []models.Comment{
 			{
-				VideoId:    1,
-				UserId:     2,
-				Content:    "真棒",
-				CreateTime: time.Now().Unix(),
+				VideoId: 1,
+				UserId:  2,
+				Content: "真棒",
+				Model:   gorm.Model{CreatedAt: time.Now()},
 			},
 			{
-				VideoId:    1,
-				UserId:     2,
-				Content:    "厉害了厉害了",
-				CreateTime: time.Now().Unix(),
+				VideoId: 1,
+				UserId:  2,
+				Content: "厉害了厉害了",
+				Model:   gorm.Model{CreatedAt: time.Now()},
 			},
 		}
-		utils.DB.Model(&models.Comments{}).Create(&comments)
+
+		mysql.DB.Model(&models.Comment{}).Create(&comments)
 	}
 }

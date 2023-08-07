@@ -1,75 +1,94 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"project/models"
+	"project/service"
 	"project/utils"
 	"strconv"
-	"time"
 )
 
-type CommentListResponse struct {
-	models.Response
-	CommentList []models.Comment `json:"comment_list,omitempty"`
-}
-
-type CommentActionResponse struct {
-	models.Response
-	Comment models.Comment `json:"comment,omitempty"`
-}
-
-// CommentAction no practical effect, just check if token is valid
 func CommentAction(c *gin.Context) {
-	token := c.Query("token")
+	// TODO 在鉴权中间件完成, 并保存userId信息到ctx中, 不在这里重新实现
+	//token := c.Query("token")
+	//if user, exist := models.FindUserByToken(utils.DB, token); !exist {
+	//	c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
+	//} else {
+
 	actionType := c.Query("action_type")
-	videoId, _ := strconv.Atoi(c.Query("video_id"))
-	if user, exist := models.FindUserByToken(utils.DB, token); !exist {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
-	} else {
-		switch actionType {
-		case "1":
-			text := c.Query("comment_text")
-			commData := models.Comments{
-				VideoId:    int64(videoId),
-				UserId:     int64(user.ID),
-				Content:    text,
-				CreateTime: time.Now().Unix(),
-			}
-			comment := models.Comment{
-				User:       user,
-				Content:    text,
-				CreateDate: models.CommentTime(commData.CreateTime, time.Now().Unix()),
-			}
+	commentId, _ := strconv.ParseInt(c.Query("comment_id"), 10, 64)
+	videoId, _ := strconv.ParseInt(c.Query("video_id"), 10, 64)
+	userId, _ := utils.GetCurrentUserID(c)
 
-			// 更新评论信息
-			utils.DB.Model(models.Comments{}).Create(&commData)
-			// 更新视频信息
-			video, b := models.FindVideoByVideoId(utils.DB, videoId)
-			if !b {
-				fmt.Println("未找到对应的视频")
-			} else {
-				num := video.CommentCount + 1
-				utils.DB.Model(&video).Update("comment_count", strconv.Itoa(int(num)))
-			}
-			c.JSON(http.StatusOK, CommentActionResponse{Response: models.Response{StatusCode: 0},
-				Comment: comment})
-			return
-		case "2": // 删除评论的操作，需要拿到commentId才能删，还要改对应的数据库
-
+	switch actionType {
+	// 新增评论
+	case "1":
+		content := c.Query("comment_text")
+		data, err := service.AddComment(videoId, userId, content)
+		if err != nil {
+			c.JSON(http.StatusOK, models.CommentActionResponse{
+				Response: models.Response{
+					StatusCode: int32(CodeServerBusy),
+					StatusMsg:  CodeServerBusy.Msg() + err.Error(),
+				},
+				Comment: data,
+			})
 		}
-		c.JSON(http.StatusOK, models.Response{StatusCode: 0, StatusMsg: "没操作"})
+		c.JSON(http.StatusOK, models.CommentActionResponse{
+			Response: models.Response{
+				StatusCode: int32(CodeSuccess),
+				StatusMsg:  CodeSuccess.Msg(),
+			},
+			Comment: data,
+		})
+		return
+
+	// 删除评论
+	case "2":
+		data, err := service.DeleteComment(videoId, userId, commentId)
+		if err != nil {
+			c.JSON(http.StatusOK, models.CommentActionResponse{
+				Response: models.Response{
+					StatusCode: int32(CodeServerBusy),
+					StatusMsg:  CodeServerBusy.Msg() + err.Error(),
+				},
+				Comment: data,
+			})
+		}
+		c.JSON(http.StatusOK, models.CommentActionResponse{
+			Response: models.Response{
+				StatusCode: int32(CodeSuccess),
+				StatusMsg:  CodeSuccess.Msg(),
+			},
+			Comment: data})
+		return
+	default:
+		c.JSON(http.StatusOK, models.Response{
+			StatusCode: int32(CodeInvalidParam),
+			StatusMsg:  CodeInvalidParam.Msg(),
+		})
 	}
 }
 
-// CommentList all videos have same demo comment list
 func CommentList(c *gin.Context) {
 	videoIdStr := c.Query("video_id")
-	videoId, _ := strconv.Atoi(videoIdStr)
-	comments := models.GetComments(videoId)
-	c.JSON(http.StatusOK, CommentListResponse{
-		Response:    models.Response{StatusCode: 0},
-		CommentList: comments,
+	videoId, _ := strconv.ParseInt(videoIdStr, 10, 64)
+	commentList, err := service.GetCommentList(videoId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.CommentListResponse{
+			Response: models.Response{
+				StatusCode: -1,
+				StatusMsg:  "Found comments failed:" + err.Error(),
+			},
+			CommentList: nil,
+		})
+	}
+	c.JSON(http.StatusOK, models.CommentListResponse{
+		Response: models.Response{
+			StatusCode: 0,
+			StatusMsg:  "Found comments successfully.",
+		},
+		CommentList: commentList,
 	})
 }

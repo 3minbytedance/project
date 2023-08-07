@@ -3,15 +3,15 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"project/dao/mysql"
 	"project/models"
-	"project/utils"
 )
 
 // FavoriteAction no practical effect, just check if token is valid
 func FavoriteAction(c *gin.Context) {
 	token := c.Query("token")
 
-	if _, exist := models.FindUserByToken(utils.DB, token); exist {
+	if _, exist := mysql.FindUserByToken(token); exist {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 0})
 	} else {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})

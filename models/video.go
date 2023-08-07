@@ -1,6 +1,8 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Video struct {
 	gorm.Model
@@ -30,32 +32,4 @@ type VideoRes struct {
 
 func (*Video) TableName() string {
 	return "video"
-}
-
-func FindVideoByVideoId(db *gorm.DB, videoId int) (Video, bool) {
-	video := Video{}
-	return video, db.Where("id = ?", videoId).First(&video).RowsAffected != 0
-}
-
-func FindVideosByAuthor(db *gorm.DB, authorId int) ([]VideoRes, bool) {
-	videos := make([]Video, 0)
-	num := db.Where("author_id = ?", authorId).Find(&videos).RowsAffected
-	if num == 0 {
-		return nil, false
-	}
-	videosRes := make([]VideoRes, 0)
-	for _, v := range videos {
-		user, _ := FindUserByID(db, int(v.AuthorId))
-		temp := VideoRes{
-			Id:            int64(v.ID),
-			Author:        user,
-			PlayUrl:       v.PlayUrl,
-			CoverUrl:      v.CoverUrl,
-			FavoriteCount: v.FavoriteCount,
-			CommentCount:  v.CommentCount,
-			IsFavorite:    v.IsFavorite,
-		}
-		videosRes = append(videosRes, temp)
-	}
-	return videosRes, true
 }

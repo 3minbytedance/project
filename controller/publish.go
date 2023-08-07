@@ -5,8 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"path/filepath"
+	"project/dao/mysql"
 	"project/models"
-	"project/utils"
 	"time"
 )
 
@@ -19,7 +19,7 @@ type VideoListResponse struct {
 func Publish(c *gin.Context) {
 	token := c.Query("token")
 
-	if user, exist := models.FindUserByToken(utils.DB, token); !exist {
+	if user, exist := mysql.FindUserByToken(token); !exist {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
 		return
 	} else {
@@ -48,11 +48,11 @@ func Publish(c *gin.Context) {
 			PlayUrl:     saveFile,
 			PublishTime: time.Now().Unix(),
 		}
-		utils.DB.Model(models.Video{}).Create(&video)
+		mysql.DB.Model(models.Video{}).Create(&video)
 		// 视频封面如何获取？用户上传（自定义）+默认生成
 
 		// 更新用户作品数量
-		utils.DB.Model(&user).Update("work_count", user.WorkCount+1)
+		mysql.DB.Model(&user).Update("work_count", user.WorkCount+1)
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: 0,
 			StatusMsg:  finalName + " uploaded successfully",
@@ -64,11 +64,11 @@ func Publish(c *gin.Context) {
 func PublishList(c *gin.Context) {
 	token := c.Query("token")
 
-	if user, exist := models.FindUserByToken(utils.DB, token); !exist {
+	if user, exist := mysql.FindUserByToken(token); !exist {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
 		return
 	} else {
-		videos, b := models.FindVideosByAuthor(utils.DB, int(user.ID))
+		videos, b := mysql.FindVideosByAuthor(int(user.ID))
 		if !b {
 			c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户未发布过作品"})
 			return
