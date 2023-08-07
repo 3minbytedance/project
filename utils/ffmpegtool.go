@@ -1,26 +1,36 @@
 package utils
 
 import (
-	"fmt"
+	"errors"
+	"log"
 	"os/exec"
 )
 
+// ffmpeg参数
+const (
+	inputVideoPathOption = "-i"
+	startTimeOption      = "-ss"
+	startTime            = "1"
+)
+
 func GetVideoFrame(fileName string) {
-	// 设置视频源文件路径
+	if fileName == "" {
+		err := errors.New("路径未指定")
+		log.Fatal(err)
+		return
+	}
 	// 设置转码后文件路径
 	outputFile := "./output.jpg"
 
-	// 设置 ffmpeg 命令行参数
-	args := []string{"-i", fileName, "-ss", "1", outputFile}
+	// 设置 ffmpeg 命令行参数，获取第1s的帧
+	args := []string{inputVideoPathOption, fileName, startTimeOption, startTime, outputFile}
 
 	// 创建 *exec.Cmd
 	cmd := exec.Command("ffmpeg", args...)
 
 	// 运行 ffmpeg 命令
 	if err := cmd.Run(); err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		return
 	}
-
-	fmt.Println("转码成功")
 }
