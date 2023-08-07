@@ -20,3 +20,5 @@ Remote:
     port: 50819
     database: douyin
     timeout: 10
+oss:
+  tencent: “https://douyin-1319971229.cos.ap-nanjing.myqcloud.com”
