@@ -109,9 +109,9 @@ func getFavoritesById(db *gorm.DB, rdb *redis.Client, id int64, idType int) ([]i
 // FavoriteActions 点赞，取消赞的操作过程
 func FavoriteActions(userId int64, videoId int64, actionType int) error {
 	var (
-		db       *gorm.DB      = DB
-		userRDB  *redis.Client = daoRedis.UserFavoriteRDB
-		videoRDB *redis.Client = daoRedis.VideoFavoritedRDB
+		db       = DB
+		userRDB  = daoRedis.UserFavoriteRDB
+		videoRDB = daoRedis.VideoFavoritedRDB
 	)
 	_, err := GetFavoritesByUserId(db, userRDB, userId)
 	if err != nil {
@@ -190,8 +190,8 @@ func FavoriteActions(userId int64, videoId int64, actionType int) error {
 
 func GetFavoriteList(userId int64) ([]int64, error) {
 	var (
-		db      *gorm.DB      = DB
-		userRDB *redis.Client = daoRedis.UserFavoriteRDB
+		db      = DB
+		userRDB = daoRedis.UserFavoriteRDB
 	)
 	favoritesByUserId, err := GetFavoritesByUserId(db, userRDB, userId)
 	if err != nil {
