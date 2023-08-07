@@ -87,6 +87,13 @@ func PrepareData() {
 			fmt.Println("create relations table failed.")
 		}
 	}
+	table = mysql.DB.Migrator().HasTable(&mysql.Favorite{})
+	if !table {
+		err := mysql.DB.AutoMigrate(&mysql.Favorite{})
+		if err != nil {
+			fmt.Println("create favorite table failed.")
+		}
+	}
 
 	// 新建数据
 	videoId := int64(1)

@@ -5,7 +5,7 @@ version: "v0.0.1"
 local:
   mysql:
     username: root
-    password: 12345678
+    password: webservertest
     address: "127.0.0.1"
     port: 3306
     database: douyin
