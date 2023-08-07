@@ -2,13 +2,13 @@ package service
 
 import (
 	"context"
+	"github.com/spf13/viper"
+	cos "github.com/tencentyun/cos-go-sdk-v5"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
-
-	"github.com/spf13/viper"
-	cos "github.com/tencentyun/cos-go-sdk-v5"
+	"project/models"
 )
 
 func Upload_video(name string, path string) error {
@@ -56,4 +56,9 @@ func Download_video(name string) (interface{}, error) {
 	resp.Body.Close()
 
 	return bs, nil
+}
+
+func GetPublishList(videoId uint) ([]models.VideoListResponse, error) {
+	//TODO
+	return nil, nil
 }

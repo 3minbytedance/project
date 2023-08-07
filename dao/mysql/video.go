@@ -14,13 +14,15 @@ func FindVideoByVideoId(videoId int64) (models.Video, bool) {
 	return video, true
 }
 
-func FindVideosByAuthor(authorId uint) ([]models.Video, bool) {
+// FindVideosByAuthorId 返回查询到的列表及是否出错
+// 若未找到，返回空列表
+func FindVideosByAuthorId(authorId uint) ([]models.Video, error) {
 	var videos []models.Video
 	result := DB.Where("author_id = ?", authorId).Find(&videos)
 	if result.Error != nil {
-		return []models.Video{}, false
+		return []models.Video{}, DB.Error
 	}
-	return videos, true
+	return videos, nil
 }
 
 // InsertVideo return 插入视频的id，是否插入成功
