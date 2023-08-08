@@ -34,3 +34,7 @@ remote:
     pool_size: 30
     min_idle_conns: 30
     expire_time: 1800   # 30分钟
+oss:
+  tencent: "https://tiktok-1319971229.cos.ap-nanjing.myqcloud.com"
+  SecretId: "AKIDFKMQPakpcN6tkV9oJg6PanzAGC0hGkCZ"
+  SecretKey: "MWXXLzQlutgMtLl5HH9pPp5CB0cfcMxR"
