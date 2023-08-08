@@ -18,14 +18,14 @@ func Upload_video(name string, path string) error {
 	b := &cos.BaseURL{BucketURL: u}
 	c := cos.NewClient(b, &http.Client{
 		Transport: &cos.AuthorizationTransport{
-			SecretID:     "SECRETID",
-			SecretKey:    "SECRETKEY",
+			SecretID:     viper.GetString("SecretID"),
+			SecretKey:    viper.GetString("SecretKey"),
 			SessionToken: "SECRETTOKEN",
 		},
 	})
 
 	// 通过文件流上传对象
-	fd, err := os.Open("./test")
+	fd, err := os.Open(name)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func Download_video(name string) (interface{}, error) {
 	return bs, nil
 }
 
-func GetPublishList(userID uint64) ([]models.VideoResponse, error) {
+func GetPublishList(userID uint) ([]models.VideoResponse, error) {
 	videos, err := mysql.FindVideosByAuthorId(userID)
 	if err != nil {
 		return nil, err
@@ -72,9 +72,9 @@ func GetPublishList(userID uint64) ([]models.VideoResponse, error) {
 			Author:        models.User{}, //TODO
 			PlayUrl:       video.VideoUrl,
 			CoverUrl:      video.CoverUrl,
-			FavoriteCount: getFavoriteCount(video.VideoId),       // TODO
-			CommentCount:  getCommentCount(video.VideoId),        // TODO
-			IsFavorite:    isUserFavorite(userId, video.VideoId), // TODO
+			FavoriteCount: getFavoriteCount(video.VideoId),    // TODO
+			CommentCount:  getCommentCount(video.VideoId),     // TODO
+			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
 		}
 		videoResponses = append(videoResponses, videoResponse)
 	}

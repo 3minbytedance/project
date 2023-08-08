@@ -16,7 +16,7 @@ func FindVideoByVideoId(videoId int64) (models.Video, bool) {
 
 // FindVideosByAuthorId 返回查询到的列表及是否出错
 // 若未找到，返回空列表
-func FindVideosByAuthorId(authorId uint64) ([]models.Video, error) {
+func FindVideosByAuthorId(authorId uint) ([]models.Video, error) {
 	var videos []models.Video
 	result := DB.Where("author_id = ?", authorId).Find(&videos)
 	if result.Error != nil {
@@ -38,7 +38,7 @@ func InsertVideo(videoUrl string, coverUrl string, authorID uint, title string) 
 	if result.Error != nil {
 		return -1, false
 	}
-	return uint(video.VideoId), true
+	return video.VideoId, true
 }
 
 func GetLatestVideos(latestTime string) []models.Video {
