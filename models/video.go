@@ -1,6 +1,7 @@
 package models
 
 import (
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -11,13 +12,13 @@ type Video struct {
 	CoverUrl  string
 	Title     string
 	CreatedAt time.Time
-	DeletedAt time.Time
+	DeletedAt gorm.DeletedAt
 }
 
 type VideoResponse struct {
 	Id            uint   `json:"id"`
 	Author        User   `json:"author"`
-	PlayUrl       string `json:"play_url,omitempty"`
+	PlayUrl       string `json:"play_url"`
 	CoverUrl      string `json:"cover_url"`
 	FavoriteCount uint   `json:"favorite_count"` //点赞数
 	CommentCount  uint   `json:"comment_count"`  //评论数

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"project/dao/mysql"
 	"project/models"
 )
 
@@ -58,7 +59,31 @@ func Download_video(name string) (interface{}, error) {
 	return bs, nil
 }
 
-func GetPublishList(videoId uint) ([]models.VideoListResponse, error) {
-	//TODO
-	return nil, nil
+func GetPublishList(userID uint64) ([]models.VideoResponse, error) {
+	videos, err := mysql.FindVideosByAuthorId(userID)
+	if err != nil {
+		return nil, err
+	}
+	// 将查询结果转换为VideoResponse类型
+	var videoResponses []models.VideoResponse
+	for _, video := range videos {
+		videoResponse := models.VideoResponse{
+			Id:            video.VideoId,
+			Author:        models.User{}, //TODO
+			PlayUrl:       video.VideoUrl,
+			CoverUrl:      video.CoverUrl,
+			FavoriteCount: getFavoriteCount(video.VideoId),       // TODO
+			CommentCount:  getCommentCount(video.VideoId),        // TODO
+			IsFavorite:    isUserFavorite(userId, video.VideoId), // TODO
+		}
+		videoResponses = append(videoResponses, videoResponse)
+	}
+
+	return videoResponses, nil
 }
+
+func getFavoriteCount(uint) uint { return 1 }
+
+func getCommentCount(uint) uint { return 1 }
+
+func isUserFavorite(uint, uint) bool { return true }
