@@ -1,11 +1,12 @@
 package test
 
 import (
-	"project/utils"
+	"project/service"
 	"testing"
 )
 
-func TestGetVideoFrame(t *testing.T) {
-	//utils.GetVideoFrame("./2_bear.mp4")
-	utils.GetVideoFrame("./2_bear.mp4")
+func TestUploadVideo(t *testing.T) {
+	service.UploadVideo("bear.mp4", "./bear.mp4")
+	//log.Fatal(err)
+
 }

@@ -36,7 +36,7 @@ func InsertVideo(videoUrl string, coverUrl string, authorID uint, title string) 
 	}
 	result := DB.Create(&video)
 	if result.Error != nil {
-		return -1, false
+		return uint(10), false
 	}
 	return video.VideoId, true
 }
