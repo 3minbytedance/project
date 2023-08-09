@@ -87,9 +87,9 @@ func PrepareData() {
 			fmt.Println("create relations table failed.")
 		}
 	}
-	table = mysql.DB.Migrator().HasTable(&mysql.Favorite{})
+	table = mysql.DB.Migrator().HasTable(&models.Favorite{})
 	if !table {
-		err := mysql.DB.AutoMigrate(&mysql.Favorite{})
+		err := mysql.DB.AutoMigrate(&models.Favorite{})
 		if err != nil {
 			fmt.Println("create favorite table failed.")
 		}

@@ -1,22 +1,20 @@
 package mysql
 
 import (
-	"errors"
 	"fmt"
 	"github.com/go-redis/redis"
 	"gorm.io/gorm"
 	"log"
-	daoRedis "project/dao/redis"
 	"project/models"
 	"strconv"
 	"time"
 )
 
 var (
-	idTypeVideo     = 1
-	idTypeUser      = 2
-	expiration      = time.Hour * 2
-	storeExpiration = expiration / 2
+	IdTypeVideo     = 1
+	IdTypeUser      = 2
+	Expiration      = time.Hour * 2
+	StoreExpiration = Expiration / 2
 )
 
 /* 这个是用来记录用户喜欢的视频的
@@ -25,35 +23,18 @@ VideoFavoritedRDB：用来存储视频被点赞的信息（用户ID集合），�
 Redis持久化时间为两倍的过期时间，用定时器管理，每次持久化过期时间及以下的数据
 */
 
-type Favorite struct {
-	gorm.Model
-	UserId  int64
-	VideoId int64
-	//IsFavorite bool
-}
-
-func (*Favorite) TableName() string {
-	return "favorite"
-}
-
-type FavoriteListResponse struct {
-	FavoriteRes models.Response
-	//VideoList   []Video
-	VideoList []int64
-}
-
-func getFavoritesByIdFromMysql(db *gorm.DB, id int64, idType int) ([]Favorite, int, error) {
+func getFavoritesByIdFromMysql(db *gorm.DB, id int64, idType int) ([]models.Favorite, int, error) {
 	var (
-		res  []Favorite
+		res  []models.Favorite
 		rows int64
 		err  error
 	)
 	switch idType {
-	case idTypeVideo:
+	case IdTypeVideo:
 		dbStruct := db.Where("video_id = ?", id).Find(&res)
 		rows = dbStruct.RowsAffected
 		err = db.Error
-	case idTypeUser:
+	case IdTypeUser:
 		dbStruct := db.Where("user_id = ?", id).Find(&res)
 		rows = dbStruct.RowsAffected
 		err = db.Error
@@ -63,16 +44,16 @@ func getFavoritesByIdFromMysql(db *gorm.DB, id int64, idType int) ([]Favorite, i
 
 // GetFavoritesByUserId 获取当前id的点赞的视频id列表
 func GetFavoritesByUserId(db *gorm.DB, rdb *redis.Client, userId int64) ([]int64, error) {
-	idList, _, err := getFavoritesById(db, rdb, userId, idTypeUser)
+	idList, _, err := GetFavoritesById(db, rdb, userId, IdTypeUser)
 	return idList, err
 }
 
 func GetFavoritesByVideoId(db *gorm.DB, rdb *redis.Client, videoId int64) ([]int64, error) {
-	idList, _, err := getFavoritesById(db, rdb, videoId, idTypeVideo)
+	idList, _, err := GetFavoritesById(db, rdb, videoId, IdTypeVideo)
 	return idList, err
 }
 
-func getFavoritesById(db *gorm.DB, rdb *redis.Client, id int64, idType int) ([]int64, int, error) {
+func GetFavoritesById(db *gorm.DB, rdb *redis.Client, id int64, idType int) ([]int64, int, error) {
 	// 先从redis中取数据
 	key := strconv.FormatInt(id, 10)
 	numKey := fmt.Sprintf("%d:count", id)
@@ -106,100 +87,6 @@ func getFavoritesById(db *gorm.DB, rdb *redis.Client, id int64, idType int) ([]i
 	}
 }
 
-// FavoriteActions 点赞，取消赞的操作过程
-func FavoriteActions(userId int64, videoId int64, actionType int) error {
-	var (
-		db       = DB
-		userRDB  = daoRedis.UserFavoriteRDB
-		videoRDB = daoRedis.VideoFavoritedRDB
-	)
-	_, err := GetFavoritesByUserId(db, userRDB, userId)
-	if err != nil {
-		return err
-	}
-	_, err = GetFavoritesByVideoId(db, videoRDB, userId)
-	if err != nil {
-		return err
-	}
-	userIdStr := strconv.FormatInt(userId, 10)
-	videoIdStr := strconv.FormatInt(videoId, 10)
-	isMember, _ := userRDB.SIsMember(userIdStr, videoId).Result()
-	switch actionType {
-	case 1:
-		// 点赞
-		// 更新用户喜欢的视频列表
-		if isMember {
-			return errors.New("该视频已点赞")
-		}
-		err = userRDB.SAdd(userIdStr, videoId).Err()
-		if err != nil {
-			log.Println(err)
-		}
-		// 更新用户喜欢的视频数量
-		err = userRDB.Incr(fmt.Sprintf("%d:count", userId)).Err()
-		if err != nil {
-			log.Println(err)
-		}
-		// 更新视频被喜欢的用户列表
-		err = videoRDB.SAdd(videoIdStr, userId).Err()
-		if err != nil {
-			log.Println(err)
-		}
-		// 更新视频被喜欢的数量
-		err = videoRDB.Incr(fmt.Sprintf("%d:count", videoId)).Err()
-		if err != nil {
-			log.Println(err)
-		}
-		// 新增到数据库
-		DB.Create(&Favorite{UserId: userId, VideoId: videoId})
-	case 2:
-		// 取消赞
-		// 更新用户喜欢的视频列表
-		if !isMember {
-			return errors.New("该视频未点赞")
-		}
-		err = userRDB.SRem(userIdStr, videoId).Err()
-		if err != nil {
-			log.Println(err)
-		}
-		// 更新用户喜欢的视频数量
-		err = userRDB.Decr(fmt.Sprintf("%d:count", userId)).Err()
-		if err != nil {
-			log.Println(err)
-		}
-		// 更新视频被喜欢的用户列表
-		err = videoRDB.SRem(videoIdStr, userId).Err()
-		if err != nil {
-			log.Println(err)
-		}
-		// 更新视频被喜欢的数量
-		err = videoRDB.Decr(fmt.Sprintf("%d:count", videoId)).Err()
-		if err != nil {
-			log.Println(err)
-		}
-		DB.Where("user_id = ? and video_id = ?", userId, videoId).Delete(&Favorite{})
-	}
-	// 更新过期时间
-	userRDB.Expire(fmt.Sprintf("%d:count", userId), expiration)
-	userRDB.Expire(userIdStr, expiration)
-	videoRDB.Expire(fmt.Sprintf("%d:count", videoId), expiration)
-	videoRDB.Expire(videoIdStr, expiration)
-
-	return nil
-}
-
-func GetFavoriteList(userId int64) ([]int64, error) {
-	var (
-		db      = DB
-		userRDB = daoRedis.UserFavoriteRDB
-	)
-	favoritesByUserId, err := GetFavoritesByUserId(db, userRDB, userId)
-	if err != nil {
-		return nil, err
-	}
-	return favoritesByUserId, err
-}
-
 func StoreByTimer() {
 	ticker := time.NewTicker(time.Hour)
 	go func() {
@@ -230,7 +117,7 @@ func convertStrListToInt64List(strs []string) ([]int64, error) {
 }
 
 // getIdListFromFavoriteSlice 从Favorite的slice中获取id的列表
-func getIdListFromFavoriteSlice(favorites []Favorite, idType int) []int64 {
+func getIdListFromFavoriteSlice(favorites []models.Favorite, idType int) []int64 {
 	res := make([]int64, 0)
 	for _, fav := range favorites {
 		switch idType {
@@ -259,7 +146,7 @@ func loadSetToRedis(id string, value []int64, rdb *redis.Client) {
 			}
 		}
 	}
-	err := rdb.Expire(id, expiration).Err()
+	err := rdb.Expire(id, Expiration).Err()
 	if err != nil {
 		log.Println(err)
 	}
@@ -267,7 +154,7 @@ func loadSetToRedis(id string, value []int64, rdb *redis.Client) {
 
 // loadCountToRedis 将数值存储在redis中
 func loadCountToRedis(id string, count int, rdb *redis.Client) {
-	err := rdb.Set(id, count, expiration).Err()
+	err := rdb.Set(id, count, Expiration).Err()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -281,14 +168,6 @@ func processData() {
 // 存储数据
 func storeDataToMysql() {
 
-}
-
-// GetFavoritesVideoCount 根据视频id，返回该视频的点赞数（外部使用）
-func GetFavoritesVideoCount(videoId int64) (int, error) {
-	db := DB
-	rdb := daoRedis.VideoFavoritedRDB
-	_, num, err := getFavoritesById(db, rdb, videoId, idTypeVideo)
-	return num, err
 }
 
 //
