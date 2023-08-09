@@ -2,9 +2,10 @@ package mysql
 
 import (
 	"fmt"
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"log"
+	daoRedis "project/dao/redis"
 	"project/models"
 	"strconv"
 	"time"
@@ -57,14 +58,14 @@ func GetFavoritesById(db *gorm.DB, rdb *redis.Client, id int64, idType int) ([]i
 	// 先从redis中取数据
 	key := strconv.FormatInt(id, 10)
 	numKey := fmt.Sprintf("%d:count", id)
-	result, err := rdb.Exists(numKey).Result()
+	result, err := rdb.Exists(daoRedis.Ctx, numKey).Result()
 	if err != nil {
 		log.Println(err.Error())
 		return []int64{}, 0, err
 	}
 	if result > 0 {
 		// redis里有对应数据的情况
-		favoritesStrList, err := rdb.SMembers(key).Result()
+		favoritesStrList, err := rdb.SMembers(daoRedis.Ctx, key).Result()
 		if err != nil {
 			log.Println(err.Error())
 		}
@@ -134,19 +135,19 @@ func getIdListFromFavoriteSlice(favorites []models.Favorite, idType int) []int64
 func loadSetToRedis(id string, value []int64, rdb *redis.Client) {
 	if len(value) == 0 {
 
-		err := rdb.SAdd(id).Err()
+		err := rdb.SAdd(daoRedis.Ctx, id).Err()
 		if err != nil {
 			log.Println(err)
 		}
 	} else {
 		for _, v := range value {
-			err := rdb.SAdd(id, v).Err()
+			err := rdb.SAdd(daoRedis.Ctx, id, v).Err()
 			if err != nil {
 				log.Println(err)
 			}
 		}
 	}
-	err := rdb.Expire(id, Expiration).Err()
+	err := rdb.Expire(daoRedis.Ctx, id, Expiration).Err()
 	if err != nil {
 		log.Println(err)
 	}
@@ -154,7 +155,7 @@ func loadSetToRedis(id string, value []int64, rdb *redis.Client) {
 
 // loadCountToRedis 将数值存储在redis中
 func loadCountToRedis(id string, count int, rdb *redis.Client) {
-	err := rdb.Set(id, count, Expiration).Err()
+	err := rdb.Set(daoRedis.Ctx, id, count, Expiration).Err()
 	if err != nil {
 		fmt.Println(err)
 	}

@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"project/config"
-	"project/models"
 	"time"
 )
 
@@ -44,9 +43,9 @@ func Init(appConfig *config.AppConfig) (err error) {
 		fmt.Println(dsn)
 		log.Fatal("connect to mysql failed:", err)
 	}
-	err = DB.AutoMigrate(&models.User{})
-	if err != nil {
-		return
-	}
-	return
+	//err = DB.AutoMigrate(&models.User{})
+	//if err != nil {
+	//	return
+	//}
+	return nil
 }
