@@ -34,7 +34,7 @@ var DemoComments = []models.CommentResponse{
 	},
 }
 
-var DemoUser = models.User{
+var DemoUser = models.UserInfo{
 	Name:          "yyf",
 	FollowCount:   0,
 	FollowerCount: 0,
@@ -97,7 +97,7 @@ func PrepareData() {
 
 	// 新建数据
 	videoId := int64(1)
-	if _, b := models.FindVideoByVideoId(mysql.DB, videoId); !b {
+	if _, b := mysql.FindVideoByVideoId(videoId); !b {
 		// 没数据的时候
 		videos := []models.Video{
 			{

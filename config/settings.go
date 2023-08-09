@@ -46,6 +46,8 @@ type RedisConfig struct {
 	VideoFavoritedRDB int    `mapstructure:"vfudb"`
 	PoolSize          int    `mapstructure:"pool_size"`
 	MinIdleConns      int    `mapstructure:"min_idle_conns"`
+	CommentDB    int    `mapstructure:"comment_db"`
+	ExpireTime   int64  `mapstructure:"expire_time"`
 }
 
 func Init() (err error) {

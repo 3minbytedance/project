@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"project/dao/mysql"
 	"project/models"
+	"project/utils"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -22,13 +23,16 @@ type ChatResponse struct {
 
 // MessageAction no practical effect, just check if token is valid
 func MessageAction(c *gin.Context) {
-	token := c.Query("token")
+
+	userId, err := utils.GetCurrentUserID(c)
+	if err != nil {
+	}
 	toUserId := c.Query("to_user_id")
 	content := c.Query("content")
 
-	if user, exist := models.FindUserByToken(mysql.DB, token); exist {
+	if _, exist := mysql.FindUserByID(userId); exist {
 		userIdB, _ := strconv.Atoi(toUserId)
-		chatKey := genChatKey(int64(user.ID), int64(userIdB))
+		chatKey := genChatKey(int64(userId), int64(userIdB))
 
 		atomic.AddInt64(&messageIdSequence, 1)
 		curMessage := models.Message{
@@ -50,12 +54,16 @@ func MessageAction(c *gin.Context) {
 
 // MessageChat all users have same follow list
 func MessageChat(c *gin.Context) {
-	token := c.Query("token")
+
+	userId, err := utils.GetCurrentUserID(c)
+	if err != nil {
+	}
+
 	toUserId := c.Query("to_user_id")
 
-	if user, exist := models.FindUserByToken(mysql.DB, token); exist {
+	if _, exist := mysql.FindUserByID(userId); exist {
 		userIdB, _ := strconv.Atoi(toUserId)
-		chatKey := genChatKey(int64(user.ID), int64(userIdB))
+		chatKey := genChatKey(int64(userId), int64(userIdB))
 
 		c.JSON(http.StatusOK, ChatResponse{Response: models.Response{StatusCode: 0}, MessageList: tempChat[chatKey]})
 	} else {

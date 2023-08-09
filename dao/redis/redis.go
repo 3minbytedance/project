@@ -1,11 +1,20 @@
 package redis
 
 import (
+	"context"
 	"fmt"
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 	"project/config"
+	"time"
 )
 
+var Ctx = context.Background()
+
+// RdbComment Comment模块Rdb
+var RdbComment *redis.Client
+
+// RdbExpireTime key的过期时间
+var RdbExpireTime time.Duration
 var (
 	RDB               *redis.Client
 	UserFavoriteRDB   *redis.Client
@@ -19,14 +28,19 @@ func Init(appConfig *config.AppConfig) (err error) {
 	} else {
 		conf = appConfig.Remote.RedisConfig
 	}
+	// 获取conf中的过期时间, 单位为s
+	RdbExpireTime = time.Duration(conf.ExpireTime) * time.Second
 
-	RDB = redis.NewClient(&redis.Options{
+	RdbComment = redis.NewClient(&redis.Options{
 		Addr:         fmt.Sprintf("%s:%d", conf.Address, conf.Port),
-		Password:     conf.Password, // 密码
-		DB:           conf.DB,       // 数据库
-		PoolSize:     conf.PoolSize, // 连接池大小
+		Password:     conf.Password,  // 密码
+		DB:           conf.CommentDB, // 数据库
+		PoolSize:     conf.PoolSize,  // 连接池大小
 		MinIdleConns: conf.MinIdleConns,
 	})
+	if err = RdbComment.Ping(Ctx).Err(); err != nil {
+		return nil
+	}
 
 	UserFavoriteRDB = redis.NewClient(&redis.Options{
 		Addr:         fmt.Sprintf("%s:%d", conf.Address, conf.Port),
