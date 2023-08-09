@@ -1,30 +1,33 @@
 package controller
 
-//
-//import (
-//	"github.com/gin-gonic/gin"
-//	"net/http"
-//	"project/dao/mysql"
-//	"project/models"
-//)
-//
-//// FavoriteAction no practical effect, just check if token is valid
-//func FavoriteAction(c *gin.Context) {
-//	token := c.Query("token")
-//
-//	if _, exist := mysql.FindUserByToken(token); exist {
-//		c.JSON(http.StatusOK, models.Response{StatusCode: 0})
-//	} else {
-//		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
-//	}
-//}
-//
-//// FavoriteList all users have same favorite video list
-//func FavoriteList(c *gin.Context) {
-//	c.JSON(http.StatusOK, VideoListResponse{
-//		Response: models.Response{
-//			StatusCode: 0,
-//		},
-//		VideoList: DemoVideos,
-//	})
-//}
+import (
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"project/dao/mysql"
+	"project/models"
+	"project/utils"
+)
+
+// FavoriteAction no practical effect, just check if token is valid
+func FavoriteAction(c *gin.Context) {
+	userId, err := utils.GetCurrentUserID(c)
+
+	if err != nil {
+	}
+
+	if _, exist := mysql.FindUserByID(userId); exist {
+		c.JSON(http.StatusOK, models.Response{StatusCode: 0})
+	} else {
+		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+	}
+}
+
+// FavoriteList all users have same favorite video list
+func FavoriteList(c *gin.Context) {
+	c.JSON(http.StatusOK, VideoListResponse{
+		Response: models.Response{
+			StatusCode: 0,
+		},
+		VideoList: DemoVideos,
+	})
+}

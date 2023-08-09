@@ -17,8 +17,8 @@ func FindUserByName(name string) (models.User, bool) {
 //	return userState, DB.Where("name = ?", name).First(&userState).RowsAffected != 0
 //}
 
-func FindUserByID(id int) (models.User, bool) {
-	user := models.User{}
+func FindUserByID(id uint) (models.UserInfo, bool) {
+	user := models.UserInfo{}
 	return user, DB.Where("id = ?", id).First(&user).RowsAffected != 0
 }
 

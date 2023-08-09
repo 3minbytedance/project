@@ -17,7 +17,7 @@ func FindVideosByAuthor(authorId int) ([]models.VideoRes, bool) {
 	}
 	videosRes := make([]models.VideoRes, 0)
 	for _, v := range videos {
-		user, _ := FindUserByID(int(v.AuthorId))
+		user, _ := FindUserByID(uint(v.AuthorId))
 		temp := models.VideoRes{
 			Id:            int64(v.ID),
 			Author:        user,
