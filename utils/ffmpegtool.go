@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"log"
 	"os/exec"
 )
@@ -10,21 +9,33 @@ import (
 const (
 	inputVideoPathOption = "-i"
 	startTimeOption      = "-ss"
-	startTime            = "1"
+	startTime            = "1" // 截取第1秒的帧
 )
 
-func GetVideoFrame(fileName string) {
-	if fileName == "" {
-		err := errors.New("路径未指定")
+func GetVideoFrame(videoPath string, outputPath string) {
+	if videoPath == "" {
+		log.Fatal("路径未指定")
+		return
+	}
+
+	// 设置 ffmpeg 命令行参数，获取第1s的帧
+	args := []string{inputVideoPathOption, videoPath, startTimeOption, startTime, outputPath}
+
+	// 创建 *exec.Cmd
+	cmd := exec.Command("ffmpeg", args...)
+
+	// 运行 ffmpeg 命令
+	if err := cmd.Run(); err != nil {
 		log.Fatal(err)
 		return
 	}
-	// 设置转码后文件路径
-	outputFile := "./output.jpg"
+}
 
-	// 设置 ffmpeg 命令行参数，获取第1s的帧
-	args := []string{inputVideoPathOption, fileName, startTimeOption, startTime, outputFile}
-
+func Transcoding(src string, dst string, overwrite bool) {
+	args := []string{inputVideoPathOption, src, "-c:v", "libx264", "-strict", "-2", dst}
+	if overwrite {
+		args = append([]string{"-y"}, args...)
+	}
 	// 创建 *exec.Cmd
 	cmd := exec.Command("ffmpeg", args...)
 

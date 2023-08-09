@@ -1,29 +1,79 @@
 package service
 
 import (
+	"bufio"
 	"context"
+	"github.com/google/uuid"
 	cos "github.com/tencentyun/cos-go-sdk-v5"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
 	"project/dao/mysql"
 	"project/models"
+	"project/utils"
+	"strings"
 )
 
-func uplaod() {
+func UploadVideo(file *multipart.FileHeader) error {
+	// 生成 UUID
+	id := uuid.New().String()
 
-	// MQ 异步解耦 TODO
+	// 修改文件名
+	fileName := strings.Replace(id, "-", "", -1) + ".mp4"
 
-	// 存储到oss
+	// 创建临时文件
+	tmpfile, err := createTempFile(fileName)
+	if err != nil {
+		return err
+	}
 
-	//写入到本地，创建临时文件
+	// 打开上传的文件
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
 
-	//将封面图上传到oss
+	// 创建缓冲写入器
+	writer := bufio.NewWriter(tmpfile)
 
+	// 将上传的文件内容写入临时文件
+	_, err = io.Copy(writer, src)
+	if err != nil {
+		return err
+	}
+
+	// 清空缓冲区并确保文件已写入磁盘
+	if err = writer.Flush(); err != nil {
+		return err
+	}
+	return nil
 }
 
-// UploadVideo
-func UploadVideo(localPath string, remotePath string) error {
+func createTempFile(fileName string) (*os.File, error) {
+	tmpDir := "/dumpfile" // 临时文件夹路径
+
+	// 创建临时文件夹（如果不存在）
+	if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
+		err := os.Mkdir(tmpDir, 0755)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// 在临时文件夹中创建临时文件
+	tmpfile, err := os.CreateTemp(tmpDir, fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return tmpfile, nil
+}
+
+// UploadToOSS  上传至腾讯OSS
+func UploadToOSS(localPath string, remotePath string) error {
 	req_url := "https://tiktok-1319971229.cos.ap-nanjing.myqcloud.com"
 	u, _ := url.Parse(req_url)
 	b := &cos.BaseURL{BucketURL: u}
@@ -46,6 +96,25 @@ func UploadVideo(localPath string, remotePath string) error {
 		return err
 	}
 	return nil
+}
+
+func GetVideoCover(fileName string) {
+	// 生成图片 UUID
+	imgId := uuid.New().String()
+	// 修改文件名
+	imgName := strings.Replace(imgId, "-", "", -1) + ".jpg"
+	//调用ffmpeg 获取封面图
+	utils.GetVideoFrame("/dumpfile/"+fileName, "/dumpfile/"+imgName)
+}
+
+func StoreVideoAndImg(videoUrl string, coverUrl string, authorID uint, title string) {
+	// 视频存储到oss
+	UploadToOSS("/dumpfile/"+fileName, fileName)
+
+	// 图片存储到oss
+	UploadToOSS("/dumpfile/"+imgName, imgName)
+
+	mysql.InsertVideo(videoUrl, coverUrl, authorID, title)
 }
 
 func GetPublishList(userID uint) ([]models.VideoResponse, error) {

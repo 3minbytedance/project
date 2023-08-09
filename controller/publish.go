@@ -1,19 +1,16 @@
 package controller
 
 import (
-	"bufio"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"io"
-	"log"
-	"mime/multipart"
 	"net/http"
-	"os"
+	"path/filepath"
 	"project/models"
 	"project/service"
 	"strconv"
-	"strings"
 )
+
+// 限制上传文件的最大大小（单位：字节）
+const maxFileSize = 200 * 1024 * 1024
 
 // GetPublishList 每个用户的自己的发布列表
 func GetPublishList(c *gin.Context) {
@@ -44,63 +41,50 @@ func GetPublishList(c *gin.Context) {
 
 func Publish(c *gin.Context) {
 	//TODO 鉴权
+	_ = c.Query("token")
+	title := c.Query("title")
 
-	//TODO 检测文件类型
-
-	file, err := c.FormFile("file")
+	file, err := c.FormFile("data")
 	if err != nil {
-		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+		return
 	}
 
-	// 生成 UUID
-	id := uuid.New().String()
+	// 校验文件类型
+	ext := filepath.Ext(file.Filename)
+	if !isValidFileType(ext) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file type"})
+		return
+	}
 
-	// 修改文件名
-	fileName := strings.Replace(id, "-", "", -1) + ".mp4"
+	// 校验文件大小
+	if file.Size > maxFileSize {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File size exceeds the limit"})
+		return
+	}
 
-	done := make(chan struct{})
-
-	// 处理文件上传的并发函数
-	go func(file *multipart.FileHeader) {
-
-		src, err := file.Open()
-		if err != nil {
-			log.Println("Failed to open source file:", err)
-			return
-		}
-		defer src.Close()
-
-		dest, err := os.Create(fileName)
-		if err != nil {
-			log.Println("Failed to create destination file:", err)
-			return
-		}
-		defer dest.Close()
-
-		reader := bufio.NewReader(src)
-		_, err = io.Copy(dest, reader)
-		if err != nil {
-			log.Println("Failed to copy file:", err)
-			return
-		}
-		done <- struct{}{}
-	}(file)
-
-	<-done
+	if err = service.UploadVideo(file); err != nil {
+		c.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: 400,
+			StatusMsg:  "上传失败"})
+	}
 
 	c.JSON(http.StatusOK, models.Response{
 		StatusCode: int32(CodeSuccess),
 		StatusMsg:  codeMsgMap[CodeSuccess]})
 
-	// MQ 异步解耦 TODO
+	// MQ 异步解耦,解决返回json阻塞 TODO
+	service.GetVideoCover()
+	service.StoreVideoAndImg()
+}
 
-	//调用ffmpeg 获取封面图
-
-	// 存储到oss
-	service.UploadVideo(fileName, fileName)
-
-	// 存储到oss
-	service.UploadVideo(fileName, fileName)
-
-	// 将视频及图片uuid写入数据库
+// 校验文件类型是否为视频类型
+func isValidFileType(fileExt string) bool {
+	validExts := []string{".mp4", ".avi", ".mov"}
+	for _, ext := range validExts {
+		if fileExt == ext {
+			return true
+		}
+	}
+	return false
 }
