@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -30,6 +31,7 @@ func Auth() gin.HandlerFunc {
 		} else {
 
 			claims, err := utils.ParseToken(token)
+			fmt.Println("jwt test:", claims.ID)
 			if err != nil {
 				// token有误，阻止后面函数执行
 				c.Abort()
@@ -51,7 +53,7 @@ func Auth() gin.HandlerFunc {
 func AuthWithoutLogin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.Query("token")
-		var userId int64
+		var userId uint
 		if len(token) == 0 {
 			// 没有token, 设置userId为0
 			userId = 0
