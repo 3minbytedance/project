@@ -20,7 +20,7 @@ func FindVideosByAuthor(authorId int) ([]models.VideoRes, bool) {
 		user, _ := FindUserByID(uint(v.AuthorId))
 		temp := models.VideoRes{
 			Id:            int64(v.ID),
-			Author:        user,
+			Author:        models.UserResponse{Id: user.Id, Name: user.Name},
 			PlayUrl:       v.PlayUrl,
 			CoverUrl:      v.CoverUrl,
 			FavoriteCount: v.FavoriteCount,

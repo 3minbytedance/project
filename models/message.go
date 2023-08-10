@@ -1,15 +1,11 @@
 package models
 
-import (
-	"time"
-)
-
 type Message struct {
-	Id         uint      `json:"id,omitempty"`
-	FromUserId uint      `json:"from_user_id,omitempty"`
-	ToUserId   uint      `json:"to_user_id,omitempty"`
-	Content    string    `json:"content,omitempty"`
-	CreateTime time.Time `json:"create_time,omitempty"`
+	Id         uint   `json:"id,omitempty"`
+	FromUserId uint   `json:"from_user_id"`
+	ToUserId   uint   `json:"to_user_id"`
+	Content    string `json:"content,omitempty"`
+	CreateTime int64  `json:"create_time,omitempty"`
 }
 
 type MessageChatResponse struct {

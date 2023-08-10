@@ -9,12 +9,10 @@ import (
 
 // Comment 数据库Model
 type Comment struct {
-	ID        uint
-	VideoId   uint `gorm:"index"` // 非唯一索引
-	UserId    uint `gorm:"index"` // 非唯一索引
-	Content   string
-	DeletedAt gorm.DeletedAt
 	gorm.Model
+	VideoId uint `gorm:"index"` // 非唯一索引
+	UserId  uint `gorm:"index"` // 非唯一索引
+	Content string
 }
 
 func (*Comment) TableName() string {
@@ -23,10 +21,10 @@ func (*Comment) TableName() string {
 
 // CommentResponse 返回数据的Model
 type CommentResponse struct {
-	Id         int64    `json:"id,omitempty"`
-	User       UserInfo `json:"user"`
-	Content    string   `json:"content,omitempty"`
-	CreateDate string   `json:"create_date,omitempty"`
+	Id         int64        `json:"id,omitempty"`
+	User       UserResponse `json:"user"`
+	Content    string       `json:"content,omitempty"`
+	CreateDate string       `json:"create_date,omitempty"`
 }
 
 type CommentListResponse struct {

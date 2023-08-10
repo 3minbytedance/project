@@ -21,13 +21,13 @@ type Video struct {
 
 // VideoRes demo中的struct，暂且保留了
 type VideoRes struct {
-	Id            int64    `json:"id,omitempty"`
-	Author        UserInfo `json:"author"`
-	PlayUrl       string   `json:"play_url" json:"play_url,omitempty"`
-	CoverUrl      string   `json:"cover_url,omitempty"`
-	FavoriteCount int64    `json:"favorite_count,omitempty"`
-	CommentCount  int64    `json:"comment_count,omitempty"`
-	IsFavorite    bool     `json:"is_favorite,omitempty"`
+	Id            int64        `json:"id,omitempty"`
+	Author        UserResponse `json:"author"`
+	PlayUrl       string       `json:"play_url" json:"play_url,omitempty"`
+	CoverUrl      string       `json:"cover_url,omitempty"`
+	FavoriteCount int64        `json:"favorite_count,omitempty"`
+	CommentCount  int64        `json:"comment_count,omitempty"`
+	IsFavorite    bool         `json:"is_favorite,omitempty"`
 }
 
 func (*Video) TableName() string {

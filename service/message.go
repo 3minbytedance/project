@@ -95,7 +95,7 @@ func SendMessage(fromUserId, toUserId uint, content string) (err error) {
 		FromUserId: fromUserId,
 		ToUserId:   toUserId,
 		Content:    content,
-		CreateTime: time.Now(),
+		CreateTime: time.Now().Unix(),
 	}
 
 	fmt.Println("Message Data=====")
