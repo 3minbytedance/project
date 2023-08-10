@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-// 限制上传文件的最大大小（单位：字节）
+// 限制上传文件的最大大小 200MB
 const maxFileSize = 200 * 1024 * 1024
 
 // GetPublishList 每个用户的自己的发布列表
