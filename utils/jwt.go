@@ -7,7 +7,7 @@ import (
 )
 
 type Claims struct {
-	ID       int64  `json:"id"`
+	ID       uint   `json:"id"`
 	Username string `json:"username"`
 	jwt.StandardClaims
 }
@@ -15,7 +15,7 @@ type Claims struct {
 // 签名密钥
 var jwtSecretKey = []byte("hi")
 
-func GenerateToken(userId int64, username string) string {
+func GenerateToken(userId uint, username string) string {
 
 	nowTime := time.Now()
 	expireTime := nowTime.Add(24 * time.Hour).Unix()

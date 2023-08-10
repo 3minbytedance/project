@@ -7,41 +7,16 @@ import (
 	"project/models"
 	"project/service"
 	"strconv"
+	"project/utils"
 )
 
 // 限制上传文件的最大大小 200MB
 const maxFileSize = 200 * 1024 * 1024
 
-// GetPublishList 每个用户的自己的发布列表
-func GetPublishList(c *gin.Context) {
-	//鉴权  TODO
-	userID, err := strconv.Atoi(c.Query("user_id"))
-	if err != nil {
-		c.JSON(http.StatusOK, models.Response{
-			StatusCode: int32(CodeInvalidParam),
-			StatusMsg:  codeMsgMap[CodeInvalidParam]})
-		return
-	}
-	videoList, err := service.GetPublishList(uint(userID))
-	if err != nil {
-		c.JSON(http.StatusOK, models.Response{
-			StatusCode: int32(CodeInvalidParam),
-			StatusMsg:  codeMsgMap[CodeInvalidParam],
-		})
-		return
-	}
-	c.JSON(http.StatusOK, models.VideoListResponse{
-		Response: models.Response{
-			StatusCode: int32(CodeSuccess),
-			StatusMsg:  codeMsgMap[CodeSuccess],
-		},
-		VideoResponse: videoList,
-	})
-}
-
 func Publish(c *gin.Context) {
-	//TODO 鉴权
-	_ = c.Query("token")
+	userId, err := utils.GetCurrentUserID(c)
+	if err != nil {
+	}
 	title := c.Query("title")
 
 	file, err := c.FormFile("data")
@@ -76,6 +51,33 @@ func Publish(c *gin.Context) {
 	// MQ 异步解耦,解决返回json阻塞 TODO
 	service.GetVideoCover()
 	service.StoreVideoAndImg()
+}
+
+// GetPublishList 每个用户的自己的发布列表
+func GetPublishList(c *gin.Context) {
+	//鉴权  TODO
+	userID, err := strconv.Atoi(c.Query("user_id"))
+	if err != nil {
+		c.JSON(http.StatusOK, models.Response{
+			StatusCode: int32(CodeInvalidParam),
+			StatusMsg:  codeMsgMap[CodeInvalidParam]})
+		return
+	}
+	videoList, err := service.GetPublishList(uint(userID))
+	if err != nil {
+		c.JSON(http.StatusOK, models.Response{
+			StatusCode: int32(CodeInvalidParam),
+			StatusMsg:  codeMsgMap[CodeInvalidParam],
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.VideoListResponse{
+		Response: models.Response{
+			StatusCode: int32(CodeSuccess),
+			StatusMsg:  codeMsgMap[CodeSuccess],
+		},
+		VideoResponse: videoList,
+	})
 }
 
 // 校验文件类型是否为视频类型

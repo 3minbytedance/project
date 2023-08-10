@@ -3,13 +3,10 @@ package controller
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"io"
 	"net/http"
-	"os"
 	"project/dao/mysql"
 	"project/models"
 	"project/utils"
-	"time"
 )
 
 // usersLoginInfo use map to store user info, and key is username+password for demo
@@ -34,7 +31,7 @@ type UserLoginResponse struct {
 
 type UserResponse struct {
 	models.Response
-	User models.User `json:"user"`
+	User models.UserInfo `json:"user"`
 }
 
 func Register(c *gin.Context) {
@@ -52,16 +49,25 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// todo token 和加密密码
-	statusCode, msg, userId, token := mysql.RegisterUserInfo(username, password)
+	statusCode, msg, userId := mysql.RegisterUserInfo(username, password)
+
+	if statusCode != 0 {
+		c.JSON(http.StatusOK, UserLoginResponse{
+			Response: models.Response{
+				StatusCode: statusCode,
+				StatusMsg:  msg,
+			},
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, UserLoginResponse{
 		Response: models.Response{
 			StatusCode: statusCode,
 			StatusMsg:  msg,
 		},
-		UserId: userId,
-		Token:  token,
+		UserId: int64(userId),
+		Token:  utils.GenerateToken(userId, username),
 	})
 
 	//token := username + password
@@ -103,10 +109,10 @@ func Login(c *gin.Context) {
 	}
 
 	// todo 判断是否重复登录
-	userState, _ := mysql.FindUserStateByName(username)
+
 	// 判断密码是否正确
-	checkPassword := utils.CheckPassword(password, userState.Salt, userState.Password)
-	if !checkPassword {
+	turePassword := utils.CheckPassword(password, user.Salt, user.Password)
+	if !turePassword {
 		c.JSON(http.StatusOK, UserLoginResponse{
 			Response: models.Response{
 				StatusCode: 2,
@@ -116,15 +122,12 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	userState.Token = utils.GenerateToken(int64(user.ID), username)
-	userState.LoginTime = time.Now().Unix()
-	userState.IsLogOut = false
-	mysql.DB.Model(&userState).Updates(models.UserStates{})
+	Token := utils.GenerateToken(user.Id, username)
 
 	c.JSON(http.StatusOK, UserLoginResponse{
 		Response: models.Response{StatusCode: 0, StatusMsg: "登录成功"},
-		UserId:   int64(user.ID),
-		Token:    userState.Token,
+		UserId:   int64(user.Id),
+		Token:    Token,
 	})
 }
 
@@ -137,89 +140,95 @@ func UserInfo(c *gin.Context) {
 	//}
 	//userByID, b := utils.FindUserByID(utils.DB, id)
 
-	// 根据token来寻找用户
-	token := c.Query("token")
-	//fmt.Println("token: ", token)
-	userByToken, b := mysql.FindUserByToken(token)
+	// 根据userId来寻找用户
+	userId, err := utils.GetCurrentUserID(c)
+	fmt.Println(err)
+	if err != nil {
+		c.JSON(http.StatusOK, UserResponse{
+			Response: models.Response{StatusCode: 2},
+		})
+		return
+	}
+	userInfo, b := mysql.FindUserInfoByUserId(uint(userId))
 	if b {
 		c.JSON(http.StatusOK, UserResponse{
 			Response: models.Response{StatusCode: 0},
-			User:     userByToken,
+			User:     userInfo,
 		})
 	} else {
 		c.JSON(http.StatusOK, UserResponse{
 			Response: models.Response{StatusCode: 1, StatusMsg: "用户不存在"},
 		})
 	}
-	// todo 返回用户的个人信息
 }
 
-// UploadAvatar 上传头像（Apifox已测，不知道提供的apk里面有没有对应的接口）
-func UploadAvatar(c *gin.Context) {
-	token := c.Query("token")
-	if user, exist := mysql.FindUserByToken(token); exist {
-		url, err := UploadPic(token, c.Request)
-		if err != nil {
-			c.JSON(http.StatusOK, models.Response{
-				StatusCode: 1,
-				StatusMsg:  err.Error(),
-			})
-			return
-		}
-		mysql.DB.Model(&user).Update("avatar", url)
-		c.JSON(http.StatusOK, models.Response{
-			StatusCode: 0,
-			StatusMsg:  "上传头像成功",
-		})
-	} else {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
-		return
-	}
-}
-
-// UploadBackGround 上传背景（Apifox已测，不知道提供的apk里面有没有对应的接口）
-func UploadBackGround(c *gin.Context) {
-	token := c.Query("token")
-	if user, exist := mysql.FindUserByToken(token); exist {
-		url, err := UploadPic(token, c.Request)
-		if err != nil {
-			c.JSON(http.StatusOK, models.Response{
-				StatusCode: 1,
-				StatusMsg:  err.Error(),
-			})
-			return
-		}
-		mysql.DB.Model(&user).Update("background_image", url)
-		c.JSON(http.StatusOK, models.Response{
-			StatusCode: 0,
-			StatusMsg:  "上传背景成功",
-		})
-	} else {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
-		return
-	}
-}
-
-func UploadPic(token string, r *http.Request) (string, error) {
-	file, head, err := r.FormFile("file")
-	if err != nil {
-		return "", err
-	}
-	oldName := head.Filename
-	fileName := fmt.Sprintf("%s_%s", token, oldName)
-	url := "./public/" + fileName
-	dstFile, err := os.Create(url)
-	if err != nil {
-		return "", err
-	}
-	_, err = io.Copy(dstFile, file)
-	if err != nil {
-		return "", err
-	}
-	return url, nil
-}
-
-// UpdateUserInfo 还有个更新用户信息的
-func UpdateUserInfo(c *gin.Context) {
-
-}
+//
+//// UploadAvatar 上传头像（Apifox已测，不知道提供的apk里面有没有对应的接口）
+//func UploadAvatar(c *gin.Context) {
+//	token := c.Query("token")
+//	if user, exist := mysql.FindUserByToken(token); exist {
+//		url, err := UploadPic(token, c.Request)
+//		if err != nil {
+//			c.JSON(http.StatusOK, models.Response{
+//				StatusCode: 1,
+//				StatusMsg:  err.Error(),
+//			})
+//			return
+//		}
+//		mysql.DB.Model(&user).Update("avatar", url)
+//		c.JSON(http.StatusOK, models.Response{
+//			StatusCode: 0,
+//			StatusMsg:  "上传头像成功",
+//		})
+//	} else {
+//		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
+//		return
+//	}
+//}
+//
+//// UploadBackGround 上传背景（Apifox已测，不知道提供的apk里面有没有对应的接口）
+//func UploadBackGround(c *gin.Context) {
+//	token := c.Query("token")
+//	if user, exist := mysql.FindUserByToken(token); exist {
+//		url, err := UploadPic(token, c.Request)
+//		if err != nil {
+//			c.JSON(http.StatusOK, models.Response{
+//				StatusCode: 1,
+//				StatusMsg:  err.Error(),
+//			})
+//			return
+//		}
+//		mysql.DB.Model(&user).Update("background_image", url)
+//		c.JSON(http.StatusOK, models.Response{
+//			StatusCode: 0,
+//			StatusMsg:  "上传背景成功",
+//		})
+//	} else {
+//		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
+//		return
+//	}
+//}
+//
+//func UploadPic(token string, r *http.Request) (string, error) {
+//	file, head, err := r.FormFile("file")
+//	if err != nil {
+//		return "", err
+//	}
+//	oldName := head.Filename
+//	fileName := fmt.Sprintf("%s_%s", token, oldName)
+//	url := "./public/" + fileName
+//	dstFile, err := os.Create(url)
+//	if err != nil {
+//		return "", err
+//	}
+//	_, err = io.Copy(dstFile, file)
+//	if err != nil {
+//		return "", err
+//	}
+//	return url, nil
+//}
+//
+//// UpdateUserInfo 还有个更新用户信息的
+//func UpdateUserInfo(c *gin.Context) {
+//
+//}

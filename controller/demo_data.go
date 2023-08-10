@@ -25,6 +25,29 @@ var DemoVideos = []models.VideoResponse{
 	},
 }
 
+var DemoComments = []models.CommentResponse{
+	{
+		Id:         1,
+		User:       DemoUser,
+		Content:    "Test Comment",
+		CreateDate: "05-01",
+	},
+}
+
+//TODO
+var DemoUser = models.User{
+	Name:            "yyf",
+	FollowCount:     0,
+	FollowerCount:   0,
+	IsFollow:        false,
+	Avatar:          LocalUrl + "/public/avatar3.jpg",
+	BackgroundImage: LocalUrl + "/public/tx.jpeg",
+	Signature:       "这是个大帅逼",
+	TotalFavorited:  99999,
+	WorkCount:       20,
+	FavoriteCount:   100,
+}
+
 var DemoUser = models.User{
 	Name:            "yyf",
 	FollowCount:     0,

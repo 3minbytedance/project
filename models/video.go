@@ -17,7 +17,7 @@ type Video struct {
 
 type VideoResponse struct {
 	Id            uint   `json:"id"`
-	Author        User   `json:"author"`
+	Author        User   `json:"author"` //TODO USERINFO?
 	PlayUrl       string `json:"play_url"`
 	CoverUrl      string `json:"cover_url"`
 	FavoriteCount uint   `json:"favorite_count"` //点赞数

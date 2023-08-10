@@ -7,22 +7,18 @@ import (
 
 func FindVideoByVideoId(videoId int64) (models.Video, bool) {
 	video := models.Video{}
-	result := DB.First(&video, videoId)
-	if result.Error != nil {
-		return video, false
-	}
-	return video, true
+	return video, DB.Where("id = ?", videoId).First(&video).RowsAffected != 0
 }
 
 // FindVideosByAuthorId 返回查询到的列表及是否出错
 // 若未找到，返回空列表
-func FindVideosByAuthorId(authorId uint) ([]models.Video, error) {
+func FindVideosByAuthorId(authorId uint) ([]models.Video, bool) {
 	var videos []models.Video
-	result := DB.Where("author_id = ?", authorId).Find(&videos)
-	if result.Error != nil {
-		return []models.Video{}, DB.Error
+	num := DB.Where("author_id = ?", authorId).Find(&videos).RowsAffected
+	if num == 0 {
+		return []models.Video{}, false
 	}
-	return videos, nil
+	return videos, true
 }
 
 // InsertVideo return 插入视频的id，是否插入成功
