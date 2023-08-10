@@ -116,7 +116,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	userState.Token = utils.GenerateToken(int64(user.ID), username)
+	userState.Token = utils.GenerateToken(uint(int64(user.ID)), username)
 	userState.LoginTime = time.Now().Unix()
 	userState.IsLogOut = false
 	mysql.DB.Model(&userState).Updates(models.UserStates{})

@@ -25,7 +25,7 @@ func CommentAction(c *gin.Context) {
 	// 新增评论
 	case "1":
 		content := c.Query("comment_text")
-		data, err := service.AddComment(videoId, userId, content)
+		data, err := service.AddComment(uint(videoId), uint(userId), content)
 		if err != nil {
 			c.JSON(http.StatusOK, models.CommentActionResponse{
 				Response: models.Response{
@@ -46,7 +46,7 @@ func CommentAction(c *gin.Context) {
 
 	// 删除评论
 	case "2":
-		data, err := service.DeleteComment(videoId, userId, commentId)
+		data, err := service.DeleteComment(uint(videoId), uint(userId), uint(commentId))
 		if err != nil {
 			c.JSON(http.StatusOK, models.CommentActionResponse{
 				Response: models.Response{
@@ -74,7 +74,7 @@ func CommentAction(c *gin.Context) {
 func CommentList(c *gin.Context) {
 	videoIdStr := c.Query("video_id")
 	videoId, _ := strconv.ParseInt(videoIdStr, 10, 64)
-	commentList, err := service.GetCommentList(videoId)
+	commentList, err := service.GetCommentList(uint(videoId))
 	if err != nil {
 		c.JSON(http.StatusOK, models.CommentListResponse{
 			Response: models.Response{

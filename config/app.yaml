@@ -18,6 +18,17 @@ local:
     pool_size: 30
     min_idle_conns: 30
     expire_time: 1800   # 30分钟
+  kafka:
+    address: "127.0.0.1"
+    port: 9092
+    username: guest
+    password: guest
+  mongo:
+    address: "127.0.0.1"
+    port: 27017
+    username: admin
+    password: admin
+
 remote:
   mysql:
     address: "127.0.0.1"
@@ -34,3 +45,13 @@ remote:
     pool_size: 30
     min_idle_conns: 30
     expire_time: 1800   # 30分钟
+  kafka:
+    address: "127.0.0.1"
+    port: 9092
+    username: root
+    password: root
+  mongo:
+    address: "127.0.0.1"
+    port: 27017
+    username: admin
+    password: admin

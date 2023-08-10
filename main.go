@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"project/config"
-	"project/controller"
+	"project/dao/mongo"
 	"project/dao/mysql"
 	"project/dao/redis"
 	"project/router"
@@ -33,8 +33,14 @@ func main() {
 		return
 	}
 
+	// 4. 初始化Mongo
+	if err := mongo.Init(config.Conf); err != nil {
+		fmt.Printf("Init mongo failed, err:%v\n", err)
+		return
+	}
+
 	// 准备数据
-	controller.PrepareData()
+	//controller.PrepareData()
 
 	// 初始化gin引擎
 	r := gin.Default()

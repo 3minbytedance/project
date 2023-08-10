@@ -3,12 +3,12 @@ package controller
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
-	"project/dao/mysql"
 	"project/models"
+	"project/service"
+	"project/utils"
 	"strconv"
-	"sync/atomic"
-	"time"
 )
 
 var tempChat = map[string][]models.Message{}
@@ -22,47 +22,81 @@ type ChatResponse struct {
 
 // MessageAction no practical effect, just check if token is valid
 func MessageAction(c *gin.Context) {
-	token := c.Query("token")
-	toUserId := c.Query("to_user_id")
+	toUserIdStr := c.Query("to_user_id")
+	toUserId, err := strconv.ParseUint(toUserIdStr, 10, 64)
 	content := c.Query("content")
-
-	if user, exist := mysql.FindUserByToken(token); exist {
-		userIdB, _ := strconv.Atoi(toUserId)
-		chatKey := genChatKey(int64(user.ID), int64(userIdB))
-
-		atomic.AddInt64(&messageIdSequence, 1)
-		curMessage := models.Message{
-			Id:         messageIdSequence,
-			Content:    content,
-			CreateTime: time.Now().Format(time.Kitchen),
-		}
-
-		if messages, exist := tempChat[chatKey]; exist {
-			tempChat[chatKey] = append(messages, curMessage)
-		} else {
-			tempChat[chatKey] = []models.Message{curMessage}
-		}
-		c.JSON(http.StatusOK, models.Response{StatusCode: 0})
-	} else {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+	fromUserId, err := utils.GetCurrentUserID(c)
+	if err != nil {
+		log.Println("Get user id from ctx err:", err)
+		return
 	}
+	err = service.SendMessage(uint(fromUserId), uint(toUserId), content)
+	if err != nil {
+		c.JSON(http.StatusOK,
+			models.Response{
+				StatusCode: int32(CodeServerBusy),
+				StatusMsg:  CodeServerBusy.Msg(),
+			})
+	}
+	c.JSON(http.StatusOK,
+		models.Response{
+			StatusCode: int32(CodeSuccess),
+			StatusMsg:  CodeSuccess.Msg(),
+		})
+	//
+
+	//if user, exist := mysql.FindUserByToken(token); exist {
+	//	userIdB, _ := strconv.Atoi(toUserId)
+	//	chatKey := genChatKey(int64(user.ID), int64(userIdB))
+	//
+	//	atomic.AddInt64(&messageIdSequence, 1)
+	//	curMessage := models.Message{
+	//		Id:         messageIdSequence,
+	//		Content:    content,
+	//		CreateTime: time.Now().Format(time.Kitchen),
+	//	}
+	//
+	//	if messages, exist := tempChat[chatKey]; exist {
+	//		tempChat[chatKey] = append(messages, curMessage)
+	//	} else {
+	//		tempChat[chatKey] = []models.Message{curMessage}
+	//	}
+	//	c.JSON(http.StatusOK, models.Response{StatusCode: 0})
+	//} else {
+	//	c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+	//}
 }
 
 // MessageChat all users have same follow list
 func MessageChat(c *gin.Context) {
-	token := c.Query("token")
-	toUserId := c.Query("to_user_id")
+	toUserIdStr := c.Query("to_user_id")
+	toUserId, _ := strconv.ParseInt(toUserIdStr, 10, 64)
+	fromUserId, _ := utils.GetCurrentUserID(c)
 
-	if user, exist := mysql.FindUserByToken(token); exist {
-		userIdB, _ := strconv.Atoi(toUserId)
-		chatKey := genChatKey(int64(user.ID), int64(userIdB))
-
-		c.JSON(http.StatusOK, ChatResponse{Response: models.Response{StatusCode: 0}, MessageList: tempChat[chatKey]})
-	} else {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+	msgList, err := service.GetMessageList(uint(fromUserId), uint(toUserId))
+	if err != nil {
+		c.JSON(http.StatusOK,
+			models.MessageChatResponse{
+				Response: models.Response{
+					StatusCode: -1,
+					StatusMsg:  "Found message chat failed:" + err.Error(),
+				},
+				MessageList: nil,
+			})
+		return
 	}
+	c.JSON(http.StatusOK,
+		models.MessageChatResponse{
+			Response: models.Response{
+				StatusCode: 0,
+				StatusMsg:  "Found comments success",
+			},
+			MessageList: msgList,
+		})
+
 }
 
+// 用redis就需要，不用就可以删掉
 func genChatKey(userIdA int64, userIdB int64) string {
 	if userIdA > userIdB {
 		return fmt.Sprintf("%d_%d", userIdB, userIdA)

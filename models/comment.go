@@ -9,10 +9,12 @@ import (
 
 // Comment 数据库Model
 type Comment struct {
+	ID        uint
+	VideoId   uint `gorm:"index"` // 非唯一索引
+	UserId    uint `gorm:"index"` // 非唯一索引
+	Content   string
+	DeletedAt gorm.DeletedAt
 	gorm.Model
-	VideoId int64 `gorm:"index"` // 非唯一索引
-	UserId  int64 `gorm:"index"`
-	Content string
 }
 
 func (*Comment) TableName() string {

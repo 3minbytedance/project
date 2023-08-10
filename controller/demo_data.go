@@ -105,7 +105,7 @@ func PrepareData() {
 		}
 		mysql.DB.Model(&models.Video{}).Create(&videos)
 	}
-	if _, err := service.GetCommentList(videoId); err == nil {
+	if _, err := service.GetCommentList(uint(videoId)); err == nil {
 		// 没数据的时候
 		comments := []models.Comment{
 			{

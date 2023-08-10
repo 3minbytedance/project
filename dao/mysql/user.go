@@ -72,11 +72,12 @@ func RegisterUserInfo(username string, password string) (int32, string, int64, s
 	salt := fmt.Sprintf("%06d", rand.Int())
 	userStates.Salt = salt
 	userStates.Password = utils.MakePassword(password, salt)
-	userStates.Token = utils.GenerateToken(int64(user.ID), username)
+	userStates.Token = utils.GenerateToken(user.ID, username)
 
 	// 数据入库
 	DB.Create(&userStates)
 	DB.Create(&user)
 	fmt.Println("<<<<<<<<<id: ", user.ID)
+	userStates.Token = utils.GenerateToken(user.ID, username)
 	return 0, "注册成功", int64(user.ID), userStates.Token
 }

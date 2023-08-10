@@ -14,34 +14,34 @@ const (
 )
 
 // GetCommentCountByVideoId 根据videoId查找评论数
-func GetCommentCountByVideoId(commentId int64) (string, error) {
+func GetCommentCountByVideoId(commentId uint) (string, error) {
 	// 封装key：comment_count:12345 => 100
-	key := KeyCommentCount + strconv.FormatInt(commentId, 10)
+	key := KeyCommentCount + strconv.FormatUint(uint64(commentId), 10)
 	count, err := RdbComment.Get(Ctx, key).Result()
 	return count, err
 }
 
 // IncrementCommentCountByVideoId 给videoId对应的评论数加一
-func IncrementCommentCountByVideoId(videoId int64) error {
+func IncrementCommentCountByVideoId(videoId uint) error {
 	// 封装key：comment_count:12345 => 100
-	key := KeyCommentCount + strconv.FormatInt(videoId, 10)
+	key := KeyCommentCount + strconv.FormatUint(uint64(videoId), 10)
 	// 给videoId对应的评论数加一
 	err := RdbComment.Incr(Ctx, key).Err()
 	return err
 }
 
 // DecrementCommentCountByVideoId 给videoId对应的评论数减一
-func DecrementCommentCountByVideoId(videoId int64) error {
+func DecrementCommentCountByVideoId(videoId uint) error {
 	// 封装key：comment_count:12345 => 100
-	key := KeyCommentCount + strconv.FormatInt(videoId, 10)
+	key := KeyCommentCount + strconv.FormatUint(uint64(videoId), 10)
 	// 给videoId对应的评论数减一
 	err := RdbComment.Decr(Ctx, key).Err()
 	return err
 }
 
-func SetCommentCountByVideoId(videoId int64, commentCount int64) error {
+func SetCommentCountByVideoId(videoId uint, commentCount int64) error {
 	// 封装key：comment_count:12345 => 100
-	key := KeyCommentCount + strconv.FormatInt(videoId, 10)
+	key := KeyCommentCount + strconv.FormatUint(uint64(videoId), 10)
 	// 给videoId对应的评论数加一
 	err := RdbComment.Set(Ctx, key, commentCount, RdbExpireTime).Err()
 	return err
