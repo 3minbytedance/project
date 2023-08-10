@@ -10,8 +10,8 @@ import (
 // Comment 数据库Model
 type Comment struct {
 	gorm.Model
-	VideoId int64 `gorm:"index"` // 非唯一索引
-	UserId  int64 `gorm:"index"`
+	VideoId uint `gorm:"index"` // 非唯一索引
+	UserId  uint `gorm:"index"`
 	Content string
 }
 

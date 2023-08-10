@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func AddComment(videoId, userId int64, content string) (models.CommentResponse, error) {
+func AddComment(videoId, userId uint, content string) (models.CommentResponse, error) {
 	// 评论信息
 	commentData := models.Comment{
 		VideoId: videoId,
@@ -69,7 +69,7 @@ func AddComment(videoId, userId int64, content string) (models.CommentResponse, 
 	return commentResp, nil
 }
 
-func GetCommentList(videoId int64) ([]models.CommentResponse, error) {
+func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
 	// 1、根据videoId查询数据库，获取comments信息
 	comments, err := mysql.FindCommentsByVideoId(videoId)
 	if err != nil {
@@ -115,7 +115,7 @@ func GetCommentList(videoId int64) ([]models.CommentResponse, error) {
 	return commentRespList, nil
 }
 
-func DeleteComment(videoId, userId, commentId int64) (models.CommentResponse, error) {
+func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, error) {
 
 	// 查询冗余字段
 	// 查询comment
@@ -156,7 +156,7 @@ func DeleteComment(videoId, userId, commentId int64) (models.CommentResponse, er
 }
 
 // GetCommentCount 根据视频ID获取视频的评论数
-func GetCommentCount(videoId int64) (int64, error) {
+func GetCommentCount(videoId uint) (int64, error) {
 	// 从redis中获取评论数
 	count, err := redis.GetCommentCountByVideoId(videoId)
 	if err != nil {

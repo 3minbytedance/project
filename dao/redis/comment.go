@@ -1,49 +1,41 @@
 package redis
 
 import (
+	"fmt"
 	_ "github.com/redis/go-redis/v9"
-	"strconv"
 )
 
 const (
-	KeyVideoToComments = "video_comments:" // videoId 到 commentId 的一对多映射, commentId 存放在zset中
-	KeyCommentToVideo  = "comment_video:"  // commentId 到 videoId 的一对一映射
-	KeyCommentData     = "comment_data:"   // commentId 到 comment 的一对一映射
-	KeyCommentCount    = "comment_count:"  // videoId 到 commentCount 的一对一映射
-	// TODO 评论点赞存放redis
+	KeyCommentCount = "comment_count"
+	Video           = "video_"
 )
 
 // GetCommentCountByVideoId 根据videoId查找评论数
-func GetCommentCountByVideoId(commentId int64) (string, error) {
-	// 封装key：comment_count:12345 => 100
-	key := KeyCommentCount + strconv.FormatInt(commentId, 10)
-	count, err := RdbComment.Get(Ctx, key).Result()
+func GetCommentCountByVideoId(videoId uint) (string, error) {
+	key := Video + fmt.Sprintf("%d", videoId)
+	count, err := Rdb.HGet(Ctx, key, KeyCommentCount).Result()
 	return count, err
 }
 
 // IncrementCommentCountByVideoId 给videoId对应的评论数加一
-func IncrementCommentCountByVideoId(videoId int64) error {
-	// 封装key：comment_count:12345 => 100
-	key := KeyCommentCount + strconv.FormatInt(videoId, 10)
-	// 给videoId对应的评论数加一
-	err := RdbComment.Incr(Ctx, key).Err()
+func IncrementCommentCountByVideoId(videoId uint) error {
+	key := Video + fmt.Sprintf("%d", videoId)
+	_, err := Rdb.HIncrBy(Ctx, key, KeyCommentCount, 1).Result()
+	//TODO 增加并返回点赞数
 	return err
 }
 
 // DecrementCommentCountByVideoId 给videoId对应的评论数减一
-func DecrementCommentCountByVideoId(videoId int64) error {
-	// 封装key：comment_count:12345 => 100
-	key := KeyCommentCount + strconv.FormatInt(videoId, 10)
-	// 给videoId对应的评论数减一
-	err := RdbComment.Decr(Ctx, key).Err()
+func DecrementCommentCountByVideoId(videoId uint) error {
+	key := Video + fmt.Sprintf("%d", videoId)
+	_, err := Rdb.HIncrBy(Ctx, key, KeyCommentCount, -1).Result()
+	//TODO 减少并返回点赞数
 	return err
 }
 
-func SetCommentCountByVideoId(videoId int64, commentCount int64) error {
-	// 封装key：comment_count:12345 => 100
-	key := KeyCommentCount + strconv.FormatInt(videoId, 10)
-	// 给videoId对应的评论数加一
-	err := RdbComment.Set(Ctx, key, commentCount, RdbExpireTime).Err()
+func SetCommentCountByVideoId(videoId uint, commentCount int64) error {
+	key := Video + fmt.Sprintf("%d", videoId)
+	err := Rdb.HSet(Ctx, key, KeyCommentCount, commentCount).Err()
 	return err
 }
 
@@ -53,14 +45,14 @@ func SetCommentCountByVideoId(videoId int64, commentCount int64) error {
 //	videoIdStr := strconv.FormatInt(videoId, 10)
 //	key := KeyVideoToComments + videoIdStr
 //	// 使用pipeline一次发送多条命令减少rtt
-//	pipeline := RdbComment.Pipeline()
+//	pipeline := Rdb.Pipeline()
 //	// 向videoId对应的ZSet中添加commentId
 //	pipeline.ZAdd(Ctx, key, redis.Z{
 //		Member: commentId,
 //		Score:  float64(score),
 //	})
 //	// 设置过期时间
-//	RdbComment.Expire(Ctx, key, RdbExpireTime)
+//	Rdb.Expire(Ctx, key, RdbExpireTime)
 //	_, err := pipeline.Exec(Ctx)
 //	return err
 //}
@@ -70,7 +62,7 @@ func SetCommentCountByVideoId(videoId int64, commentCount int64) error {
 //	// 将videoId转为string，封装成key：video_comments:12345 => [10001, 10002, 10003]
 //	key := KeyVideoToComments + strconv.FormatInt(videoId, 10)
 //	// 从videoId对应的zset中删除commentId
-//	err := RdbComment.ZRem(Ctx, key, commentId).Err()
+//	err := Rdb.ZRem(Ctx, key, commentId).Err()
 //	return err
 //}
 
@@ -78,14 +70,14 @@ func SetCommentCountByVideoId(videoId int64, commentCount int64) error {
 //func GetCommentIdListByVideoId(videoId int64) ([]string, error) {
 //	// 将videoId转为string，封装成key：video_comments:12345 => [10001, 10002, 10003]
 //	key := KeyVideoToComments + strconv.FormatInt(videoId, 10)
-//	commentIdStrList, err := RdbComment.SMembers(Ctx, key).Result()
+//	commentIdStrList, err := Rdb.SMembers(Ctx, key).Result()
 //	return commentIdStrList, err
 //}
 
 // GetCommentCountByVideoId 根据videoId获取对应视频的评论数
 //func GetCommentCountByVideoId(videoId int64) (int64, error) {
 //	key := KeyCommentCount + strconv.FormatInt(videoId, 10)
-//	commentCount, err := RdbComment.Get(Ctx, key).Int64()
+//	commentCount, err := Rdb.Get(Ctx, key).Int64()
 //	return commentCount, err
 //}
 
@@ -95,7 +87,7 @@ func SetCommentCountByVideoId(videoId int64, commentCount int64) error {
 //	commentIdStr := strconv.FormatInt(commentId, 10)
 //	key := KeyCommentToVideo + commentIdStr
 //	// 添加commentId到videoId的一对一映射
-//	err := RdbComment.Set(Ctx, key, videoId, RdbExpireTime).Err()
+//	err := Rdb.Set(Ctx, key, videoId, RdbExpireTime).Err()
 //	return err
 //}
 
@@ -104,7 +96,7 @@ func SetCommentCountByVideoId(videoId int64, commentCount int64) error {
 //	// 封装key: comment_video:10001 => 12345
 //	key := KeyCommentToVideo + strconv.FormatInt(commentId, 10)
 //	// 删除commentId到videoId的一对一映射
-//	err := RdbComment.Del(Ctx, key).Err()
+//	err := Rdb.Del(Ctx, key).Err()
 //	return err
 //}
 
@@ -112,7 +104,7 @@ func SetCommentCountByVideoId(videoId int64, commentCount int64) error {
 //func GetVideoIdByCommentId(commentId int64) (string, error) {
 //	// 封装key：comment_data:10001 => {"id": "123", "author": "user123", "timestamp": "1679921230" }
 //	key := KeyCommentData + strconv.FormatInt(commentId, 10)
-//	videoIdStr, err := RdbComment.Get(Ctx, key).Result()
+//	videoIdStr, err := Rdb.Get(Ctx, key).Result()
 //	if err != nil {
 //		return "0", err
 //	}
@@ -124,7 +116,7 @@ func SetCommentCountByVideoId(videoId int64, commentCount int64) error {
 //	// 封装key：comment_data:10001 => {"id": "123", "author": "user123", "timestamp": "1679921230" }
 //	key := KeyCommentData + strconv.FormatInt(commentId, 10)
 //	// 添加commentId到comment的一对一映射
-//	err := RdbComment.Set(Ctx, key, comment, RdbExpireTime).Err()
+//	err := Rdb.Set(Ctx, key, comment, RdbExpireTime).Err()
 //	return err
 //}
 
@@ -133,7 +125,7 @@ func SetCommentCountByVideoId(videoId int64, commentCount int64) error {
 //	// 封装key：comment_data:10001 => {"id": "123", "author": "user123", "timestamp": "1679921230" }
 //	key := KeyCommentData + strconv.FormatInt(commentId, 10)
 //	// 删除commentId到comment的一对一映射
-//	err := RdbComment.Del(Ctx, key).Err()
+//	err := Rdb.Del(Ctx, key).Err()
 //	return err
 //}
 
@@ -141,7 +133,7 @@ func SetCommentCountByVideoId(videoId int64, commentCount int64) error {
 //func GetCommentByCommentId(commentId int64) (string, error) {
 //	// 封装key：comment_data:10001 => {"id": "123", "author": "user123", "timestamp": "1679921230" }
 //	key := KeyCommentData + strconv.FormatInt(commentId, 10)
-//	comment, err := RdbComment.Get(Ctx, key).Result()
+//	comment, err := Rdb.Get(Ctx, key).Result()
 //	if err != nil {
 //		return "", err
 //	}

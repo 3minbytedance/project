@@ -10,8 +10,8 @@ import (
 
 var Ctx = context.Background()
 
-// RdbComment Comment模块Rdb
-var RdbComment *redis.Client
+// Rdb Comment模块Rdb
+var Rdb *redis.Client
 
 // RdbExpireTime key的过期时间
 var RdbExpireTime time.Duration
@@ -26,14 +26,14 @@ func Init(appConfig *config.AppConfig) (err error) {
 	// 获取conf中的过期时间, 单位为s
 	RdbExpireTime = time.Duration(conf.ExpireTime) * time.Second
 
-	RdbComment = redis.NewClient(&redis.Options{
+	Rdb = redis.NewClient(&redis.Options{
 		Addr:         fmt.Sprintf("%s:%d", conf.Address, conf.Port),
 		Password:     conf.Password,  // 密码
 		DB:           conf.CommentDB, // 数据库
 		PoolSize:     conf.PoolSize,  // 连接池大小
 		MinIdleConns: conf.MinIdleConns,
 	})
-	if err = RdbComment.Ping(Ctx).Err(); err != nil {
+	if err = Rdb.Ping(Ctx).Err(); err != nil {
 		return err
 	}
 
