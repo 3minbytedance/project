@@ -2,12 +2,26 @@ package models
 
 import (
 	"gorm.io/gorm"
+	"time"
 )
 
 type User struct {
 	// 用户的信息社交平台信息， todo 作为常用个人信息，如果获取过于复杂可以考虑在redis中储存
-	gorm.Model
-	//Id              int64  `json:"id,omitempty"`               // 用户id
+	Id              uint   `gorm:"primaryKey"`          // 用户id
+	Name            string `gorm:"uniqueIndex;size:32"` // 用户名称
+	Password        string // 用户密码
+	Avatar          string // 用户头像
+	BackgroundImage string // 用户个人页顶部大图
+	Signature       string // 个人简介
+	Salt            string //加密盐
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	DeletedAt       gorm.DeletedAt
+}
+
+type UserInfo struct {
+	// 用户的信息社交平台信息， todo 作为常用个人信息，如果获取过于复杂可以考虑在redis中储存
+	Id              int64  `json:"id,omitempty"`               // 用户id
 	Name            string `json:"name,omitempty"`             // 用户名称
 	FollowCount     int64  `json:"follow_count,omitempty"`     // 关注总数
 	FollowerCount   int64  `json:"follower_count,omitempty"`   // 粉丝总数
@@ -30,7 +44,7 @@ type UserStates struct {
 	Password  string
 	Salt      string
 	Token     string
-	LoginTime int64
+	LoginTime uint
 	IsLogOut  bool
 }
 

@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -29,6 +30,7 @@ func Auth() gin.HandlerFunc {
 
 		} else {
 			claims, err := utils.ParseToken(token)
+			fmt.Println("jwt test:", claims.ID)
 			if err != nil {
 				// token有误，阻止后面函数执行
 				c.Abort()

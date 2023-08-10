@@ -34,7 +34,7 @@ var DemoComments = []models.CommentResponse{
 	},
 }
 
-var DemoUser = models.User{
+var DemoUser = models.UserInfo{
 	Name:          "yyf",
 	FollowCount:   0,
 	FollowerCount: 0,

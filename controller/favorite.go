@@ -5,13 +5,17 @@ import (
 	"net/http"
 	"project/dao/mysql"
 	"project/models"
+	"project/utils"
 )
 
 // FavoriteAction no practical effect, just check if token is valid
 func FavoriteAction(c *gin.Context) {
-	token := c.Query("token")
+	userId, err := utils.GetCurrentUserID(c)
 
-	if _, exist := mysql.FindUserByToken(token); exist {
+	if err != nil {
+	}
+
+	if _, exist := mysql.FindUserByID(userId); exist {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 0})
 	} else {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})

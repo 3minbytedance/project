@@ -26,6 +26,7 @@ func CommentAction(c *gin.Context) {
 	case "1":
 		content := c.Query("comment_text")
 		data, err := service.AddComment(uint(videoId), uint(userId), content)
+
 		if err != nil {
 			c.JSON(http.StatusOK, models.CommentActionResponse{
 				Response: models.Response{

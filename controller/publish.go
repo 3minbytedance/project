@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"project/dao/mysql"
 	"project/models"
+	"project/utils"
 	"time"
 )
 
@@ -17,9 +18,11 @@ type VideoListResponse struct {
 
 // Publish check token then save upload file to public directory
 func Publish(c *gin.Context) {
-	token := c.Query("token")
+	userId, err := utils.GetCurrentUserID(c)
+	if err != nil {
+	}
 
-	if user, exist := mysql.FindUserByToken(token); !exist {
+	if _, exist := mysql.FindUserByID(userId); !exist {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
 		return
 	} else {
@@ -33,7 +36,7 @@ func Publish(c *gin.Context) {
 		}
 
 		filename := filepath.Base(data.Filename)
-		finalName := fmt.Sprintf("%d_%s", user.ID, filename)
+		finalName := fmt.Sprintf("%d_%s", userId, filename)
 		saveFile := filepath.Join("./public/", finalName)
 		if err := c.SaveUploadedFile(data, saveFile); err != nil {
 			c.JSON(http.StatusOK, models.Response{
@@ -44,7 +47,7 @@ func Publish(c *gin.Context) {
 		}
 		// 更新视频信息
 		video := models.Video{
-			AuthorId:    int64(user.ID),
+			AuthorId:    int64(userId),
 			PlayUrl:     saveFile,
 			PublishTime: time.Now().Unix(),
 		}
@@ -52,23 +55,25 @@ func Publish(c *gin.Context) {
 		// 视频封面如何获取？用户上传（自定义）+默认生成
 
 		// 更新用户作品数量
-		mysql.DB.Model(&user).Update("work_count", user.WorkCount+1)
-		c.JSON(http.StatusOK, models.Response{
-			StatusCode: 0,
-			StatusMsg:  finalName + " uploaded successfully",
-		})
+		//mysql.DB.Model(&user).Update("work_count", user.WorkCount+1)
+		//c.JSON(http.StatusOK, models.Response{
+		//	StatusCode: 0,
+		//	StatusMsg:  finalName + " uploaded successfully",
+		//})
 	}
 }
 
 // PublishList 每个用户的自己的发布列表
 func PublishList(c *gin.Context) {
-	token := c.Query("token")
+	userId, err := utils.GetCurrentUserID(c)
+	if err != nil {
+	}
 
-	if user, exist := mysql.FindUserByToken(token); !exist {
+	if _, exist := mysql.FindUserByID(userId); !exist {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
 		return
 	} else {
-		videos, b := mysql.FindVideosByAuthor(int(user.ID))
+		videos, b := mysql.FindVideosByAuthor(int(userId))
 		if !b {
 			c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户未发布过作品"})
 			return
