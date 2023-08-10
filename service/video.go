@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"project/dao/mysql"
+	"project/dao/redis"
 	"project/models"
 	"project/utils"
 	"strings"
@@ -132,13 +133,15 @@ func GetPublishList(userID uint) ([]models.VideoResponse, error) {
 	// 将查询结果转换为VideoResponse类型
 	var videoResponses []models.VideoResponse
 	for _, video := range videos {
+		user, _ := mysql.FindUserInfoByUserId(userID)
+		commentCount, _ := redis.GetCommentCountByVideoId(video.VideoId)
 		videoResponse := models.VideoResponse{
 			Id:            video.VideoId,
-			Author:        models.User{}, //TODO
+			Author:        user,
 			PlayUrl:       video.VideoUrl,
 			CoverUrl:      video.CoverUrl,
-			FavoriteCount: getFavoriteCount(video.VideoId),    // TODO
-			CommentCount:  getCommentCount(video.VideoId),     // TODO
+			FavoriteCount: 0,                                  // TODO
+			CommentCount:  commentCount,                       // TODO
 			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
 		}
 		videoResponses = append(videoResponses, videoResponse)

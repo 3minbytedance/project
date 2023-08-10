@@ -3,6 +3,7 @@ package redis
 import (
 	"fmt"
 	_ "github.com/redis/go-redis/v9"
+	"strconv"
 )
 
 const (
@@ -10,10 +11,11 @@ const (
 )
 
 // GetCommentCountByVideoId 根据videoId查找评论数
-func GetCommentCountByVideoId(videoId uint) (string, error) {
+func GetCommentCountByVideoId(videoId uint) (int, error) {
 	key := Video + fmt.Sprintf("%d", videoId)
 	count, err := Rdb.HGet(Ctx, key, KeyCommentCount).Result()
-	return count, err
+	commentCount, _ := strconv.Atoi(count)
+	return commentCount, err
 }
 
 // IncrementCommentCountByVideoId 给videoId对应的评论数加一
