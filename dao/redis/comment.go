@@ -7,7 +7,6 @@ import (
 
 const (
 	KeyCommentCount = "comment_count"
-	Video           = "video_"
 )
 
 // GetCommentCountByVideoId 根据videoId查找评论数
@@ -21,7 +20,7 @@ func GetCommentCountByVideoId(videoId uint) (string, error) {
 func IncrementCommentCountByVideoId(videoId uint) error {
 	key := Video + fmt.Sprintf("%d", videoId)
 	_, err := Rdb.HIncrBy(Ctx, key, KeyCommentCount, 1).Result()
-	//TODO 增加并返回点赞数
+	//TODO 增加并返回评论数
 	return err
 }
 
@@ -29,7 +28,7 @@ func IncrementCommentCountByVideoId(videoId uint) error {
 func DecrementCommentCountByVideoId(videoId uint) error {
 	key := Video + fmt.Sprintf("%d", videoId)
 	_, err := Rdb.HIncrBy(Ctx, key, KeyCommentCount, -1).Result()
-	//TODO 减少并返回点赞数
+	//TODO 减少并返回评论数
 	return err
 }
 

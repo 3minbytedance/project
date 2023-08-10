@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"project/models"
 	"project/service"
-	"strconv"
 	"project/utils"
+	"strconv"
 )
 
 // 限制上传文件的最大大小 200MB
@@ -55,7 +55,6 @@ func Publish(c *gin.Context) {
 
 // GetPublishList 每个用户的自己的发布列表
 func GetPublishList(c *gin.Context) {
-	//鉴权  TODO
 	userID, err := strconv.Atoi(c.Query("user_id"))
 	if err != nil {
 		c.JSON(http.StatusOK, models.Response{

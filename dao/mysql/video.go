@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func FindVideoByVideoId(videoId int64) (models.Video, bool) {
+func FindVideoByVideoId(videoId uint) (models.Video, bool) {
 	video := models.Video{}
 	return video, DB.Where("id = ?", videoId).First(&video).RowsAffected != 0
 }

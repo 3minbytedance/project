@@ -88,7 +88,7 @@ func PrepareData() {
 	}
 
 	// 新建数据
-	videoId := int64(1)
+	videoId := uint(1)
 	if _, b := mysql.FindVideoByVideoId(videoId); !b {
 		// 没数据的时候
 		videos := []models.Video{
