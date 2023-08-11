@@ -11,6 +11,16 @@ const (
 	KeyFollowerCount = "follower_count  "
 )
 
+// 判断是否存在此建
+func Is_Exist(userId uint, s string) bool {
+	key := User + fmt.Sprintf("%d", userId)
+	err := Rdb.Exists(Ctx, key, s).Err()
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 // 根据userId查找关注数
 func GetFollowCountById(userId uint) (int, error) {
 	key := User + fmt.Sprintf("%d", userId)

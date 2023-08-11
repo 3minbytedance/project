@@ -11,11 +11,35 @@ import (
 func AddFollow(userId, followId uint) error {
 	// 评论信息
 	err := mysql.AddFollow(userId, followId)
+	go func() {
+		err := redis.IncreaseFollowCountByUserId(userId)
+		if err != nil {
+			return
+		}
+	}()
+	go func() {
+		err := redis.IncreaseFollowerCountByUserId(followId)
+		if err != nil {
+			return
+		}
+	}()
 	return err
 }
 
 func DeleteFollow(userId, followId uint) error {
 	err := mysql.DeleteFollowById(userId, followId)
+	go func() {
+		err := redis.DecreaseFollowCountByUserId(userId)
+		if err != nil {
+			return
+		}
+	}()
+	go func() {
+		err := redis.DecreaseFollowerCountByUserId(followId)
+		if err != nil {
+			return
+		}
+	}()
 	return err
 }
 
@@ -55,16 +79,13 @@ func GetFriendList(userId uint) ([]models.UserInfo, error) {
 }
 
 func GetFollowCount(userID uint) (int64, error) {
-	// 从redis中获取评论数
-	count, err := redis.GetFollowCountById(userID)
-	if err != nil {
-		log.Println("从redis中获取失败：", err)
-		return 0, err
-	}
 	// 1. 缓存中有数据, 直接返回
-
-	if count >= 0 {
-		log.Println("从redis中获取评论数成功：", count)
+	if redis.Is_Exist(userID, redis.KeyFollowCount) {
+		count, err := redis.GetFollowCountById(userID)
+		if err != nil {
+			log.Println("从redis中获取失败：", err)
+			return 0, err
+		}
 		return int64(count), nil
 	}
 
@@ -86,15 +107,13 @@ func GetFollowCount(userID uint) (int64, error) {
 }
 
 func GetFollowerCount(userID uint) (int64, error) {
-	// 从redis中获取评论数
-	count, err := redis.GetFollowerCountById(userID)
-	if err != nil {
-		log.Println("从redis中获取失败：", err)
-		return 0, err
-	}
 	// 1. 缓存中有数据, 直接返回
-	if count >= 0 {
-		log.Println("从redis中获取评论数成功：", count)
+	if redis.Is_Exist(userID, redis.KeyFollowerCount) {
+		count, err := redis.GetFollowerCountById(userID)
+		if err != nil {
+			log.Println("从redis中获取失败：", err)
+			return 0, err
+		}
 		return int64(count), nil
 	}
 
