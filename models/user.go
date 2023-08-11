@@ -38,16 +38,3 @@ func (*User) TableName() string {
 	return "user"
 }
 
-type UserStates struct {
-	gorm.Model
-	Name      string
-	Password  string
-	Salt      string
-	Token     string
-	LoginTime uint
-	IsLogOut  bool
-}
-
-func (*UserStates) TableName() string {
-	return "user_states"
-}

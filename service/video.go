@@ -140,8 +140,8 @@ func GetPublishList(userID uint) ([]models.VideoResponse, error) {
 			Author:        user,
 			PlayUrl:       video.VideoUrl,
 			CoverUrl:      video.CoverUrl,
-			FavoriteCount: 0,                                  // TODO
-			CommentCount:  commentCount,                       // TODO
+			FavoriteCount: 0, // TODO
+			CommentCount:  commentCount,
 			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
 		}
 		videoResponses = append(videoResponses, videoResponse)
