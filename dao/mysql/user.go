@@ -41,7 +41,7 @@ func FindUserByID(id uint) (models.UserInfo, bool) {
 
 func FindUserInfoByUserId(userId uint) (models.User, bool) {
 	user := models.User{}
-	
+
 	return user, DB.Where("id = ?", userId).First(&user).RowsAffected != 0
 }
 
