@@ -39,28 +39,13 @@ func FindUserByID(id uint) (models.UserInfo, bool) {
 //	return user, DB.Where("name = ?", userState.Name).First(&user).RowsAffected != 0
 //}
 
-func FindUserInfoByUserId(userId uint) (models.UserInfo, bool) {
+func FindUserInfoByUserId(userId uint) (models.User, bool) {
 	user := models.User{}
 
 	row := DB.Where("Id = ?", userId).First(&user).RowsAffected
 	if row == 0 {
-		return models.UserInfo{}, false
+		return user, false
 	}
-	userInfo := models.UserInfo{
-		Id:              int64(user.Id),
-		Name:            user.Name,
-		FollowCount:     0,
-		FollowerCount:   0,
-		IsFollow:        true,
-		Avatar:          user.Avatar,
-		BackgroundImage: user.BackgroundImage,
-		Signature:       user.Signature,
-		TotalFavorited:  0,
-		WorkCount:       0,
-		FavoriteCount:   0,
-	}
-
-	return userInfo, true
 }
 
 func CheckUserRegisterInfo(username string, password string) (int32, string) {
