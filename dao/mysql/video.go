@@ -14,11 +14,7 @@ func FindVideoByVideoId(videoId uint) (models.Video, bool) {
 // 若未找到，返回空列表
 func FindVideosByAuthorId(authorId uint) ([]models.Video, bool) {
 	var videos []models.Video
-	num := DB.Where("author_id = ?", authorId).Find(&videos).RowsAffected
-	if num == 0 {
-		return []models.Video{}, false
-	}
-	return videos, true
+	return videos, DB.Where("author_id = ?", authorId).Find(&videos).RowsAffected != 0
 }
 
 // InsertVideo return 插入视频的id，是否插入成功
