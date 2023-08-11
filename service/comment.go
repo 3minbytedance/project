@@ -137,7 +137,7 @@ func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, err
 }
 
 // GetCommentCount 根据视频ID获取视频的评论数
-func GetCommentCount(videoId uint) (int64, error) {
+func GetCommentCount(videoId uint) (int, error) {
 	// 从redis中获取评论数
 	count, err := redis.GetCommentCountByVideoId(videoId)
 	if err != nil {
@@ -145,13 +145,12 @@ func GetCommentCount(videoId uint) (int64, error) {
 		return 0, err
 	}
 	// 1. 缓存中有数据, 直接返回
-	cnt, _ := strconv.Atoi(count)
 	if err != nil {
 		return 0, err
 	}
-	if cnt > 0 {
+	if count > 0 {
 		log.Println("从redis中获取评论数成功：", count)
-		return int64(cnt), nil
+		return count, nil
 	}
 
 	// 2. 缓存中没有数据，从数据库中获取

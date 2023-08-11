@@ -16,13 +16,13 @@ type Video struct {
 }
 
 type VideoResponse struct {
-	Id            uint     `json:"id"`
-	Author        UserInfo `json:"author"`
-	PlayUrl       string   `json:"play_url"`
-	CoverUrl      string   `json:"cover_url"`
-	FavoriteCount int      `json:"favorite_count"` //点赞数
-	CommentCount  int      `json:"comment_count"`  //评论数
-	IsFavorite    bool     `json:"is_favorite"`    //是否点赞
+	Id            uint         `json:"id"`
+	Author        UserResponse `json:"author"`
+	PlayUrl       string       `json:"play_url"`
+	CoverUrl      string       `json:"cover_url"`
+	FavoriteCount int          `json:"favorite_count"` //点赞数
+	CommentCount  int          `json:"comment_count"`  //评论数
+	IsFavorite    bool         `json:"is_favorite"`    //是否点赞
 }
 
 // VideoListResponse 用户所有投稿过的视频

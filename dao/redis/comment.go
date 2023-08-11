@@ -34,7 +34,7 @@ func DecrementCommentCountByVideoId(videoId uint) error {
 	return err
 }
 
-func SetCommentCountByVideoId(videoId uint, commentCount int64) error {
+func SetCommentCountByVideoId(videoId uint, commentCount int) error {
 	key := Video + fmt.Sprintf("%d", videoId)
 	err := Rdb.HSet(Ctx, key, KeyCommentCount, commentCount).Err()
 	return err

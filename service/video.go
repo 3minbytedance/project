@@ -125,17 +125,16 @@ func StoreVideoAndImg(videoUrl string, coverUrl string, authorID uint, title str
 	mysql.InsertVideo(videoUrl, coverUrl, authorID, title)
 }
 
-func GetPublishList(userID uint) ([]models.VideoResponse, error) {
-	videos, err := mysql.FindVideosByAuthorId(userID)
-	if err != nil {
-		return nil, err
+func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
+	videos, found := mysql.FindVideosByAuthorId(userID)
+	if !found {
+		return []models.VideoResponse{}, false
 	}
 	// 将查询结果转换为VideoResponse类型
 	var videoResponses []models.VideoResponse
 	for _, video := range videos {
-		// todo 待改
-		user, _ := mysql.FindUserInfoByUserId(userID)
-		commentCount, _ := redis.GetCommentCountByVideoId(video.VideoId)
+		user, _ := GetUserInfoByUserId(userID)
+		commentCount, _ := GetCommentCount(video.VideoId)
 		videoResponse := models.VideoResponse{
 			Id:            video.VideoId,
 			Author:        user,
@@ -148,18 +147,17 @@ func GetPublishList(userID uint) ([]models.VideoResponse, error) {
 		videoResponses = append(videoResponses, videoResponse)
 	}
 
-	return videoResponses, nil
+	return videoResponses, true
 }
 
-
-//TODO
+// TODO
 func GetFeedList(latestTime string) ([]models.VideoResponse, string, error) {
 	videos := mysql.GetLatestVideos(latestTime)
 	// 将查询结果转换为VideoResponse类型
 	var videoResponses []models.VideoResponse
 	for _, video := range videos {
 		// todo 待改
-		user, _ := mysql.FindUserInfoByUserId(userID)
+		user, _ := GetUserInfoByUserId(11)
 		commentCount, _ := redis.GetCommentCountByVideoId(video.VideoId)
 		videoResponse := models.VideoResponse{
 			Id:            video.VideoId,
