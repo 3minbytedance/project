@@ -14,7 +14,7 @@ func AddComment(comment *models.Comment) (uint, error) {
 		return 0, result.Error
 	} else {
 		log.Println("成功创建 Comment")
-		return comment.ID, nil
+		return comment.CommentId, nil
 	}
 }
 

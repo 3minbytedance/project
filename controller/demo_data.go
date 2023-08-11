@@ -2,11 +2,9 @@ package controller
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"os"
 	"project/dao/mysql"
 	"project/models"
-	"project/service"
 	"time"
 )
 
@@ -43,7 +41,7 @@ var DemoUser = models.UserResponse{
 	Avatar:          LocalUrl + "/public/avatar3.jpg",
 	BackgroundImage: LocalUrl + "/public/tx.jpeg",
 	Signature:       "这是个大帅逼",
-	TotalFavorited:  99999,
+	TotalFavorited:  "99999",
 	WorkCount:       20,
 	FavoriteCount:   100,
 }
@@ -95,23 +93,22 @@ func PrepareData() {
 		}
 		mysql.DB.Model(&models.Video{}).Create(&videos)
 	}
-	if _, err := service.GetCommentList(videoId); err == nil {
-		// 没数据的时候
-		comments := []models.Comment{
-			{
-				VideoId: 1,
-				UserId:  2,
-				Content: "真棒",
-				Model:   gorm.Model{CreatedAt: time.Now()},
-			},
-			{
-				VideoId: 1,
-				UserId:  2,
-				Content: "厉害了厉害了",
-				Model:   gorm.Model{CreatedAt: time.Now()},
-			},
-		}
-
-		mysql.DB.Model(&models.Comment{}).Create(&comments)
-	}
+	//if _, err := service.GetCommentList(videoId); err == nil {
+	//	// 没数据的时候
+	//	comments := []models.Comment{
+	//		{
+	//			VideoId: 1,
+	//			UserId:  2,
+	//			Content: "真棒"},
+	//		},
+	//		{
+	//			VideoId: 1,
+	//			UserId:  2,
+	//			Content: "厉害了厉害了",
+	//			Model:   gorm.Model{CreatedAt: time.Now()},
+	//		},
+	//	}
+	//
+	//	mysql.DB.Model(&models.Comment{}).Create(&comments)
+	//}
 }

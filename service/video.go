@@ -108,6 +108,7 @@ func GetVideoCover(fileName string) {
 	utils.GetVideoFrame("/dumpfile/"+fileName, "/dumpfile/"+imgName)
 }
 
+// todo
 func StoreVideoAndImg(videoUrl string, coverUrl string, authorID uint, title string) {
 	// 视频存储到oss
 	if err := UploadToOSS("/dumpfile/"+fileName, fileName); err != nil {

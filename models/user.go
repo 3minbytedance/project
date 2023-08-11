@@ -6,8 +6,8 @@ import (
 )
 
 type User struct {
-	// 用户的信息社交平台信息， todo 作为常用个人信息，如果获取过于复杂可以考虑在redis中储存
-	Id              uint   `gorm:"primaryKey"`          // 用户id
+	// 用户的信息社交平台信息
+	UserId          uint   `gorm:"primaryKey"`          // 用户id
 	Name            string `gorm:"uniqueIndex;size:32"` // 用户名称
 	Password        string // 用户密码
 	Avatar          string // 用户头像
@@ -20,7 +20,7 @@ type User struct {
 }
 
 type UserResponse struct {
-	// 用户的信息社交平台信息， todo 作为常用个人信息，如果获取过于复杂可以考虑在redis中储存
+	// 用户的信息社交平台信息
 	Id              uint   `json:"id"`               // 用户id
 	Name            string `json:"name"`             // 用户名称
 	FollowCount     int64  `json:"follow_count"`     // 关注总数
