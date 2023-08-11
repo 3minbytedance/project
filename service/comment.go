@@ -137,7 +137,7 @@ func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, err
 }
 
 // GetCommentCount 根据视频ID获取视频的评论数
-func GetCommentCount(videoId uint) (int, error) {
+func GetCommentCount(videoId uint) (int64, error) {
 	// 从redis中获取评论数
 	count, err := redis.GetCommentCountByVideoId(videoId)
 	if err != nil {

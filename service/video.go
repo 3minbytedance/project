@@ -176,6 +176,4 @@ func GetFeedList(latestTime string) ([]models.VideoResponse, string, error) {
 
 func getFavoriteCount(uint) uint { return 1 }
 
-func getCommentCount(uint) uint { return 1 }
-
 func isUserFavorite(uint, uint) bool { return true }

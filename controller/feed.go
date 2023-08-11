@@ -10,13 +10,13 @@ import (
 )
 
 func Feed(c *gin.Context) {
-	_ = c.Query("token") //TODO 视频流客户端传递这个参数做什么？
+	_ = c.Query("token") //TODO 视频流客户端传递这个参数，可能是做Token续签？
 	latestTime := c.Query("latest_time")
 	if latestTime == "" {
 		latestTime = strconv.FormatInt(time.Now().Unix(), 10)
 	}
 
-	videoList, err := service.GetFeedList(latestTime)
+	videoList, nextTime, err := service.GetFeedList(latestTime)
 	if err != nil {
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: int32(CodeInvalidParam),
@@ -24,11 +24,12 @@ func Feed(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(http.StatusOK, models.VideoListResponse{
+	c.JSON(http.StatusOK, models.FeedListResponse{
 		Response: models.Response{
 			StatusCode: int32(CodeSuccess),
 			StatusMsg:  codeMsgMap[CodeSuccess],
 		},
+		NextTime:      nextTime,
 		VideoResponse: videoList,
 	})
 }

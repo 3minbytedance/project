@@ -46,7 +46,7 @@ func DeleteCommentById(commentId uint) error {
 	return nil
 }
 
-func GetCommentCnt(videoId uint) (int, error) {
+func GetCommentCnt(videoId uint) (int64, error) {
 	var cnt int64
 	err := DB.Model(&models.Comment{}).Where("video_id = ?", videoId).Count(&cnt).Error
 	// 返回评论数和是否查询成功
