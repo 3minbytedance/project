@@ -41,11 +41,8 @@ func FindUserByID(id uint) (models.UserInfo, bool) {
 
 func FindUserInfoByUserId(userId uint) (models.User, bool) {
 	user := models.User{}
-
-	row := DB.Where("Id = ?", userId).First(&user).RowsAffected
-	if row == 0 {
-		return user, false
-	}
+	
+	return user, DB.Where("id = ?", userId).First(&user).RowsAffected != 0
 }
 
 func CheckUserRegisterInfo(username string, password string) (int32, string) {
