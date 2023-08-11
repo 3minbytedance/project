@@ -133,6 +133,7 @@ func GetPublishList(userID uint) ([]models.VideoResponse, error) {
 	// 将查询结果转换为VideoResponse类型
 	var videoResponses []models.VideoResponse
 	for _, video := range videos {
+		// todo 待改
 		user, _ := mysql.FindUserInfoByUserId(userID)
 		commentCount, _ := redis.GetCommentCountByVideoId(video.VideoId)
 		videoResponse := models.VideoResponse{
@@ -157,6 +158,7 @@ func GetFeedList(latestTime string) ([]models.VideoResponse, string, error) {
 	// 将查询结果转换为VideoResponse类型
 	var videoResponses []models.VideoResponse
 	for _, video := range videos {
+		// todo 待改
 		user, _ := mysql.FindUserInfoByUserId(userID)
 		commentCount, _ := redis.GetCommentCountByVideoId(video.VideoId)
 		videoResponse := models.VideoResponse{
