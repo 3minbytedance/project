@@ -60,7 +60,7 @@ func CheckUserRegisterInfo(username string, password string) (int32, string) {
 		return 2, "密码不合法"
 	}
 
-	if _, exist := GetUserByName(username); !exist {
+	if _, exist := GetUserByName(username); exist {
 		return 3, "用户已注册"
 	}
 

@@ -1,6 +1,6 @@
 name: "douyin"
 mode: "local"
-port: 8080
+port: 8081
 version: "v0.0.1"
 local:
   mysql:
@@ -21,8 +21,6 @@ local:
   kafka:
     address: "127.0.0.1"
     port: 9092
-    username: guest
-    password: guest
   mongo:
     address: "127.0.0.1"
     port: 27017

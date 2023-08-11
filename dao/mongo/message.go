@@ -18,12 +18,15 @@ func SendMessage(message *models.Message) (err error) {
 	return
 }
 
-func GetMessageList(fromUserId, toUserId uint) ([]models.Message, error) {
+func GetMessageList(fromUserId, toUserId uint, preMsgTime int64) ([]models.Message, error) {
 	collection := Mongo.Collection("messages")
 	filter := bson.M{
-		"$or": []bson.M{
-			{"fromuserid": fromUserId, "touserid": toUserId},
-			{"fromuserid": toUserId, "touserid": fromUserId},
+		"$and": []bson.M{
+			{"$or": []bson.M{
+				{"fromuserid": fromUserId, "touserid": toUserId},
+				{"fromuserid": toUserId, "touserid": fromUserId},
+			}},
+			{"createtime": bson.M{"$gt": preMsgTime}}, // 添加时间戳条件
 		},
 	}
 

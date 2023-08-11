@@ -8,6 +8,7 @@ import (
 	"project/dao/mongo"
 	"project/dao/mysql"
 	"project/dao/redis"
+	"project/middleware/kafka"
 	"project/router"
 	"project/service"
 )
@@ -39,6 +40,9 @@ func main() {
 		fmt.Printf("Init mongo failed, err:%v\n", err)
 		return
 	}
+
+	// 5. 初始化Kafka
+	kafka.InitMessageKafka()
 
 	// 准备数据
 	controller.PrepareData()

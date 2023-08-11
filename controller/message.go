@@ -70,10 +70,15 @@ func MessageAction(c *gin.Context) {
 // MessageChat all users have same follow list
 func MessageChat(c *gin.Context) {
 	toUserIdStr := c.Query("to_user_id")
+	preMsgTimeStr := c.Query("pre_msg_time")
+	preMsgTime, err := strconv.ParseInt(preMsgTimeStr, 10, 64)
+	if err != nil {
+		return
+	}
 	toUserId, _ := strconv.ParseInt(toUserIdStr, 10, 64)
 	fromUserId, _ := utils.GetCurrentUserID(c)
 
-	msgList, err := service.GetMessageList(uint(fromUserId), uint(toUserId))
+	msgList, err := service.GetMessageList(fromUserId, uint(toUserId), preMsgTime)
 	if err != nil {
 		c.JSON(http.StatusOK,
 			models.MessageChatResponse{

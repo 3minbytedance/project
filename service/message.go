@@ -3,9 +3,9 @@ package service
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"project/dao/mongo"
+	"project/middleware/kafka"
 	"project/models"
 	"sync"
 	"sync/atomic"
@@ -101,16 +101,20 @@ func SendMessage(fromUserId, toUserId uint, content string) (err error) {
 	fmt.Println("Message Data=====")
 	fmt.Println(messageData)
 	// 往mongo发送聊天记录
-	err = mongo.SendMessage(messageData)
-	if err != nil {
-		log.Println("mongo.SendMessage err:", err)
-		return err
-	}
+	//err = mongo.SendMessage(messageData)
+	//if err != nil {
+	//	log.Println("mongo.SendMessage err:", err)
+	//	return err
+	//}
+
+	// 聊天记录发向kafka
+	go kafka.Produce(messageData)
+
 	return
 }
 
-func GetMessageList(fromUserId, toUserId uint) ([]models.Message, error) {
-	msgList, err := mongo.GetMessageList(fromUserId, toUserId)
+func GetMessageList(fromUserId, toUserId uint, preMsgTime int64) ([]models.Message, error) {
+	msgList, err := mongo.GetMessageList(fromUserId, toUserId, preMsgTime)
 	if err != nil {
 		fmt.Println("mongo.GetMessageList err:", err)
 		return nil, err
