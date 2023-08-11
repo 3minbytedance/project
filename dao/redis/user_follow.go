@@ -56,14 +56,14 @@ func DecreaseFollowerCountByUserId(userId uint) error {
 }
 
 // 设置关注数
-func SetFollowCountByVideoId(userid uint, count int64) error {
+func SetFollowCountByUserId(userid uint, count int64) error {
 	key := Video + fmt.Sprintf("%d", userid)
 	err := Rdb.HSet(Ctx, key, KeyFollowCount, count).Err()
 	return err
 }
 
 // 设置粉丝数
-func SetFollowerCountByVideoId(userid uint, count int64) error {
+func SetFollowerCountByUserId(userid uint, count int64) error {
 	key := Video + fmt.Sprintf("%d", userid)
 	err := Rdb.HSet(Ctx, key, KeyFollowerCount, count).Err()
 	return err
