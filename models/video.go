@@ -17,7 +17,7 @@ type Video struct {
 
 type VideoResponse struct {
 	Id            uint     `json:"id"`
-	Author        UserInfo `json:"author"` //TODO USERINFO?
+	Author        UserInfo `json:"author"`
 	PlayUrl       string   `json:"play_url"`
 	CoverUrl      string   `json:"cover_url"`
 	FavoriteCount int      `json:"favorite_count"` //点赞数
@@ -34,7 +34,7 @@ type VideoListResponse struct {
 // FeedListResponse 投稿时间倒序的视频列表
 type FeedListResponse struct {
 	Response
-	NextTime      uint64          `json:"next_time,omitempty"`
+	NextTime      string          `json:"next_time,omitempty"`
 	VideoResponse []VideoResponse `json:"video_list,omitempty"`
 }
 

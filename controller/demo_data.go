@@ -57,13 +57,6 @@ func PrepareData() {
 			fmt.Println("create user table failed.")
 		}
 	}
-	table = mysql.DB.Migrator().HasTable(&models.UserStates{})
-	if !table {
-		err := mysql.DB.AutoMigrate(&models.UserStates{})
-		if err != nil {
-			fmt.Println("create user_states table failed.")
-		}
-	}
 	table = mysql.DB.Migrator().HasTable(&models.Comment{})
 	if !table {
 		err := mysql.DB.AutoMigrate(&models.Comment{})

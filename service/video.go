@@ -140,14 +140,38 @@ func GetPublishList(userID uint) ([]models.VideoResponse, error) {
 			Author:        user,
 			PlayUrl:       video.VideoUrl,
 			CoverUrl:      video.CoverUrl,
-			FavoriteCount: 0,                                  // TODO
-			CommentCount:  commentCount,                       // TODO
+			FavoriteCount: 0, // TODO
+			CommentCount:  commentCount,
 			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
 		}
 		videoResponses = append(videoResponses, videoResponse)
 	}
 
 	return videoResponses, nil
+}
+
+
+//TODO
+func GetFeedList(latestTime string) ([]models.VideoResponse, string, error) {
+	videos := mysql.GetLatestVideos(latestTime)
+	// 将查询结果转换为VideoResponse类型
+	var videoResponses []models.VideoResponse
+	for _, video := range videos {
+		user, _ := mysql.FindUserInfoByUserId(userID)
+		commentCount, _ := redis.GetCommentCountByVideoId(video.VideoId)
+		videoResponse := models.VideoResponse{
+			Id:            video.VideoId,
+			Author:        user,
+			PlayUrl:       video.VideoUrl,
+			CoverUrl:      video.CoverUrl,
+			FavoriteCount: 0, // TODO
+			CommentCount:  commentCount,
+			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
+		}
+		videoResponses = append(videoResponses, videoResponse)
+	}
+
+	return videoResponses, "111", nil
 }
 
 func getFavoriteCount(uint) uint { return 1 }
