@@ -20,10 +20,11 @@ func AddComment(comment *models.Comment) (uint, error) {
 
 func FindCommentsByVideoId(videoId uint) ([]models.Comment, error) {
 	comments := make([]models.Comment, 0)
-	result := DB.Where("video_id = ?", videoId).Find(&comments)
+	result := DB.Where("video_id = ?", videoId).Order("created_at desc").Find(&comments)
 	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
-		return comments, result.Error
+		return nil, result.Error
 	}
+	log.Println(comments)
 	return comments, nil
 }
 

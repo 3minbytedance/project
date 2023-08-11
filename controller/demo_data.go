@@ -35,7 +35,7 @@ var DemoComments = []models.CommentResponse{
 }
 
 // TODO
-var DemoUser = models.UserInfo{
+var DemoUser = models.UserResponse{
 	Name:            "yyf",
 	FollowCount:     0,
 	FollowerCount:   0,

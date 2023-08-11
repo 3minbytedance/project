@@ -39,3 +39,21 @@ func SetCommentCountByVideoId(videoId uint, commentCount int64) error {
 	err := Rdb.HSet(Ctx, key, KeyCommentCount, commentCount).Err()
 	return err
 }
+
+// AddMappingVideoIdToCommentId 向videoId对应的zset中添加commentId
+//func AddMappingVideoIdToCommentId(videoId, commentId int64, score int64) error {
+//	// 将videoId转为string，封装成key：video_comments:12345 => [10001, 10002, 10003]
+//	videoIdStr := strconv.FormatInt(videoId, 10)
+//	key := KeyVideoToComments + videoIdStr
+//	// 使用pipeline一次发送多条命令减少rtt
+//	pipeline := RdbComment.Pipeline()
+//	// 向videoId对应的ZSet中添加commentId
+//	pipeline.ZAdd(Ctx, key, redis.Z{
+//		Member: commentId,
+//		Score:  float64(score),
+//	})
+//	// 设置过期时间
+//	RdbComment.Expire(Ctx, key, RdbExpireTime)
+//	_, err := pipeline.Exec(Ctx)
+//	return err
+//}

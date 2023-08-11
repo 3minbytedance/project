@@ -53,7 +53,7 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	}()
 
 	// 查询user
-	user, exist := mysql.FindUserByID(uint(userId))
+	user, exist := GetUserInfoByUserId(uint(userId))
 	if !exist {
 		fmt.Println("根据评论中的user_id找用户失败, 评论ID为：", commentData.ID)
 		return models.CommentResponse{}, err
@@ -79,40 +79,21 @@ func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
 
 	commentList := make([]models.CommentResponse, 0)
 	for _, comment := range comments {
-		user, exist := mysql.FindUserByID(uint(comment.UserId))
+		user, exist := mysql.FindUserByID(comment.UserId)
 		if !exist {
 			fmt.Println("根据评论中的user_id找用户失败")
 		}
+		userResp := models.UserResponse{Id: user.Id, Name: user.Name}
 		commentResp := models.CommentResponse{
 			Id:         int64(comment.ID),
-			User:       user,
+			User:       userResp,
 			Content:    comment.Content,
 			CreateDate: models.TranslateTime(comment.CreatedAt.Unix(), time.Now().Unix()),
 		}
 		commentList = append(commentList, commentResp)
 	}
 
-	commentRespList := make([]models.CommentResponse, len(comments), len(comments))
-	for i, comment := range comments {
-		comment := comment
-		go func(i int) {
-			// 3、拼接comment信息
-			var commentResp models.CommentResponse
-			commentResp.Id = int64(comment.ID)
-			commentResp.Content = comment.Content
-			commentResp.CreateDate = strconv.FormatInt(comment.CreatedAt.Unix(), 10)
-
-			// 4、根据comment.userId，获取user信息
-			userId := comment.UserId
-			user, exist := mysql.FindUserByID(uint(userId))
-			if exist {
-				commentResp.User = user
-			}
-			commentRespList[i] = commentResp
-		}(i)
-	}
-
-	return commentRespList, nil
+	return commentList, nil
 }
 
 func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, error) {
@@ -126,7 +107,7 @@ func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, err
 	}
 
 	// 查询user
-	user, exist := mysql.FindUserByID(uint(comment.UserId))
+	user, exist := GetUserInfoByUserId(comment.UserId)
 	if !exist {
 		log.Println("根据评论中的user_id找用户失败")
 	}

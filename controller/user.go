@@ -3,44 +3,20 @@ package controller
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
-	"project/dao/mysql"
 	"project/models"
+	"project/service"
 	"project/utils"
 )
-
-// usersLoginInfo use map to store user info, and key is username+password for demo
-// user data will be cleared every time the server starts
-//// test data: username=zhanglei, password=douyin
-//var usersLoginInfo = map[string]models.User{
-//	"zhangleidouyin": {
-//		Name:          "zhanglei",
-//		FollowCount:   10,
-//		FollowerCount: 5,
-//		IsFollow:      true,
-//	},
-//}
-
-var userIdSequence = int64(1)
-
-type UserLoginResponse struct {
-	models.Response
-	UserId int64  `json:"user_id,omitempty"`
-	Token  string `json:"token"`
-}
-
-type UserResponse struct {
-	models.Response
-	User models.UserInfo `json:"user"`
-}
 
 func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
 	// todo 用户名密码检测是否合法且不冲突
-	statusCode, msg := mysql.CheckUserRegisterInfo(username, password)
+	statusCode, msg := service.CheckUserRegisterInfo(username, password)
 	if statusCode != 0 {
-		c.JSON(http.StatusOK, UserLoginResponse{
+		c.JSON(http.StatusOK, models.UserLoginResponse{
 			Response: models.Response{
 				StatusCode: statusCode,
 				StatusMsg:  msg,
@@ -49,19 +25,19 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	statusCode, msg, userId := mysql.RegisterUserInfo(username, password)
-
-	if statusCode != 0 {
-		c.JSON(http.StatusOK, UserLoginResponse{
+	userId, err := service.RegisterUser(username, password)
+	if err != nil {
+		log.Println("Register user err:", err)
+		c.JSON(http.StatusOK, models.UserLoginResponse{
 			Response: models.Response{
-				StatusCode: statusCode,
-				StatusMsg:  msg,
+				StatusCode: -1,
+				StatusMsg:  "用户注册失败" + err.Error(),
 			},
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, UserLoginResponse{
+	c.JSON(http.StatusOK, models.UserLoginResponse{
 		Response: models.Response{
 			StatusCode: statusCode,
 			StatusMsg:  msg,
@@ -70,36 +46,16 @@ func Register(c *gin.Context) {
 		Token:  utils.GenerateToken(userId, username),
 	})
 
-	//token := username + password
-	//
-	//if _, exist := usersLoginInfo[token]; exist {
-	//	c.JSON(http.StatusOK, UserLoginResponse{
-	//		Response: Response{StatusCode: 1, StatusMsg: "User already exist"},
-	//	})
-	//} else {
-	//	atomic.AddInt64(&userIdSequence, 1)
-	//	newUser := User{
-	//		Id:   userIdSequence,
-	//		Name: username,
-	//	}
-	//	usersLoginInfo[token] = newUser
-	//	c.JSON(http.StatusOK, UserLoginResponse{
-	//		Response: Response{StatusCode: 0},
-	//		UserId:   userIdSequence,
-	//		Token:    username + password,
-	//	})
-	//}
 }
 
 func Login(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
-	fmt.Println("<<<<<<<<username: ", username)
 
-	user, b := mysql.FindUserByName(username)
-	if !b {
+	user, exist := service.GetUserByName(username)
+	if !exist {
 		// 就是用户不存在
-		c.JSON(http.StatusOK, UserLoginResponse{
+		c.JSON(http.StatusOK, models.UserLoginResponse{
 			Response: models.Response{
 				StatusCode: 1,
 				StatusMsg:  "User doesn't exist",
@@ -109,11 +65,10 @@ func Login(c *gin.Context) {
 	}
 
 	// todo 判断是否重复登录
-
 	// 判断密码是否正确
 	turePassword := utils.CheckPassword(password, user.Salt, user.Password)
 	if !turePassword {
-		c.JSON(http.StatusOK, UserLoginResponse{
+		c.JSON(http.StatusOK, models.UserLoginResponse{
 			Response: models.Response{
 				StatusCode: 2,
 				StatusMsg:  "密码错误",
@@ -123,8 +78,7 @@ func Login(c *gin.Context) {
 	}
 
 	Token := utils.GenerateToken(user.Id, username)
-
-	c.JSON(http.StatusOK, UserLoginResponse{
+	c.JSON(http.StatusOK, models.UserLoginResponse{
 		Response: models.Response{StatusCode: 0, StatusMsg: "登录成功"},
 		UserId:   int64(user.Id),
 		Token:    Token,
@@ -144,19 +98,19 @@ func UserInfo(c *gin.Context) {
 	userId, err := utils.GetCurrentUserID(c)
 	fmt.Println(err)
 	if err != nil {
-		c.JSON(http.StatusOK, UserResponse{
+		c.JSON(http.StatusOK, models.UserDetailResponse{
 			Response: models.Response{StatusCode: 2},
 		})
 		return
 	}
-	userInfo, b := mysql.FindUserInfoByUserId(uint(userId))
+	userInfo, b := service.GetUserInfoByUserId(uint(userId))
 	if b {
-		c.JSON(http.StatusOK, UserResponse{
+		c.JSON(http.StatusOK, models.UserDetailResponse{
 			Response: models.Response{StatusCode: 0},
 			User:     userInfo,
 		})
 	} else {
-		c.JSON(http.StatusOK, UserResponse{
+		c.JSON(http.StatusOK, models.UserDetailResponse{
 			Response: models.Response{StatusCode: 1, StatusMsg: "用户不存在"},
 		})
 	}

@@ -29,7 +29,6 @@ func Auth() gin.HandlerFunc {
 			})
 
 		} else {
-
 			claims, err := utils.ParseToken(token)
 			fmt.Println("jwt test:", claims.ID)
 			if err != nil {

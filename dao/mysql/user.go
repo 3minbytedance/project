@@ -7,44 +7,25 @@ import (
 	"project/utils"
 )
 
-func FindUserByName(name string) (models.User, bool) {
-	user := models.User{}
+func FindUserByName(name string) (user models.User, exist bool) {
+	user = models.User{}
 	return user, DB.Where("name = ?", name).First(&user).RowsAffected != 0
 }
 
-//func FindUserStateByName(name string) (models.user, bool) {
-//	userState := models.user{}
-//	return userState, DB.Where("name = ?", name).First(&userState).RowsAffected != 0
-//}
-
-func FindUserByID(id uint) (models.UserInfo, bool) {
-	user := models.UserInfo{}
+func FindUserByID(id uint) (models.User, bool) {
+	user := models.User{}
 	return user, DB.Where("id = ?", id).First(&user).RowsAffected != 0
 }
 
-//func FindUserStateByID(id int) (models.user, bool) {
-//	userState := models.user{}
-//	return userState, DB.Where("id = ?", id).First(&userState).RowsAffected != 0
-//}
 
-//// FindUserByToken todo 废弃，jwt解析自带信息
-//func FindUserByToken(token string) (models.User, bool) {
-//	user := models.User{}
-//	userState := models.user{}
-//	row := DB.Where("token = ?", token).First(&userState).RowsAffected
-//	if row == 0 {
-//		return user, false
-//	}
-//	// 应该在user表里面加id，而不是name
-//	return user, DB.Where("name = ?", userState.Name).First(&user).RowsAffected != 0
-//}
-
-func FindUserInfoByUserId(userId uint) (models.User, bool) {
+//TODO 待改
+func FindUserInfoByUserId(userId uint) (models.UserInfo, bool) {
 	user := models.User{}
-
 	return user, DB.Where("id = ?", userId).First(&user).RowsAffected != 0
 }
 
+
+//TODO 待改
 func CheckUserRegisterInfo(username string, password string) (int32, string) {
 
 	if len(username) == 0 || len(username) > 32 {
@@ -62,6 +43,7 @@ func CheckUserRegisterInfo(username string, password string) (int32, string) {
 	return 0, "合法"
 }
 
+//TODO 待改
 func RegisterUserInfo(username string, password string) (int32, string, uint) {
 
 	user := models.User{}
@@ -79,4 +61,12 @@ func RegisterUserInfo(username string, password string) (int32, string, uint) {
 	DB.Create(&user)
 	fmt.Println("<<<<<<<<<id: ", user.Id)
 	return 0, "注册成功", user.Id
+}
+
+func CreateUser(user *models.User) (id uint, err error) {
+	// 数据入库
+	err = DB.Create(&user).Error
+	id = user.Id
+	return
+
 }

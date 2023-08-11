@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"project/config"
 	"project/controller"
+	"project/dao/mongo"
 	"project/dao/mysql"
 	"project/dao/redis"
 	"project/router"
@@ -30,6 +31,12 @@ func main() {
 	// 3. 初始化Redis
 	if err := redis.Init(config.Conf); err != nil {
 		fmt.Printf("Init redis failed, err:%v\n", err)
+		return
+	}
+
+	// 4. 初始化Mongo
+	if err := mongo.Init(config.Conf); err != nil {
+		fmt.Printf("Init mongo failed, err:%v\n", err)
 		return
 	}
 

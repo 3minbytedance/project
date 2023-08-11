@@ -19,9 +19,9 @@ type User struct {
 	DeletedAt       gorm.DeletedAt
 }
 
-type UserInfo struct {
+type UserResponse struct {
 	// 用户的信息社交平台信息， todo 作为常用个人信息，如果获取过于复杂可以考虑在redis中储存
-	Id              int64  `json:"id,omitempty"`               // 用户id
+	Id              uint   `json:"id,omitempty"`               // 用户id
 	Name            string `json:"name,omitempty"`             // 用户名称
 	FollowCount     int64  `json:"follow_count,omitempty"`     // 关注总数
 	FollowerCount   int64  `json:"follower_count,omitempty"`   // 粉丝总数
@@ -32,6 +32,17 @@ type UserInfo struct {
 	TotalFavorited  int64  `json:"total_favorited"`            // 获赞数量
 	WorkCount       int64  `json:"work_count"`                 // 作品数量
 	FavoriteCount   int64  `json:"favorite_count"`             // 点赞数量
+}
+
+type UserLoginResponse struct {
+	Response
+	UserId int64  `json:"user_id,omitempty"`
+	Token  string `json:"token"`
+}
+
+type UserDetailResponse struct {
+	Response
+	User UserResponse `json:"user"`
 }
 
 func (*User) TableName() string {
