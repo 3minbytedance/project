@@ -1,88 +1,86 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"net/http"
-	"path/filepath"
-	"project/dao/mysql"
-	"project/models"
-	"project/utils"
-	"time"
 )
 
-type VideoListResponse struct {
-	models.Response
-	VideoList []models.VideoRes `json:"video_list"`
-}
+// 限制上传文件的最大大小 200MB
+const maxFileSize = 200 * 1024 * 1024
 
-// Publish check token then save upload file to public directory
+// TODO
 func Publish(c *gin.Context) {
-	userId, err := utils.GetCurrentUserID(c)
-	if err != nil {
-	}
-
-	if _, exist := mysql.FindUserByID(userId); !exist {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
-		return
-	} else {
-		data, err := c.FormFile("data")
-		if err != nil {
-			c.JSON(http.StatusOK, models.Response{
-				StatusCode: 1,
-				StatusMsg:  err.Error(),
-			})
-			return
-		}
-
-		filename := filepath.Base(data.Filename)
-		finalName := fmt.Sprintf("%d_%s", userId, filename)
-		saveFile := filepath.Join("./public/", finalName)
-		if err := c.SaveUploadedFile(data, saveFile); err != nil {
-			c.JSON(http.StatusOK, models.Response{
-				StatusCode: 1,
-				StatusMsg:  err.Error(),
-			})
-			return
-		}
-		// 更新视频信息
-		video := models.Video{
-			AuthorId:    int64(userId),
-			PlayUrl:     saveFile,
-			PublishTime: time.Now().Unix(),
-		}
-		mysql.DB.Model(models.Video{}).Create(&video)
-		// 视频封面如何获取？用户上传（自定义）+默认生成
-
-		// 更新用户作品数量
-		//mysql.DB.Model(&user).Update("work_count", user.WorkCount+1)
-		//c.JSON(http.StatusOK, models.Response{
-		//	StatusCode: 0,
-		//	StatusMsg:  finalName + " uploaded successfully",
-		//})
-	}
+	//userId, err := utils.GetCurrentUserID(c)
+	//if err != nil {
+	//}
+	//title := c.Query("title")
+	//
+	//file, err := c.FormFile("data")
+	//if err != nil {
+	//	c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+	//	return
+	//}
+	//
+	//// 校验文件类型
+	//ext := filepath.Ext(file.Filename)
+	//if !isValidFileType(ext) {
+	//	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file type"})
+	//	return
+	//}
+	//
+	//// 校验文件大小
+	//if file.Size > maxFileSize {
+	//	c.JSON(http.StatusBadRequest, gin.H{"error": "File size exceeds the limit"})
+	//	return
+	//}
+	//
+	//if err = service.UploadVideo(file); err != nil {
+	//	c.JSON(http.StatusBadRequest, models.Response{
+	//		StatusCode: 400,
+	//		StatusMsg:  "上传失败"})
+	//}
+	//
+	//c.JSON(http.StatusOK, models.Response{
+	//	StatusCode: int32(CodeSuccess),
+	//	StatusMsg:  codeMsgMap[CodeSuccess]})
+	//
+	//// MQ 异步解耦,解决返回json阻塞 TODO
+	//service.GetVideoCover()
+	//service.StoreVideoAndImg()
 }
 
-// PublishList 每个用户的自己的发布列表
-func PublishList(c *gin.Context) {
-	userId, err := utils.GetCurrentUserID(c)
-	if err != nil {
-	}
+// GetPublishList 每个用户的自己的发布列表
+func GetPublishList(c *gin.Context) {
+	//userID, err := strconv.Atoi(c.Query("user_id"))
+	//if err != nil {
+	//	c.JSON(http.StatusOK, models.Response{
+	//		StatusCode: int32(CodeInvalidParam),
+	//		StatusMsg:  codeMsgMap[CodeInvalidParam]})
+	//	return
+	//}
+	//videoList, err := service.GetPublishList(uint(userID))
+	//if err != nil {
+	//	c.JSON(http.StatusOK, models.Response{
+	//		StatusCode: int32(CodeInvalidParam),
+	//		StatusMsg:  codeMsgMap[CodeInvalidParam],
+	//	})
+	//	return
+	//}
+	//c.JSON(http.StatusOK, models.VideoListResponse{
+	//	Response: models.Response{
+	//		StatusCode: int32(CodeSuccess),
+	//		StatusMsg:  codeMsgMap[CodeSuccess],
+	//	},
+	//	VideoResponse: videoList,
+	//})
+}
 
-	if _, exist := mysql.FindUserByID(userId); !exist {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
-		return
-	} else {
-		videos, b := mysql.FindVideosByAuthor(int(userId))
-		if !b {
-			c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户未发布过作品"})
-			return
+// 校验文件类型是否为视频类型
+func isValidFileType(fileExt string) bool {
+	validExts := []string{".mp4", ".avi", ".mov"}
+	for _, ext := range validExts {
+		if fileExt == ext {
+			return true
 		}
-		c.JSON(http.StatusOK, VideoListResponse{
-			Response: models.Response{
-				StatusCode: 0,
-			},
-			VideoList: videos,
-		})
 	}
+	return false
 }

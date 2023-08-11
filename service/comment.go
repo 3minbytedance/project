@@ -145,13 +145,12 @@ func GetCommentCount(videoId uint) (int64, error) {
 		return 0, err
 	}
 	// 1. 缓存中有数据, 直接返回
-	cnt, _ := strconv.Atoi(count)
 	if err != nil {
 		return 0, err
 	}
-	if cnt > 0 {
+	if count > 0 {
 		log.Println("从redis中获取评论数成功：", count)
-		return int64(cnt), nil
+		return count, nil
 	}
 
 	// 2. 缓存中没有数据，从数据库中获取

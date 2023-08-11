@@ -2,16 +2,18 @@ package controller
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"os"
 	"project/dao/mysql"
 	"project/models"
+	"project/service"
 	"time"
 )
 
 var ServerUrl = "https://" + os.Getenv("paas_url")
 var LocalUrl = "http://loaclhost:8080"
 
-var DemoVideos = []models.VideoRes{
+var DemoVideos = []models.VideoResponse{
 	{
 		Id:            1,
 		Author:        DemoUser,
@@ -32,13 +34,12 @@ var DemoComments = []models.CommentResponse{
 	},
 }
 
+// TODO
 var DemoUser = models.UserResponse{
-	Name:          "yyf",
-	FollowCount:   0,
-	FollowerCount: 0,
-	IsFollow:      false,
-	//Avatar:          ServerUrl + "/public/avatar3.jpg",
-	//BackgroundImage: ServerUrl + "/public/tx.jpeg",
+	Name:            "yyf",
+	FollowCount:     0,
+	FollowerCount:   0,
+	IsFollow:        false,
 	Avatar:          LocalUrl + "/public/avatar3.jpg",
 	BackgroundImage: LocalUrl + "/public/tx.jpeg",
 	Signature:       "这是个大帅逼",
@@ -54,13 +55,6 @@ func PrepareData() {
 		err := mysql.DB.AutoMigrate(&models.User{})
 		if err != nil {
 			fmt.Println("create user table failed.")
-		}
-	}
-	table = mysql.DB.Migrator().HasTable(&models.UserStates{})
-	if !table {
-		err := mysql.DB.AutoMigrate(&models.UserStates{})
-		if err != nil {
-			fmt.Println("create user_states table failed.")
 		}
 	}
 	table = mysql.DB.Migrator().HasTable(&models.Comment{})
@@ -87,39 +81,37 @@ func PrepareData() {
 	}
 
 	// 新建数据
-	videoId := int64(1)
+	videoId := uint(1)
 	if _, b := mysql.FindVideoByVideoId(videoId); !b {
 		// 没数据的时候
 		videos := []models.Video{
 			{
-				AuthorId:      1,
-				PlayUrl:       "https://www.w3schools.com/html/movie.mp4",
-				CoverUrl:      "https://cdn.pixabay.com/photo/2016/03/27/18/10/bear-1283347_1280.jpg",
-				FavoriteCount: 100,
-				CommentCount:  100,
-				IsFavorite:    false,
-				PublishTime:   time.Now().Unix(),
+				AuthorId:  1,
+				VideoUrl:  "https://www.w3schools.com/html/movie.mp4",
+				CoverUrl:  "https://cdn.pixabay.com/photo/2016/03/27/18/10/bear-1283347_1280.jpg",
+				Title:     "hello world",
+				CreatedAt: time.Now(),
 			},
 		}
 		mysql.DB.Model(&models.Video{}).Create(&videos)
 	}
-	//if _, err := service.GetCommentList(uint(videoId)); err == nil {
-	//	// 没数据的时候
-	//	comments := []models.Comment{
-	//		{
-	//			VideoId: 1,
-	//			UserId:  2,
-	//			Content: "真棒",
-	//			Model:   gorm.Model{CreatedAt: time.Now()},
-	//		},
-	//		{
-	//			VideoId: 1,
-	//			UserId:  2,
-	//			Content: "厉害了厉害了",
-	//			Model:   gorm.Model{CreatedAt: time.Now()},
-	//		},
-	//	}
-	//
-	//	mysql.DB.Model(&models.Comment{}).Create(&comments)
-	//}
+	if _, err := service.GetCommentList(videoId); err == nil {
+		// 没数据的时候
+		comments := []models.Comment{
+			{
+				VideoId: 1,
+				UserId:  2,
+				Content: "真棒",
+				Model:   gorm.Model{CreatedAt: time.Now()},
+			},
+			{
+				VideoId: 1,
+				UserId:  2,
+				Content: "厉害了厉害了",
+				Model:   gorm.Model{CreatedAt: time.Now()},
+			},
+		}
+
+		mysql.DB.Model(&models.Comment{}).Create(&comments)
+	}
 }

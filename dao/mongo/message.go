@@ -3,6 +3,7 @@ package mongo
 import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
+	_ "go.mongodb.org/mongo-driver/bson"
 	"log"
 	"project/models"
 )

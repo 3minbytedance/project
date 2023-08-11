@@ -22,13 +22,13 @@ func InitRouter(r *gin.Engine) {
 	apiRouter := r.Group("/douyin")
 
 	// 基础接口
-	//apiRouter.GET("/feed/", jwt.AuthWithoutLogin(), controller.Feed)
+	apiRouter.GET("/feed/", jwt.AuthWithoutLogin(), controller.Feed)
 	apiRouter.GET("/user/", jwt.Auth(), controller.UserInfo)
 	apiRouter.POST("/user/register/", controller.Register)
 	apiRouter.POST("/user/login/", controller.Login)
 	apiRouter.POST("/publish/action/", jwt.AuthBody(), controller.Publish)
-	apiRouter.GET("/publish/list/", jwt.AuthWithoutLogin(), controller.PublishList)
-	//
+	apiRouter.GET("/publish/list/", jwt.AuthWithoutLogin(), controller.GetPublishList)
+
 	//// 互动接口
 	apiRouter.POST("/favorite/action/", jwt.Auth(), controller.FavoriteAction)
 	apiRouter.GET("/favorite/list/", jwt.AuthWithoutLogin(), controller.FavoriteList)
@@ -44,7 +44,7 @@ func InitRouter(r *gin.Engine) {
 	apiRouter.POST("/message/action/", jwt.Auth(), controller.MessageAction)
 
 	//// basic apis
-	apiRouter.GET("/feed/", controller.Feed)
+	//apiRouter.GET("/feed/", controller.Feed)
 	//apiRouter.GET("/user/", controller.UserInfo)
 	//apiRouter.POST("/user/register/", controller.Register)
 	//apiRouter.POST("/user/login/", controller.Login)
