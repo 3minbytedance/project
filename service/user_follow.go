@@ -11,11 +11,35 @@ import (
 func AddFollow(userId, followId uint) error {
 	// 评论信息
 	err := mysql.AddFollow(userId, followId)
+	go func() {
+		err := redis.IncreaseFollowCountByUserId(userId)
+		if err != nil {
+			return
+		}
+	}()
+	go func() {
+		err := redis.IncreaseFollowerCountByUserId(followId)
+		if err != nil {
+			return
+		}
+	}()
 	return err
 }
 
 func DeleteFollow(userId, followId uint) error {
 	err := mysql.DeleteFollowById(userId, followId)
+	go func() {
+		err := redis.DecreaseFollowCountByUserId(userId)
+		if err != nil {
+			return
+		}
+	}()
+	go func() {
+		err := redis.DecreaseFollowerCountByUserId(followId)
+		if err != nil {
+			return
+		}
+	}()
 	return err
 }
 
