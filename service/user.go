@@ -25,7 +25,7 @@ func RegisterUser(username string, password string) (id uint, err error) {
 
 func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
 
-	user, exist := mysql.FindUserByID(userId)
+	user, exist := mysql.FindUserByUserID(userId)
 	if !exist {
 		return models.UserResponse{}, false
 	}

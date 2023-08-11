@@ -12,14 +12,12 @@ func FindUserByName(name string) (user models.User, exist bool) {
 	return user, DB.Where("name = ?", name).First(&user).RowsAffected != 0
 }
 
-func FindUserByID(id uint) (models.User, bool) {
+func FindUserByUserID(id uint) (models.User, bool) {
 	user := models.User{}
 	return user, DB.Where("id = ?", id).First(&user).RowsAffected != 0
 }
 
-
-
-//TODO 待改
+// TODO 待改
 func CheckUserRegisterInfo(username string, password string) (int32, string) {
 
 	if len(username) == 0 || len(username) > 32 {
@@ -37,7 +35,7 @@ func CheckUserRegisterInfo(username string, password string) (int32, string) {
 	return 0, "合法"
 }
 
-//TODO 待改
+// TODO 待改
 func RegisterUserInfo(username string, password string) (int32, string, uint) {
 
 	user := models.User{}

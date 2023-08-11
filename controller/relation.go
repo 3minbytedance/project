@@ -12,7 +12,7 @@ import (
 
 type UserListResponse struct {
 	models.Response
-	UserList []models.UserInfo `json:"user_list"`
+	UserList []models.UserResponse `json:"user_list"`
 }
 
 // RelationAction no practical effect, just check if token is valid
@@ -27,7 +27,7 @@ func RelationAction(c *gin.Context) {
 		return
 	}
 	user_id := claims.ID
-	if _, exist := mysql.FindUserByID(to_user_id); !exist {
+	if _, exist := mysql.FindUserByUserID(to_user_id); !exist {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "关注用户不存在"})
 		return
 	}

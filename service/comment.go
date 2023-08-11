@@ -79,7 +79,7 @@ func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
 
 	commentList := make([]models.CommentResponse, 0)
 	for _, comment := range comments {
-		user, exist := mysql.FindUserByID(comment.UserId)
+		user, exist := mysql.FindUserByUserID(comment.UserId)
 		if !exist {
 			fmt.Println("根据评论中的user_id找用户失败")
 		}

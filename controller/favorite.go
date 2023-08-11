@@ -15,7 +15,7 @@ func FavoriteAction(c *gin.Context) {
 	if err != nil {
 	}
 
-	if _, exist := mysql.FindUserByID(userId); exist {
+	if _, exist := mysql.FindUserByUserID(userId); exist {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 0})
 	} else {
 		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})

@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"os"
 	"project/dao/mysql"
-	"project/dao/redis"
 	"project/models"
 	"project/utils"
 	"strings"
@@ -143,6 +142,7 @@ func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
 			FavoriteCount: 0, // TODO
 			CommentCount:  commentCount,
 			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
+			Title:         video.Title,
 		}
 		videoResponses = append(videoResponses, videoResponse)
 	}
@@ -150,15 +150,13 @@ func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
 	return videoResponses, true
 }
 
-// TODO
-func GetFeedList(latestTime string) ([]models.VideoResponse, string, error) {
+func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 	videos := mysql.GetLatestVideos(latestTime)
 	// 将查询结果转换为VideoResponse类型
 	var videoResponses []models.VideoResponse
 	for _, video := range videos {
-		// todo 待改
-		user, _ := GetUserInfoByUserId(11)
-		commentCount, _ := redis.GetCommentCountByVideoId(video.VideoId)
+		user, _ := GetUserInfoByUserId(video.AuthorId)
+		commentCount, _ := GetCommentCount(video.VideoId)
 		videoResponse := models.VideoResponse{
 			Id:            video.VideoId,
 			Author:        user,
@@ -167,11 +165,15 @@ func GetFeedList(latestTime string) ([]models.VideoResponse, string, error) {
 			FavoriteCount: 0, // TODO
 			CommentCount:  commentCount,
 			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
+			Title:         video.Title,
 		}
+
 		videoResponses = append(videoResponses, videoResponse)
 	}
+	//本次返回的视频中，发布最早的时间
+	nextTime := videos[len(videos)-1].CreatedAt.Unix()
 
-	return videoResponses, "111", nil
+	return videoResponses, nextTime, nil
 }
 
 func getFavoriteCount(uint) uint { return 1 }
