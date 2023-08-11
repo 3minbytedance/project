@@ -23,7 +23,7 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	if err != nil {
 		return models.CommentResponse{}, err
 	}
-	log.Println("===========CommentID: " + strconv.Itoa(int(commentData.ID)))
+	log.Println("===========CommentID: " + strconv.Itoa(int(commentData.CommentId)))
 
 	go func() {
 		// 如果当前video的commentCount为0，不确定是没有评论，还是评论刚刚过期，所以不能直接+1
@@ -55,13 +55,13 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	// 查询user
 	user, exist := GetUserInfoByUserId(uint(userId))
 	if !exist {
-		fmt.Println("根据评论中的user_id找用户失败, 评论ID为：", commentData.ID)
+		fmt.Println("根据评论中的user_id找用户失败, 评论ID为：", commentData.CommentId)
 		return models.CommentResponse{}, err
 	}
 
 	// 封装返回数据
 	var commentResp models.CommentResponse
-	commentResp.Id = int64(commentData.ID)
+	commentResp.Id = int64(commentData.CommentId)
 	commentResp.User = user
 	commentResp.Content = content
 	commentResp.CreateDate = models.TranslateTime(commentData.CreatedAt.Unix(), time.Now().Unix())
@@ -83,9 +83,9 @@ func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
 		if !exist {
 			fmt.Println("根据评论中的user_id找用户失败")
 		}
-		userResp := models.UserResponse{Id: user.Id, Name: user.Name}
+		userResp := models.UserResponse{Id: user.UserId, Name: user.Name}
 		commentResp := models.CommentResponse{
-			Id:         int64(comment.ID),
+			Id:         int64(comment.CommentId),
 			User:       userResp,
 			Content:    comment.Content,
 			CreateDate: models.TranslateTime(comment.CreatedAt.Unix(), time.Now().Unix()),
@@ -114,7 +114,7 @@ func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, err
 
 	// 封装返回数据
 	var commentResp models.CommentResponse
-	commentResp.Id = int64(comment.ID)
+	commentResp.Id = int64(comment.CommentId)
 	commentResp.User = user
 	commentResp.Content = comment.Content
 	commentResp.CreateDate = models.TranslateTime(comment.CreatedAt.Unix(), time.Now().Unix())
