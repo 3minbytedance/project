@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"project/dao/mysql"
+	"project/dao/redis"
 	"project/models"
 	"project/utils"
 	"strings"
@@ -143,6 +144,32 @@ func StoreVideoAndImg(videoName string, imgName string, authorId uint, title str
 		//TODO redis用户上传的视频数+1
 	}()
 	wg.Wait()
+}
+
+// GetWorkCount 获得作品数
+func GetWorkCount(userId uint) (int64, error) {
+	// 从redis中获取作品数
+	// 1. 缓存中有数据, 直接返回
+	if redis.IsExistUser(userId) {
+		workCount, err := redis.GetWorkCountByUserId(userId)
+		if err != nil {
+			log.Println("从redis中获取作品数失败：", err)
+			//return 0, err
+		}
+		return workCount, nil
+	}
+
+	// 2. 缓存中没有数据，从数据库中获取
+	workCount := mysql.FindWorkCountsByAuthorId(userId)
+	log.Println("从数据库中获取关注数成功：", workCount)
+	// 将作品数写入redis
+	go func() {
+		err := redis.SetWorkCountByUserId(userId, workCount)
+		if err != nil {
+			log.Println("将评论数写入redis失败：", err)
+		}
+	}()
+	return workCount, nil
 }
 
 func GetPublishList(userID uint) ([]models.VideoResponse, bool) {

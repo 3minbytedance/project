@@ -24,7 +24,6 @@ func RegisterUser(username string, password string) (id uint, err error) {
 }
 
 func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
-
 	user, exist := mysql.FindUserByUserID(userId)
 	if !exist {
 		return models.UserResponse{}, false
@@ -34,6 +33,10 @@ func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
 		return models.UserResponse{}, false
 	}
 	followerCount, err := GetFollowerCount(userId)
+	if err != nil {
+		return models.UserResponse{}, false
+	}
+	workCount, err := GetWorkCount(userId)
 	if err != nil {
 		return models.UserResponse{}, false
 	}
@@ -48,7 +51,7 @@ func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
 		//BackgroundImage: user.BackgroundImage,
 		//Signature:       user.Signature,
 		//TotalFavorited:  "0",
-		WorkCount:     0, //todo
+		WorkCount:     workCount, //todo
 		FavoriteCount: 0,
 	}
 	return userResponse, true

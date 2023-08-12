@@ -17,6 +17,11 @@ func FindVideosByAuthorId(authorId uint) ([]models.Video, bool) {
 	return videos, DB.Where("id = ?", authorId).Find(&videos).RowsAffected != 0
 }
 
+func FindWorkCountsByAuthorId(authorId uint) int64 {
+	var videos []models.Video
+	return DB.Where("id = ?", authorId).Find(&videos).RowsAffected
+}
+
 // InsertVideo return 是否插入成功
 func InsertVideo(videoUrl string, coverUrl string, authorID uint, title string) bool {
 	video := models.Video{
