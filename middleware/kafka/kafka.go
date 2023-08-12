@@ -22,25 +22,25 @@ func NewKafkaManager(brokers []string) *Manager {
 }
 
 func (m *Manager) NewProducer(topic string) *kafka.Writer {
+	// TODO writer 优雅关闭
 	return &kafka.Writer{
 		Addr:                   kafka.TCP(m.Brokers...),
 		Topic:                  topic,
-		Balancer:               &kafka.Hash{},
+		Balancer:               &kafka.Hash{}, // 使用Hash算法按照key将消息均匀分布到不同的partition上
 		WriteTimeout:           1 * time.Second,
-		RequiredAcks:           kafka.RequireAll,
-		AllowAutoTopicCreation: true,
+		RequiredAcks:           kafka.RequireAll, // 需要确保Leader和所有Follower都写入成功才可以发送下一条消息, 确保消息成功写入, 不丢失
+		AllowAutoTopicCreation: true,             // Topic不存在时自动创建。生产环境中一般设为false，由运维管理员创建Topic并配置partition数目
 	}
 }
 
-func (m *Manager) NewConsumer(topic string) *kafka.Reader {
+func (m *Manager) NewConsumer(topic, groupId string) *kafka.Reader {
+	// TODO reader 优雅关闭
 	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers:   m.Brokers,
-		Topic:     topic,
-		Partition: 0,
-		MinBytes:  10e3, // 10KB
-		MaxBytes:  10e6, // 10MB
-		MaxWait:   1 * time.Second,
-		GroupID:   "messages",
+		Brokers: m.Brokers,
+		Topic:   topic,
+		GroupID: groupId,
+		// CommitInterval: 1 * time.Second, // 不配置此项, 默认每次读取都会自动提交offset
+		StartOffset: kafka.FirstOffset, //当一个特定的partition没有commited offset时(比如第一次读一个partition，之前没有commit过)，通过StartOffset指定从第一个还是最后一个位置开始消费。StartOffset的取值要么是FirstOffset要么是LastOffset，LastOffset表示Consumer启动之前生成的老数据不管了。仅当指定了GroupID时，StartOffset才生效
 	})
 }
 

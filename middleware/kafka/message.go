@@ -23,7 +23,7 @@ func InitMessageKafka() {
 
 	// 创建 Message 业务的生产者和消费者实例
 	messageProducer = kafkaManager.NewProducer(topic)
-	messageConsumer = kafkaManager.NewConsumer(topic)
+	messageConsumer = kafkaManager.NewConsumer(topic, "message_group")
 
 	go Consume()
 }
