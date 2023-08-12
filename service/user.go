@@ -38,17 +38,18 @@ func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
 		return models.UserResponse{}, false
 	}
 	userResponse := models.UserResponse{
-		Id:              user.UserId,
-		Name:            user.Name,
-		FollowCount:     followCount,
-		FollowerCount:   followerCount,
-		IsFollow:        false,
-		Avatar:          user.Avatar,
-		BackgroundImage: user.BackgroundImage,
-		Signature:       user.Signature,
-		TotalFavorited:  "0",
-		WorkCount:       0, //todo
-		FavoriteCount:   0,
+		Id:            user.UserId,
+		Name:          user.Name,
+		FollowCount:   followCount,
+		FollowerCount: followerCount,
+		IsFollow:      false,
+		//todo
+		//Avatar:          user.Avatar,
+		//BackgroundImage: user.BackgroundImage,
+		//Signature:       user.Signature,
+		//TotalFavorited:  "0",
+		WorkCount:     0, //todo
+		FavoriteCount: 0,
 	}
 	return userResponse, true
 }
