@@ -12,7 +12,7 @@ import (
 func Feed(c *gin.Context) {
 	_ = c.Query("token") //TODO 视频流客户端传递这个参数，用处Token续签、未登录的情况下查询关注返回false
 	latestTime := c.Query("latest_time")
-	if latestTime == "" || latestTime == "0" {
+	if latestTime == "" || latestTime <= "0" {
 		latestTime = strconv.FormatInt(time.Now().Unix(), 10)
 	}
 	videoList, nextTime, err := service.GetFeedList(latestTime)
