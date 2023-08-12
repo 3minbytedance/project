@@ -51,14 +51,14 @@ func RegisterUserInfo(username string, password string) (int32, string, uint) {
 
 	// 数据入库
 	DB.Create(&user)
-	fmt.Println("<<<<<<<<<id: ", user.Id)
-	return 0, "注册成功", user.Id
+	fmt.Println("<<<<<<<<<id: ", user.UserId)
+	return 0, "注册成功", user.UserId
 }
 
 func CreateUser(user *models.User) (id uint, err error) {
 	// 数据入库
 	err = DB.Create(&user).Error
-	id = user.Id
+	id = user.UserId
 	return
 
 }

@@ -77,10 +77,10 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	Token := utils.GenerateToken(user.Id, username)
+	Token := utils.GenerateToken(user.UserId, username)
 	c.JSON(http.StatusOK, models.UserLoginResponse{
 		Response: models.Response{StatusCode: 0, StatusMsg: "登录成功"},
-		UserId:   int64(user.Id),
+		UserId:   int64(user.UserId),
 		Token:    Token,
 	})
 }
