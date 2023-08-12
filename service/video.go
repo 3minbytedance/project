@@ -195,7 +195,7 @@ func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 		videoResponses = append(videoResponses, videoResponse)
 	}
 	//本次返回的视频中，发布最早的时间
-	nextTime := videos[len(videos)-1].CreatedAt.Unix()
+	nextTime := videos[len(videos)-1].CreatedAt
 	return videoResponses, nextTime, nil
 }
 

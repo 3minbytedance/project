@@ -14,6 +14,7 @@ var (
 	messageProducer *kafka.Writer
 	messageConsumer *kafka.Reader
 	topic           = "messages"
+	groupId         = "message_group"
 )
 
 func InitMessageKafka() {
@@ -23,7 +24,7 @@ func InitMessageKafka() {
 
 	// 创建 Message 业务的生产者和消费者实例
 	messageProducer = kafkaManager.NewProducer(topic)
-	messageConsumer = kafkaManager.NewConsumer(topic, "message_group")
+	messageConsumer = kafkaManager.NewConsumer(topic, groupId)
 
 	go Consume()
 }
