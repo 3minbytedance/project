@@ -38,7 +38,8 @@ func Publish(c *gin.Context) {
 		return
 	}
 
-	if err = service.UploadVideo(file); err != nil {
+	videoFileName, err := service.UploadVideo(file)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, models.Response{
 			StatusCode: 400,
 			StatusMsg:  "上传失败"})
@@ -49,8 +50,9 @@ func Publish(c *gin.Context) {
 		StatusMsg:  codeMsgMap[CodeSuccess]})
 
 	// MQ 异步解耦,解决返回json阻塞 TODO
-	service.GetVideoCover()
-	service.StoreVideoAndImg()
+
+	imgName := service.GetVideoCover(videoFileName)
+	service.StoreVideoAndImg(videoFileName, imgName, userId, title)
 }
 
 // GetPublishList 每个用户的自己的发布列表
@@ -62,8 +64,8 @@ func GetPublishList(c *gin.Context) {
 			StatusMsg:  codeMsgMap[CodeInvalidParam]})
 		return
 	}
-	videoList, err := service.GetPublishList(uint(userID))
-	if err != nil {
+	videoList, found := service.GetPublishList(uint(userID))
+	if !found {
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: int32(CodeInvalidParam),
 			StatusMsg:  codeMsgMap[CodeInvalidParam],

@@ -17,23 +17,23 @@ import (
 	"strings"
 )
 
-func UploadVideo(file *multipart.FileHeader) error {
+func UploadVideo(file *multipart.FileHeader) (string, error) {
 	// 生成 UUID
-	id := uuid.New().String()
+	fileId := strings.Replace(uuid.New().String(), "-", "", -1)
 
 	// 修改文件名
-	fileName := strings.Replace(id, "-", "", -1) + ".mp4"
+	fileName := fileId + ".mp4"
 
 	// 创建临时文件
 	tmpfile, err := createTempFile(fileName)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// 打开上传的文件
 	src, err := file.Open()
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer src.Close()
 
@@ -43,14 +43,14 @@ func UploadVideo(file *multipart.FileHeader) error {
 	// 将上传的文件内容写入临时文件
 	_, err = io.Copy(writer, src)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// 清空缓冲区并确保文件已写入磁盘
 	if err = writer.Flush(); err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return fileName, nil
 }
 
 func createTempFile(fileName string) (*os.File, error) {
@@ -99,17 +99,18 @@ func UploadToOSS(localPath string, remotePath string) error {
 	return nil
 }
 
-func GetVideoCover(fileName string) {
+func GetVideoCover(fileName string) string {
 	// 生成图片 UUID
 	imgId := uuid.New().String()
 	// 修改文件名
 	imgName := strings.Replace(imgId, "-", "", -1) + ".jpg"
 	//调用ffmpeg 获取封面图
 	utils.GetVideoFrame("/dumpfile/"+fileName, "/dumpfile/"+imgName)
+	return imgName
 }
 
 // todo
-func StoreVideoAndImg(videoUrl string, coverUrl string, authorID uint, title string) {
+func StoreVideoAndImg(videoName string, imgName string, authorId uint, title string) {
 	// 视频存储到oss
 	//if err := UploadToOSS("/dumpfile/"+fileName, fileName); err != nil {
 	//	log.Fatal(err)
@@ -122,7 +123,7 @@ func StoreVideoAndImg(videoUrl string, coverUrl string, authorID uint, title str
 	//	return
 	//}
 
-	mysql.InsertVideo(videoUrl, coverUrl, authorID, title)
+	mysql.InsertVideo(videoName, imgName, authorId, title)
 }
 
 func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
