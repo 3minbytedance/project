@@ -1,11 +1,15 @@
 package service
 
 import (
+	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
+	"github.com/spf13/viper"
 	cos "github.com/tencentyun/cos-go-sdk-v5"
+	"io"
+	"log"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -13,17 +17,75 @@ import (
 	"project/models"
 	"project/utils"
 	"strings"
+	"sync"
 )
+
+// todo io优化，待测
+func UploadIOVideo(file *multipart.FileHeader) (string, error) {
+	// 生成 UUID
+	fileId := strings.Replace(uuid.New().String(), "-", "", -1)
+
+	// 修改文件名
+	fileName := fileId + ".mp4"
+
+	// 创建临时文件
+	tempFile, err := createTempFile(fileName)
+	if err != nil {
+		return "", err
+	}
+
+	// 打开上传的文件
+	src, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+	defer src.Close()
+
+	// 创建缓冲写入器
+	dest := bufio.NewWriter(tempFile)
+
+	// 将上传的文件内容写入临时文件
+	_, err = io.Copy(dest, src)
+	if err != nil {
+		return "", err
+	}
+
+	// 清空缓冲区并确保文件已写入磁盘
+	if err = dest.Flush(); err != nil {
+		return "", err
+	}
+	return fileName, nil
+}
+
+func createTempFile(fileName string) (*os.File, error) {
+	tempDir := "./public/" // 临时文件夹路径
+
+	// 创建临时文件夹（如果不存在）
+	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
+		err := os.Mkdir(tempDir, 0755)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// 在临时文件夹中创建临时文件
+	tmpfile, err := os.Create(tempDir + fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return tmpfile, nil
+}
 
 // UploadToOSS  上传至腾讯OSS
 func UploadToOSS(localPath string, remotePath string) error {
-	req_url := "https://tiktok-1319971229.cos.ap-nanjing.myqcloud.com"
-	u, _ := url.Parse(req_url)
+	reqUrl := viper.GetString("oss.tencent")
+	u, _ := url.Parse(reqUrl)
 	b := &cos.BaseURL{BucketURL: u}
 	c := cos.NewClient(b, &http.Client{
 		Transport: &cos.AuthorizationTransport{
-			SecretID:     "AKIDFKMQPakpcN6tkV9oJg6PanzAGC0hGkCZ",
-			SecretKey:    "MWXXLzQlutgMtLl5HH9pPp5CB0cfcMxR",
+			SecretID:     viper.GetString("oss.SecretID"),
+			SecretKey:    viper.GetString("oss.SecretKey"),
 			SessionToken: "SECRETTOKEN",
 		},
 	})
@@ -53,20 +115,32 @@ func GetVideoCover(fileName string) string {
 
 // todo
 func StoreVideoAndImg(videoName string, imgName string, authorId uint, title string) {
-	// 视频存储到oss
-	//if err := UploadToOSS("/dumpfile/"+fileName, fileName); err != nil {
-	//	log.Fatal(err)
-	//	return
-	//}
-	//
-	//// 图片存储到oss
-	//if err := UploadToOSS("/dumpfile/"+imgName, imgName); err != nil {
-	//	log.Fatal(err)
-	//	return
-	//}
-	fmt.Println(videoName, imgName, authorId, title)
+	//视频存储到oss
+	var wg sync.WaitGroup
+	wg.Add(3)
+	go func() {
+		defer wg.Done()
+		if err := UploadToOSS("./public/"+videoName, videoName); err != nil {
+			log.Fatal(err)
+			return
+		}
+	}()
 
-	mysql.InsertVideo(videoName, imgName, authorId, title)
+	// 图片存储到oss
+	go func() {
+		defer wg.Done()
+		if err := UploadToOSS("./public/"+imgName, imgName); err != nil {
+			log.Fatal(err)
+			return
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		mysql.InsertVideo(videoName, imgName, authorId, title)
+		//TODO redis用户上传的视频数+1
+	}()
+	wg.Wait()
 }
 
 func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
