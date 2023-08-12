@@ -53,28 +53,28 @@ func DecreaseFollowCountByUserId(userId uint) error {
 
 // 给videoId对应的粉丝数加一
 func IncreaseFollowerCountByUserId(userId uint) error {
-	key := Video + fmt.Sprintf("%d", userId)
+	key := User + fmt.Sprintf("%d", userId)
 	_, err := Rdb.HIncrBy(Ctx, key, KeyFollowerCount, 1).Result()
 	return err
 }
 
 // 给videoId对应的粉丝数减一
 func DecreaseFollowerCountByUserId(userId uint) error {
-	key := Video + fmt.Sprintf("%d", userId)
+	key := User + fmt.Sprintf("%d", userId)
 	_, err := Rdb.HIncrBy(Ctx, key, KeyFollowerCount, -1).Result()
 	return err
 }
 
 // 设置关注数
 func SetFollowCountByUserId(userid uint, count int64) error {
-	key := Video + fmt.Sprintf("%d", userid)
+	key := User + fmt.Sprintf("%d", userid)
 	err := Rdb.HSet(Ctx, key, KeyFollowCount, count).Err()
 	return err
 }
 
 // 设置粉丝数
 func SetFollowerCountByUserId(userid uint, count int64) error {
-	key := Video + fmt.Sprintf("%d", userid)
+	key := User + fmt.Sprintf("%d", userid)
 	err := Rdb.HSet(Ctx, key, KeyFollowerCount, count).Err()
 	return err
 }

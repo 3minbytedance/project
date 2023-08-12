@@ -12,7 +12,7 @@ type User struct {
 	Password        string // 用户密码
 	Avatar          string // 用户头像
 	BackgroundImage string // 用户个人页顶部大图
-	Signature       string // 个人简介
+	Signature       string `default:"默认签名"` // 个人简介
 	Salt            string // 加密盐
 	CreatedAt       time.Time
 	UpdatedAt       time.Time

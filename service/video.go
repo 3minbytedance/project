@@ -20,6 +20,8 @@ import (
 	"sync"
 )
 
+const oss = "https://tiktok-1319971229.cos.ap-nanjing.myqcloud.com/"
+
 // todo io优化，待测
 func UploadIOVideo(file *multipart.FileHeader) (string, error) {
 	// 生成 UUID
@@ -156,8 +158,8 @@ func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
 		videoResponse := models.VideoResponse{
 			Id:            video.VideoId,
 			Author:        user,
-			PlayUrl:       video.VideoUrl,
-			CoverUrl:      video.CoverUrl,
+			PlayUrl:       oss + video.VideoUrl,
+			CoverUrl:      oss + video.CoverUrl,
 			FavoriteCount: 0, // TODO
 			CommentCount:  commentCount,
 			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
@@ -182,8 +184,8 @@ func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 		videoResponse := models.VideoResponse{
 			Id:            video.VideoId,
 			Author:        user,
-			PlayUrl:       video.VideoUrl,
-			CoverUrl:      video.CoverUrl,
+			PlayUrl:       oss + video.VideoUrl,
+			CoverUrl:      oss + video.CoverUrl,
 			FavoriteCount: 0, // TODO
 			CommentCount:  commentCount,
 			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
@@ -200,4 +202,4 @@ func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 
 func getFavoriteCount(uint) uint { return 1 }
 
-func isUserFavorite(uint, uint) bool { return true }
+func isUserFavorite(uint, uint) bool { return false }
