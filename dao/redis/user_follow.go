@@ -39,14 +39,14 @@ func GetFollowerCountById(userId uint) (int, error) {
 
 // 给Id对应的关注数加一
 func IncreaseFollowCountByUserId(userId uint) error {
-	key := Video + fmt.Sprintf("%d", userId)
+	key := User + fmt.Sprintf("%d", userId)
 	_, err := Rdb.HIncrBy(Ctx, key, KeyFollowCount, 1).Result()
 	return err
 }
 
 // 给Id对应的关注数减一
 func DecreaseFollowCountByUserId(userId uint) error {
-	key := Video + fmt.Sprintf("%d", userId)
+	key := User + fmt.Sprintf("%d", userId)
 	_, err := Rdb.HIncrBy(Ctx, key, KeyFollowCount, -1).Result()
 	return err
 }

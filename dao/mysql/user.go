@@ -12,12 +12,13 @@ func FindUserByName(name string) (user models.User, exist bool) {
 	return user, DB.Where("name = ?", name).First(&user).RowsAffected != 0
 }
 
-func FindUserByID(id uint) (models.User, bool) {
+func FindUserByUserID(id uint) (models.User, bool) {
 	user := models.User{}
-	return user, DB.Where("id = ?", id).First(&user).RowsAffected != 0
+	return user, DB.Where("user_id = ?", id).First(&user).RowsAffected != 0
 }
 
 // TODO 待改
+<<<<<<< HEAD
 func CheckUserRegisterInfo(username string, password string) (int32, string) {
 
 	if len(username) == 0 || len(username) > 32 {
@@ -36,6 +37,8 @@ func CheckUserRegisterInfo(username string, password string) (int32, string) {
 }
 
 // TODO 待改
+=======
+>>>>>>> develop
 func RegisterUserInfo(username string, password string) (int32, string, uint) {
 
 	user := models.User{}
@@ -51,13 +54,18 @@ func RegisterUserInfo(username string, password string) (int32, string, uint) {
 
 	// 数据入库
 	DB.Create(&user)
+<<<<<<< HEAD
 	return 0, "注册成功", user.Id
+=======
+	fmt.Println("<<<<<<<<<id: ", user.UserId)
+	return 0, "注册成功", user.UserId
+>>>>>>> develop
 }
 
 func CreateUser(user *models.User) (id uint, err error) {
 	// 数据入库
 	err = DB.Create(&user).Error
-	id = user.Id
+	id = user.UserId
 	return
 
 }

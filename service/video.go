@@ -1,77 +1,19 @@
 package service
 
 import (
-	"bufio"
 	"context"
+	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	cos "github.com/tencentyun/cos-go-sdk-v5"
-	"io"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
 	"project/dao/mysql"
-	"project/dao/redis"
 	"project/models"
 	"project/utils"
 	"strings"
 )
-
-func UploadVideo(file *multipart.FileHeader) error {
-	// 生成 UUID
-	id := uuid.New().String()
-
-	// 修改文件名
-	fileName := strings.Replace(id, "-", "", -1) + ".mp4"
-
-	// 创建临时文件
-	tmpfile, err := createTempFile(fileName)
-	if err != nil {
-		return err
-	}
-
-	// 打开上传的文件
-	src, err := file.Open()
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-
-	// 创建缓冲写入器
-	writer := bufio.NewWriter(tmpfile)
-
-	// 将上传的文件内容写入临时文件
-	_, err = io.Copy(writer, src)
-	if err != nil {
-		return err
-	}
-
-	// 清空缓冲区并确保文件已写入磁盘
-	if err = writer.Flush(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func createTempFile(fileName string) (*os.File, error) {
-	tmpDir := "/dumpfile" // 临时文件夹路径
-
-	// 创建临时文件夹（如果不存在）
-	if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
-		err := os.Mkdir(tmpDir, 0755)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// 在临时文件夹中创建临时文件
-	tmpfile, err := os.CreateTemp(tmpDir, fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	return tmpfile, nil
-}
 
 // UploadToOSS  上传至腾讯OSS
 func UploadToOSS(localPath string, remotePath string) error {
@@ -99,31 +41,33 @@ func UploadToOSS(localPath string, remotePath string) error {
 	return nil
 }
 
-func GetVideoCover(fileName string) {
+func GetVideoCover(fileName string) string {
 	// 生成图片 UUID
 	imgId := uuid.New().String()
 	// 修改文件名
 	imgName := strings.Replace(imgId, "-", "", -1) + ".jpg"
 	//调用ffmpeg 获取封面图
-	utils.GetVideoFrame("/dumpfile/"+fileName, "/dumpfile/"+imgName)
+	utils.GetVideoFrame("./public/"+fileName, "./public/"+imgName)
+	return imgName
 }
 
-// TODO
-//func StoreVideoAndImg(videoUrl string, coverUrl string, authorID uint, title string) {
-//	// 视频存储到oss
-//	if err := UploadToOSS("/dumpfile/"+fileName, fileName); err != nil {
-//		log.Fatal(err)
-//		return
-//	}
-//
-//	// 图片存储到oss
-//	if err := UploadToOSS("/dumpfile/"+imgName, imgName); err != nil {
-//		log.Fatal(err)
-//		return
-//	}
-//
-//	mysql.InsertVideo(videoUrl, coverUrl, authorID, title)
-//}
+// todo
+func StoreVideoAndImg(videoName string, imgName string, authorId uint, title string) {
+	// 视频存储到oss
+	//if err := UploadToOSS("/dumpfile/"+fileName, fileName); err != nil {
+	//	log.Fatal(err)
+	//	return
+	//}
+	//
+	//// 图片存储到oss
+	//if err := UploadToOSS("/dumpfile/"+imgName, imgName); err != nil {
+	//	log.Fatal(err)
+	//	return
+	//}
+	fmt.Println(videoName, imgName, authorId, title)
+
+	mysql.InsertVideo(videoName, imgName, authorId, title)
+}
 
 func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
 	videos, found := mysql.FindVideosByAuthorId(userID)
@@ -141,8 +85,9 @@ func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
 			PlayUrl:       video.VideoUrl,
 			CoverUrl:      video.CoverUrl,
 			FavoriteCount: 0, // TODO
-			CommentCount:  int(commentCount),
+			CommentCount:  int64(int(commentCount)),
 			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
+			Title:         video.Title,
 		}
 		videoResponses = append(videoResponses, videoResponse)
 	}
@@ -150,28 +95,33 @@ func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
 	return videoResponses, true
 }
 
-// TODO
-func GetFeedList(latestTime string) ([]models.VideoResponse, string, error) {
+func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 	videos := mysql.GetLatestVideos(latestTime)
+	if len(videos) == 0 {
+		return []models.VideoResponse{}, 0, errors.New("no videos")
+	}
 	// 将查询结果转换为VideoResponse类型
 	var videoResponses []models.VideoResponse
 	for _, video := range videos {
-		// todo 待改
-		user, _ := GetUserInfoByUserId(11)
-		commentCount, _ := redis.GetCommentCountByVideoId(video.VideoId)
+		user, _ := GetUserInfoByUserId(video.AuthorId)
+		commentCount, _ := GetCommentCount(video.VideoId)
 		videoResponse := models.VideoResponse{
 			Id:            video.VideoId,
 			Author:        user,
 			PlayUrl:       video.VideoUrl,
 			CoverUrl:      video.CoverUrl,
 			FavoriteCount: 0, // TODO
-			CommentCount:  int(commentCount),
+			CommentCount:  int64(int(commentCount)),
 			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
+			Title:         video.Title,
 		}
+
 		videoResponses = append(videoResponses, videoResponse)
 	}
-	//
-	return videoResponses, "111", nil
+	//本次返回的视频中，发布最早的时间
+	nextTime := videos[len(videos)-1].CreatedAt.Unix()
+
+	return videoResponses, nextTime, nil
 }
 
 func getFavoriteCount(uint) uint { return 1 }
