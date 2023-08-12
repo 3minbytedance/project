@@ -43,5 +43,4 @@ func CreateUser(user *models.User) (id uint, err error) {
 	err = DB.Create(&user).Error
 	id = user.ID
 	return
-
 }

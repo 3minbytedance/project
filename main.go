@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"project/config"
+	"project/controller"
 	"project/dao/mongo"
 	"project/dao/mysql"
 	"project/dao/redis"
@@ -42,6 +43,9 @@ func main() {
 	//先关掉 TODO
 	//// 5. 初始化Kafka
 	//kafka.InitMessageKafka()
+
+	//准备数据
+	controller.PrepareData()
 
 	// 初始化gin引擎
 	r := gin.Default()
