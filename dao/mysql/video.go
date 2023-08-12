@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"project/models"
+	"strconv"
 	"time"
 )
 
@@ -35,7 +36,8 @@ func InsertVideo(videoUrl string, coverUrl string, authorID uint, title string) 
 
 func GetLatestVideos(latestTime string) []models.Video {
 	var videos []models.Video
-	result := DB.Where("created_at < ?", latestTime).Order("created_at DESC").Limit(30).Find(&videos)
+	unix, _ := strconv.ParseInt(latestTime, 10, 64)
+	result := DB.Where("created_at < ?", time.Unix(unix, 0)).Order("created_at DESC").Limit(30).Find(&videos)
 	if result.Error != nil {
 		return []models.Video{}
 	}
