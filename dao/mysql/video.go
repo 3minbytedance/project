@@ -26,7 +26,7 @@ func InsertVideo(videoUrl string, coverUrl string, authorID uint, title string) 
 		VideoUrl:  videoUrl,
 		CoverUrl:  coverUrl,
 		Title:     title,
-		CreatedAt: time.Now().Unix(),
+		CreatedAt: time.Now(),
 	}
 	result := DB.Model(models.Video{}).Create(&video)
 	if result.Error != nil {
@@ -38,6 +38,7 @@ func InsertVideo(videoUrl string, coverUrl string, authorID uint, title string) 
 func GetLatestVideos(latestTime string) []models.Video {
 	var videos []models.Video
 	// 对传递来的latestTime进行格式化
+
 	latestTimeInt, err := strconv.ParseInt(latestTime, 10, 64)
 	if err != nil {
 		log.Println(err)
@@ -45,7 +46,7 @@ func GetLatestVideos(latestTime string) []models.Video {
 	}
 	latestTimeUnix := time.Unix(latestTimeInt, 0)
 
-	result := DB.Where("created_at > ?", latestTimeUnix).Order("created_at DESC").Limit(30).Find(&videos)
+	result := DB.Where("created_at < ?", latestTimeUnix).Order("created_at DESC").Limit(30).Find(&videos)
 	if result.Error != nil {
 		return []models.Video{}
 	}

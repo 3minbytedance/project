@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	cos "github.com/tencentyun/cos-go-sdk-v5"
@@ -196,8 +195,7 @@ func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 		videoResponses = append(videoResponses, videoResponse)
 	}
 	//本次返回的视频中，发布最早的时间
-	nextTime := videos[len(videos)-1].CreatedAt
-	fmt.Println(nextTime)
+	nextTime := videos[len(videos)-1].CreatedAt.Unix()
 	return videoResponses, nextTime, nil
 }
 
