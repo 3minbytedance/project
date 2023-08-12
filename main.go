@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"project/config"
-	"project/controller"
 	"project/dao/mongo"
 	"project/dao/mysql"
 	"project/dao/redis"
@@ -45,7 +44,7 @@ func main() {
 	kafka.InitMessageKafka()
 
 	// 准备数据
-	controller.PrepareData()
+	//controller.PrepareData()
 
 	// 初始化gin引擎
 	r := gin.Default()
@@ -54,5 +53,5 @@ func main() {
 	router.InitRouter(r)
 
 	// 启动服务
-	r.Run(fmt.Sprintf(":%d", config.Conf.Port)) // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	r.Run(fmt.Sprintf(":%d", config.Conf.Port))
 }

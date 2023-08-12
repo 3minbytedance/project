@@ -1,7 +1,7 @@
 package models
 
 type Message struct {
-	Id         uint   `json:"id,omitempty"`
+	ID         uint   `json:"id,omitempty"`
 	FromUserId uint   `json:"from_user_id"`
 	ToUserId   uint   `json:"to_user_id"`
 	Content    string `json:"content,omitempty"`

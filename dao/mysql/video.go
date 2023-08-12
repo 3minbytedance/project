@@ -1,7 +1,9 @@
 package mysql
 
 import (
+	"log"
 	"project/models"
+	"strconv"
 	"time"
 )
 
@@ -35,7 +37,15 @@ func InsertVideo(videoUrl string, coverUrl string, authorID uint, title string) 
 
 func GetLatestVideos(latestTime string) []models.Video {
 	var videos []models.Video
-	result := DB.Where("created_at < ?", latestTime).Order("created_at DESC").Limit(30).Find(&videos)
+	// 对传递来的latestTime进行格式化
+	latestTimeInt, err := strconv.ParseInt(latestTime, 10, 64)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	latestTimeUnix := time.Unix(latestTimeInt, 0)
+
+	result := DB.Where("created_at > ?", latestTimeUnix).Order("created_at DESC").Limit(30).Find(&videos)
 	if result.Error != nil {
 		return []models.Video{}
 	}

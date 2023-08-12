@@ -20,14 +20,14 @@ func Feed(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: int32(CodeInvalidParam),
-			StatusMsg:  codeMsgMap[CodeInvalidParam],
+			StatusMsg:  CodeInvalidParam.Msg(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, models.FeedListResponse{
 		Response: models.Response{
 			StatusCode: int32(CodeSuccess),
-			StatusMsg:  codeMsgMap[CodeSuccess],
+			StatusMsg:  CodeSuccess.Msg(),
 		},
 		NextTime:      nextTime,
 		VideoResponse: videoList,

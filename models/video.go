@@ -6,7 +6,7 @@ import (
 )
 
 type Video struct {
-	VideoId   uint `gorm:"primaryKey"`
+	ID        uint `gorm:"primaryKey"`
 	AuthorId  uint `gorm:"index"`
 	VideoUrl  string
 	CoverUrl  string
@@ -16,7 +16,7 @@ type Video struct {
 }
 
 type VideoResponse struct {
-	Id            uint         `json:"id"`
+	ID            uint         `json:"id"`
 	Author        UserResponse `json:"author"`
 	PlayUrl       string       `json:"play_url"`
 	CoverUrl      string       `json:"cover_url"`

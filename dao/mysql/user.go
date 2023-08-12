@@ -14,31 +14,11 @@ func FindUserByName(name string) (user models.User, exist bool) {
 
 func FindUserByUserID(id uint) (models.User, bool) {
 	user := models.User{}
-	return user, DB.Where("user_id = ?", id).First(&user).RowsAffected != 0
+	return user, DB.Where("id = ?", id).First(&user).RowsAffected != 0
 }
 
 // TODO 待改
-<<<<<<< HEAD
-func CheckUserRegisterInfo(username string, password string) (int32, string) {
 
-	if len(username) == 0 || len(username) > 32 {
-		return 1, "用户名不合法"
-	}
-
-	if len(password) <= 6 || len(password) > 32 {
-		return 2, "密码不合法"
-	}
-
-	if _, ok := FindUserByName(username); ok {
-		return 3, "用户已注册"
-	}
-
-	return 0, "合法"
-}
-
-// TODO 待改
-=======
->>>>>>> develop
 func RegisterUserInfo(username string, password string) (int32, string, uint) {
 
 	user := models.User{}
@@ -54,18 +34,14 @@ func RegisterUserInfo(username string, password string) (int32, string, uint) {
 
 	// 数据入库
 	DB.Create(&user)
-<<<<<<< HEAD
-	return 0, "注册成功", user.Id
-=======
-	fmt.Println("<<<<<<<<<id: ", user.UserId)
-	return 0, "注册成功", user.UserId
->>>>>>> develop
+	fmt.Println("<<<<<<<<<id: ", user.ID)
+	return 0, "注册成功", user.ID
 }
 
 func CreateUser(user *models.User) (id uint, err error) {
 	// 数据入库
 	err = DB.Create(&user).Error
-	id = user.UserId
+	id = user.ID
 	return
 
 }

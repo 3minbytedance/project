@@ -78,15 +78,15 @@ func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
 	var videoResponses []models.VideoResponse
 	for _, video := range videos {
 		user, _ := GetUserInfoByUserId(userID)
-		commentCount, _ := GetCommentCount(video.VideoId)
+		commentCount, _ := GetCommentCount(video.ID)
 		videoResponse := models.VideoResponse{
-			Id:            video.VideoId,
+			ID:            video.ID,
 			Author:        user,
 			PlayUrl:       video.VideoUrl,
 			CoverUrl:      video.CoverUrl,
 			FavoriteCount: 0, // TODO
 			CommentCount:  int64(int(commentCount)),
-			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
+			IsFavorite:    isUserFavorite(111, video.ID), // TODO  userId,videoID
 			Title:         video.Title,
 		}
 		videoResponses = append(videoResponses, videoResponse)
@@ -104,15 +104,15 @@ func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 	var videoResponses []models.VideoResponse
 	for _, video := range videos {
 		user, _ := GetUserInfoByUserId(video.AuthorId)
-		commentCount, _ := GetCommentCount(video.VideoId)
+		commentCount, _ := GetCommentCount(video.ID)
 		videoResponse := models.VideoResponse{
-			Id:            video.VideoId,
+			ID:            video.ID,
 			Author:        user,
 			PlayUrl:       video.VideoUrl,
 			CoverUrl:      video.CoverUrl,
 			FavoriteCount: 0, // TODO
 			CommentCount:  int64(int(commentCount)),
-			IsFavorite:    isUserFavorite(111, video.VideoId), // TODO  userId,videoID
+			IsFavorite:    isUserFavorite(111, video.ID), // TODO  userId,videoID
 			Title:         video.Title,
 		}
 

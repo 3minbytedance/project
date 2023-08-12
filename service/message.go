@@ -91,7 +91,7 @@ func SendMessage(fromUserId, toUserId uint, content string) (err error) {
 
 	// TODO 3、对数据进行非对称加密
 	messageData := &models.Message{
-		Id:         uint(atomic.AddInt64(&messageIdSequence, 1)),
+		ID:         uint(atomic.AddInt64(&messageIdSequence, 1)),
 		FromUserId: fromUserId,
 		ToUserId:   toUserId,
 		Content:    content,

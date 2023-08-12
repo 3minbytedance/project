@@ -1,27 +1,21 @@
 package models
 
-import (
-	"gorm.io/gorm"
-	"time"
-)
+import "gorm.io/gorm"
 
 type User struct {
 	// 用户的信息社交平台信息
-	UserId          uint   `gorm:"primaryKey"`          // 用户id
+	gorm.Model
 	Name            string `gorm:"uniqueIndex;size:32"` // 用户名称
 	Password        string // 用户密码
 	Avatar          string // 用户头像
 	BackgroundImage string // 用户个人页顶部大图
 	Signature       string // 个人简介
 	Salt            string // 加密盐
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	DeletedAt       gorm.DeletedAt
 }
 
 type UserResponse struct {
 	// 用户的信息社交平台信息
-	Id              uint   `json:"id"`               // 用户id
+	ID              uint   `json:"id"`               // 用户id
 	Name            string `json:"name"`             // 用户名称
 	FollowCount     int64  `json:"follow_count"`     // 关注总数
 	FollowerCount   int64  `json:"follower_count"`   // 粉丝总数

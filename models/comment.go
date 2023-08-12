@@ -9,7 +9,7 @@ import (
 
 // Comment 数据库Model
 type Comment struct {
-	CommentId uint `gorm:"primaryKey"`
+	ID        uint `gorm:"primaryKey"`
 	VideoId   uint `gorm:"index"` // 非唯一索引
 	UserId    uint `gorm:"index"` // 非唯一索引
 	Content   string

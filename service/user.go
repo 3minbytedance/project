@@ -31,7 +31,7 @@ func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
 	}
 
 	userResponse := models.UserResponse{
-		Id:              user.UserId,
+		ID:              user.ID,
 		Name:            user.Name,
 		FollowCount:     0,
 		FollowerCount:   0,
