@@ -7,7 +7,6 @@ import (
 	"project/dao/mysql"
 	"project/dao/redis"
 	"project/models"
-	"strconv"
 	"time"
 )
 
@@ -23,7 +22,6 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	if err != nil {
 		return models.CommentResponse{}, err
 	}
-	log.Println("===========CommentID: " + strconv.Itoa(int(commentData.ID)))
 
 	go func() {
 		// 如果当前video的commentCount为0，不确定是没有评论，还是评论刚刚过期，所以不能直接+1
@@ -92,6 +90,13 @@ func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
 		}
 		commentList = append(commentList, commentResp)
 	}
+
+	go func() {
+		err = redis.SetCommentCountByVideoId(videoId, int64(len(commentList)))
+		if err != nil {
+			log.Println("将评论数写入redis失败：", err.Error())
+		}
+	}()
 
 	return commentList, nil
 }

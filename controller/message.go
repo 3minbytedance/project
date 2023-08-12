@@ -30,7 +30,7 @@ func MessageAction(c *gin.Context) {
 		log.Println("Get user id from ctx err:", err)
 		return
 	}
-	err = service.SendMessage(uint(fromUserId), uint(toUserId), content)
+	err = service.SendMessage(fromUserId, uint(toUserId), content)
 	if err != nil {
 		c.JSON(http.StatusOK,
 			models.Response{

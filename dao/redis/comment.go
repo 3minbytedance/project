@@ -6,37 +6,33 @@ import (
 	"strconv"
 )
 
-const (
-	KeyCommentCount = "comment_count"
-)
-
 // GetCommentCountByVideoId 根据videoId查找评论数
 func GetCommentCountByVideoId(videoId uint) (int64, error) {
-	key := Video + fmt.Sprintf("%d", videoId)
-	count, err := Rdb.HGet(Ctx, key, KeyCommentCount).Result()
+	key := KeyVideoCommentCount + fmt.Sprintf("%d", videoId)
+	count, err := Rdb.HGet(Ctx, key, KeyVideoCommentCount).Result()
 	commentCount, _ := strconv.ParseInt(count, 10, 64)
 	return commentCount, err
 }
 
 // IncrementCommentCountByVideoId 给videoId对应的评论数加一
 func IncrementCommentCountByVideoId(videoId uint) error {
-	key := Video + fmt.Sprintf("%d", videoId)
+	key := KeyVideoCommentCount + fmt.Sprintf("%d", videoId)
 	//增加并返回评论数
-	_, err := Rdb.HIncrBy(Ctx, key, KeyCommentCount, 1).Result()
+	_, err := Rdb.HIncrBy(Ctx, key, KeyVideoCommentCount, 1).Result()
 	return err
 }
 
 // DecrementCommentCountByVideoId 给videoId对应的评论数减一
 func DecrementCommentCountByVideoId(videoId uint) error {
-	key := Video + fmt.Sprintf("%d", videoId)
+	key := KeyVideoCommentCount + fmt.Sprintf("%d", videoId)
 	//减少并返回评论数
-	_, err := Rdb.HIncrBy(Ctx, key, KeyCommentCount, -1).Result()
+	_, err := Rdb.HIncrBy(Ctx, key, KeyVideoCommentCount, -1).Result()
 	return err
 }
 
 func SetCommentCountByVideoId(videoId uint, commentCount int64) error {
-	key := Video + fmt.Sprintf("%d", videoId)
-	err := Rdb.HSet(Ctx, key, KeyCommentCount, commentCount).Err()
+	key := KeyVideoCommentCount + fmt.Sprintf("%d", videoId)
+	err := Rdb.HSet(Ctx, key, KeyVideoCommentCount, commentCount).Err()
 	return err
 }
 
