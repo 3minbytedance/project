@@ -12,7 +12,7 @@ const (
 )
 
 // 判断是否存在此建
-func Is_Exist(userId uint, s string) bool {
+func IsExist(userId uint, s string) bool {
 	key := User + fmt.Sprintf("%d", userId)
 	err := Rdb.Exists(Ctx, key, s).Err()
 	if err != nil {

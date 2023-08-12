@@ -15,7 +15,6 @@ func Feed(c *gin.Context) {
 	if latestTime == "" || latestTime == "0" {
 		latestTime = strconv.FormatInt(time.Now().Unix(), 10)
 	}
-
 	videoList, nextTime, err := service.GetFeedList(latestTime)
 	if err != nil {
 		c.JSON(http.StatusOK, models.Response{
