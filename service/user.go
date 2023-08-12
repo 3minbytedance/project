@@ -29,18 +29,25 @@ func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
 	if !exist {
 		return models.UserResponse{}, false
 	}
-
+	followCount, err := GetFollowCount(userId)
+	if err != nil {
+		return models.UserResponse{}, false
+	}
+	followerCount, err := GetFollowerCount(userId)
+	if err != nil {
+		return models.UserResponse{}, false
+	}
 	userResponse := models.UserResponse{
 		ID:              user.ID,
 		Name:            user.Name,
-		FollowCount:     0,
-		FollowerCount:   0,
+		FollowCount:     followCount,
+		FollowerCount:   followerCount,
 		IsFollow:        false,
-		Avatar:          "",
-		BackgroundImage: "",
-		Signature:       "",
+		Avatar:          user.Avatar,
+		BackgroundImage: user.BackgroundImage,
+		Signature:       user.Signature,
 		TotalFavorited:  "0",
-		WorkCount:       0,
+		WorkCount:       0, //todo
 		FavoriteCount:   0,
 	}
 	return userResponse, true

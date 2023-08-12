@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"net/http"
@@ -22,7 +21,7 @@ func Publish(c *gin.Context) {
 	token := c.PostForm("token")
 	title := c.PostForm("title")
 	file, err := c.FormFile("data")
-	if token == "" || title == "" || file.Size == 0 || err != nil {
+	if token == "" || title == "" || err != nil || file.Size == 0 {
 		c.JSON(http.StatusBadRequest, models.Response{
 			StatusCode: 400,
 			StatusMsg:  "参数错"})
@@ -69,7 +68,6 @@ func Publish(c *gin.Context) {
 	// MQ 异步解耦,解决返回json阻塞 TODO
 
 	imgName := service.GetVideoCover(videoFileName)
-	fmt.Println(imgName)
 	service.StoreVideoAndImg(videoFileName, imgName, userId, title)
 }
 

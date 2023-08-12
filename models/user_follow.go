@@ -1,11 +1,11 @@
 package models
 
-type User_follow struct {
+type UserFollow struct {
 	// 用户的关注信息
-	User_Id   uint `gorm:"primaryKey;not null"` // 用户id
-	Follow_Id uint `gorm:"not null"`            // 关注用户id
+	UserId   uint `gorm:"primaryKey;not null"` // 用户id
+	FollowId uint `gorm:"not null"`            // 关注用户id
 }
 
-func (*User_follow) TableName() string {
+func (*UserFollow) TableName() string {
 	return "user_follow"
 }
