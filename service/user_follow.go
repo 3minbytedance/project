@@ -43,7 +43,7 @@ func DeleteFollow(userId, followId uint) error {
 	return err
 }
 
-func GetFollowList(userId uint) ([]models.UserInfo, error) {
+func GetFollowList(userId uint) ([]models.UserResponse, error) {
 	follow, err := mysql.GetFollowList(userId)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func GetFollowList(userId uint) ([]models.UserInfo, error) {
 	return results, err
 }
 
-func GetFollowerList(userId uint) ([]models.UserInfo, error) {
+func GetFollowerList(userId uint) ([]models.UserResponse, error) {
 	follower, err := mysql.GetFollowerList(userId)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func GetFollowerList(userId uint) ([]models.UserInfo, error) {
 	return results, err
 }
 
-func GetFriendList(userId uint) ([]models.UserInfo, error) {
+func GetFriendList(userId uint) ([]models.UserResponse, error) {
 	follow, err := mysql.GetFollowList(userId)
 	if err != nil {
 		return nil, err
@@ -150,8 +150,8 @@ func intersection(a, b []uint) (c []uint) {
 }
 
 // 根据id获取model
-func GetUserModelByList(id []uint) ([]models.UserInfo, error) {
-	var results []models.UserInfo
+func GetUserModelByList(id []uint) ([]models.UserResponse, error) {
+	var results []models.UserResponse
 	for _, value := range id {
 		result, ok := GetUserInfoByUserId(value)
 		if !ok {

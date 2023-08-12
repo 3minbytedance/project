@@ -13,7 +13,7 @@ type User struct {
 	Avatar          string // 用户头像
 	BackgroundImage string // 用户个人页顶部大图
 	Signature       string // 个人简介
-	Salt            string //加密盐
+	Salt            string // 加密盐
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	DeletedAt       gorm.DeletedAt

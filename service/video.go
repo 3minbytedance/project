@@ -3,10 +3,10 @@ package service
 import (
 	"bufio"
 	"context"
+	"errors"
 	"github.com/google/uuid"
 	cos "github.com/tencentyun/cos-go-sdk-v5"
 	"io"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -111,16 +111,16 @@ func GetVideoCover(fileName string) {
 // todo
 func StoreVideoAndImg(videoUrl string, coverUrl string, authorID uint, title string) {
 	// 视频存储到oss
-	if err := UploadToOSS("/dumpfile/"+fileName, fileName); err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	// 图片存储到oss
-	if err := UploadToOSS("/dumpfile/"+imgName, imgName); err != nil {
-		log.Fatal(err)
-		return
-	}
+	//if err := UploadToOSS("/dumpfile/"+fileName, fileName); err != nil {
+	//	log.Fatal(err)
+	//	return
+	//}
+	//
+	//// 图片存储到oss
+	//if err := UploadToOSS("/dumpfile/"+imgName, imgName); err != nil {
+	//	log.Fatal(err)
+	//	return
+	//}
 
 	mysql.InsertVideo(videoUrl, coverUrl, authorID, title)
 }
@@ -153,6 +153,9 @@ func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
 
 func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 	videos := mysql.GetLatestVideos(latestTime)
+	if len(videos) == 0 {
+		return []models.VideoResponse{}, 0, errors.New("no videos")
+	}
 	// 将查询结果转换为VideoResponse类型
 	var videoResponses []models.VideoResponse
 	for _, video := range videos {

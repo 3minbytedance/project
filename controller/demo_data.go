@@ -93,22 +93,4 @@ func PrepareData() {
 		}
 		mysql.DB.Model(&models.Video{}).Create(&videos)
 	}
-	//if _, err := service.GetCommentList(videoId); err == nil {
-	//	// 没数据的时候
-	//	comments := []models.Comment{
-	//		{
-	//			VideoId: 1,
-	//			UserId:  2,
-	//			Content: "真棒"},
-	//		},
-	//		{
-	//			VideoId: 1,
-	//			UserId:  2,
-	//			Content: "厉害了厉害了",
-	//			Model:   gorm.Model{CreatedAt: time.Now()},
-	//		},
-	//	}
-	//
-	//	mysql.DB.Model(&models.Comment{}).Create(&comments)
-	//}
 }
