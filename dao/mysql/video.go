@@ -26,7 +26,7 @@ func InsertVideo(videoUrl string, coverUrl string, authorID uint, title string) 
 		VideoUrl:  videoUrl,
 		CoverUrl:  coverUrl,
 		Title:     title,
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().Unix(),
 	}
 	result := DB.Model(models.Video{}).Create(&video)
 	if result.Error != nil {

@@ -10,18 +10,6 @@ import (
 var ServerUrl = "https://" + os.Getenv("paas_url")
 var LocalUrl = "http://loaclhost:8080"
 
-var DemoVideos = []models.VideoResponse{
-	{
-		ID:            1,
-		Author:        DemoUser,
-		PlayUrl:       "https://www.w3schools.com/html/movie.mp4",
-		CoverUrl:      "https://cdn.pixabay.com/photo/2016/03/27/18/10/bear-1283347_1280.jpg",
-		FavoriteCount: 0,
-		CommentCount:  0,
-		IsFavorite:    false,
-	},
-}
-
 var DemoComments = []models.CommentResponse{
 	{
 		Id:         1,
@@ -77,19 +65,4 @@ func PrepareData() {
 		}
 	}
 
-	//// 新建数据
-	//videoId := uint(1)
-	//if _, b := mysql.FindVideoByVideoId(videoId); !b {
-	//	// 没数据的时候
-	//	videos := []models.Video{
-	//		{
-	//			AuthorId:  1,
-	//			VideoUrl:  "https://www.w3schools.com/html/movie.mp4",
-	//			CoverUrl:  "https://cdn.pixabay.com/photo/2016/03/27/18/10/bear-1283347_1280.jpg",
-	//			Title:     "hello world",
-	//			CreatedAt: time.Now(),
-	//		},
-	//	}
-	//	mysql.DB.Model(&models.Video{}).Create(&videos)
-	//}
 }
