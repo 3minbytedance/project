@@ -57,9 +57,9 @@ func PrepareData() {
 		}
 	}
 
-	table = mysql.DB.Migrator().HasTable(&models.Relations{})
+	table = mysql.DB.Migrator().HasTable(&models.UserFollow{})
 	if !table {
-		err := mysql.DB.AutoMigrate(&models.Relations{})
+		err := mysql.DB.AutoMigrate(&models.UserFollow{})
 		if err != nil {
 			fmt.Println("create relations table failed.")
 		}
