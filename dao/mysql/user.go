@@ -14,25 +14,7 @@ func FindUserByName(name string) (user models.User, exist bool) {
 
 func FindUserByUserID(id uint) (models.User, bool) {
 	user := models.User{}
-	return user, DB.Where("id = ?", id).First(&user).RowsAffected != 0
-}
-
-// TODO 待改
-func CheckUserRegisterInfo(username string, password string) (int32, string) {
-
-	if len(username) == 0 || len(username) > 32 {
-		return 1, "用户名不合法"
-	}
-
-	if len(password) <= 6 || len(password) > 32 {
-		return 2, "密码不合法"
-	}
-
-	if _, ok := FindUserByName(username); ok {
-		return 3, "用户已注册"
-	}
-
-	return 0, "合法"
+	return user, DB.Where("user_id = ?", id).First(&user).RowsAffected != 0
 }
 
 // TODO 待改

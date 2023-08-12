@@ -1,13 +1,11 @@
 package service
 
 import (
-	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	cos "github.com/tencentyun/cos-go-sdk-v5"
-	"io"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,62 +14,6 @@ import (
 	"project/utils"
 	"strings"
 )
-
-func UploadVideo(file *multipart.FileHeader) (string, error) {
-	// 生成 UUID
-	fileId := strings.Replace(uuid.New().String(), "-", "", -1)
-
-	// 修改文件名
-	fileName := fileId + ".mp4"
-
-	// 创建临时文件
-	tempFile, err := createTempFile(fileName)
-	if err != nil {
-		return "", err
-	}
-
-	// 打开上传的文件
-	src, err := file.Open()
-	if err != nil {
-		return "", err
-	}
-	defer src.Close()
-
-	// 创建缓冲写入器
-	dest := bufio.NewWriter(tempFile)
-
-	// 将上传的文件内容写入临时文件
-	_, err = io.Copy(dest, src)
-	if err != nil {
-		return "", err
-	}
-
-	// 清空缓冲区并确保文件已写入磁盘
-	if err = dest.Flush(); err != nil {
-		return "", err
-	}
-	return fileName, nil
-}
-
-func createTempFile(fileName string) (*os.File, error) {
-	tempDir := "./public/" // 临时文件夹路径
-
-	// 创建临时文件夹（如果不存在）
-	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
-		err := os.Mkdir(tempDir, 0755)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// 在临时文件夹中创建临时文件
-	tmpfile, err := os.Create(tempDir + fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	return tmpfile, nil
-}
 
 // UploadToOSS  上传至腾讯OSS
 func UploadToOSS(localPath string, remotePath string) error {
@@ -122,6 +64,7 @@ func StoreVideoAndImg(videoName string, imgName string, authorId uint, title str
 	//	log.Fatal(err)
 	//	return
 	//}
+	fmt.Println(videoName, imgName, authorId, title)
 
 	mysql.InsertVideo(videoName, imgName, authorId, title)
 }

@@ -9,7 +9,7 @@ import (
 const (
 	inputVideoPathOption = "-i"
 	startTimeOption      = "-ss"
-	startTime            = "1" // 截取第1秒的帧
+	startTime            = "00:00:01" // 截取第1秒的帧
 )
 
 func GetVideoFrame(videoPath string, outputPath string) {
@@ -19,16 +19,13 @@ func GetVideoFrame(videoPath string, outputPath string) {
 	}
 
 	// 设置 ffmpeg 命令行参数，获取第1s的帧
-	args := []string{inputVideoPathOption, videoPath, startTimeOption, startTime, outputPath}
+	args := []string{inputVideoPathOption, videoPath, startTimeOption, startTime, "-vframes", "1", outputPath}
 
 	// 创建 *exec.Cmd
 	cmd := exec.Command("ffmpeg", args...)
 
 	// 运行 ffmpeg 命令
-	if err := cmd.Run(); err != nil {
-		log.Fatal(err)
-		return
-	}
+	cmd.Run()
 }
 
 // Transcoding 转为h264
