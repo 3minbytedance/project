@@ -43,9 +43,6 @@ func main() {
 	// 5. 初始化Kafka
 	kafka.InitMessageKafka()
 
-	// 准备数据
-	//controller.PrepareData()
-
 	// 初始化gin引擎
 	r := gin.Default()
 

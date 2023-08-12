@@ -2,7 +2,6 @@ package models
 
 import (
 	"gorm.io/gorm"
-	"time"
 )
 
 type Video struct {
@@ -11,7 +10,7 @@ type Video struct {
 	VideoUrl  string
 	CoverUrl  string
 	Title     string
-	CreatedAt time.Time
+	CreatedAt int64 `gorm:"autoCreateTime"`
 	DeletedAt gorm.DeletedAt
 }
 
