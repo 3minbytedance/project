@@ -83,8 +83,8 @@ func GetFollowCount(userID uint) (int64, error) {
 	if redis.Is_Exist(userID, redis.KeyFollowCount) {
 		count, err := redis.GetFollowCountById(userID)
 		if err != nil {
-			log.Println("从redis中获取失败：", err)
-			return 0, err
+			log.Println("从redis中获取关注数失败：", err)
+			//return 0, err
 		}
 		return int64(count), nil
 	}
@@ -111,8 +111,8 @@ func GetFollowerCount(userID uint) (int64, error) {
 	if redis.Is_Exist(userID, redis.KeyFollowerCount) {
 		count, err := redis.GetFollowerCountById(userID)
 		if err != nil {
-			log.Println("从redis中获取失败：", err)
-			return 0, err
+			log.Println("从redis中获取粉丝数失败：", err)
+			//return 0, err
 		}
 		return int64(count), nil
 	}
@@ -120,15 +120,15 @@ func GetFollowerCount(userID uint) (int64, error) {
 	// 2. 缓存中没有数据，从数据库中获取
 	num, err := mysql.GetFollowerCnt(userID)
 	if err != nil {
-		log.Println("从数据库中获取关注数失败：", err.Error())
+		log.Println("从数据库中获取粉丝数失败：", err.Error())
 		return 0, nil
 	}
-	log.Println("从数据库中获取关注数成功：", num)
+	log.Println("从数据库中获取粉丝数成功：", num)
 	// 将评论数写入redis
 	go func() {
 		err = redis.SetFollowerCountByUserId(userID, num)
 		if err != nil {
-			log.Println("将评论数写入redis失败：", err.Error())
+			log.Println("将粉丝数写入redis失败：", err.Error())
 		}
 	}()
 	return num, nil

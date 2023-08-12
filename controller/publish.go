@@ -30,7 +30,7 @@ func Publish(c *gin.Context) {
 	userToken, _ := utils.ParseToken(token)
 	userId := userToken.ID
 	// 校验文件类型
-	ext := filepath.Ext(file.Filename)
+	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if !isValidFileType(ext) {
 		c.JSON(http.StatusBadRequest, models.Response{
 			StatusCode: 400,

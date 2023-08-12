@@ -32,3 +32,6 @@ __debug_bin
 .project
 tmp/
 .tmp/
+
+# Ignore .DS_Store files
+.DS_Store
