@@ -13,7 +13,7 @@ const (
 )
 
 func GetVideoFrame(videoPath string, outputPath string) {
-	if videoPath == "" {
+	if videoPath == "" || outputPath == "" {
 		log.Fatal("路径未指定")
 		return
 	}
@@ -31,6 +31,7 @@ func GetVideoFrame(videoPath string, outputPath string) {
 	}
 }
 
+// Transcoding 转为h264
 func Transcoding(src string, dst string, overwrite bool) {
 	args := []string{inputVideoPathOption, src, "-c:v", "libx264", "-strict", "-2", dst}
 	if overwrite {

@@ -25,7 +25,7 @@ func UploadVideo(file *multipart.FileHeader) (string, error) {
 	fileName := fileId + ".mp4"
 
 	// 创建临时文件
-	tmpfile, err := createTempFile(fileName)
+	tempFile, err := createTempFile(fileName)
 	if err != nil {
 		return "", err
 	}
@@ -38,34 +38,34 @@ func UploadVideo(file *multipart.FileHeader) (string, error) {
 	defer src.Close()
 
 	// 创建缓冲写入器
-	writer := bufio.NewWriter(tmpfile)
+	dest := bufio.NewWriter(tempFile)
 
 	// 将上传的文件内容写入临时文件
-	_, err = io.Copy(writer, src)
+	_, err = io.Copy(dest, src)
 	if err != nil {
 		return "", err
 	}
 
 	// 清空缓冲区并确保文件已写入磁盘
-	if err = writer.Flush(); err != nil {
+	if err = dest.Flush(); err != nil {
 		return "", err
 	}
 	return fileName, nil
 }
 
 func createTempFile(fileName string) (*os.File, error) {
-	tmpDir := "/dumpfile" // 临时文件夹路径
+	tempDir := "./public/" // 临时文件夹路径
 
 	// 创建临时文件夹（如果不存在）
-	if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
-		err := os.Mkdir(tmpDir, 0755)
+	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
+		err := os.Mkdir(tempDir, 0755)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	// 在临时文件夹中创建临时文件
-	tmpfile, err := os.CreateTemp(tmpDir, fileName)
+	tmpfile, err := os.Create(tempDir + fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func GetVideoCover(fileName string) string {
 	// 修改文件名
 	imgName := strings.Replace(imgId, "-", "", -1) + ".jpg"
 	//调用ffmpeg 获取封面图
-	utils.GetVideoFrame("/dumpfile/"+fileName, "/dumpfile/"+imgName)
+	utils.GetVideoFrame("./public/"+fileName, "./public/"+imgName)
 	return imgName
 }
 
