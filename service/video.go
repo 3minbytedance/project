@@ -161,7 +161,7 @@ func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
 			PlayUrl:       oss + video.VideoUrl,
 			CoverUrl:      oss + video.CoverUrl,
 			FavoriteCount: 0, // TODO
-			CommentCount:  int64(int(commentCount)),
+			CommentCount:  commentCount,
 			IsFavorite:    isUserFavorite(111, video.ID), // TODO  userId,videoID
 			Title:         video.Title,
 		}
@@ -187,7 +187,7 @@ func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 			PlayUrl:       oss + video.VideoUrl,
 			CoverUrl:      oss + video.CoverUrl,
 			FavoriteCount: 0, // TODO
-			CommentCount:  int64(int(commentCount)),
+			CommentCount:  commentCount,
 			IsFavorite:    isUserFavorite(111, video.ID), // TODO  userId,videoID
 			Title:         video.Title,
 		}

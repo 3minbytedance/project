@@ -1,6 +1,6 @@
 package redis
 
-const KeyVideoCommentCount = "video_comment_count:"
+const Video = "video_"
 
 const VideoPage = "video_page_"
 
