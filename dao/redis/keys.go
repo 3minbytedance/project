@@ -23,6 +23,8 @@ const (
 	FavoriteCountField = "favorite_count"  //喜欢数
 	FollowCountField   = "follow_count"    //关注数
 	FollowerCountField = "follower_count"  //粉丝数
+	FollowList         = "follow_list"     //关注列表
+	FollowerList       = "follower_list"   //粉丝列表
 )
 
 const VideoPage = "video_page_"
@@ -48,6 +50,19 @@ func IsExistVideoField(videoId uint, field string) bool {
 		return false
 	}
 	if !exists {
+		return false
+	}
+	return true
+}
+
+func IsExistUserSetField(userId uint, field string) bool {
+	key := fmt.Sprintf("%d_%S", userId, field)
+	exists, err := Rdb.Exists(Ctx, key).Result()
+	if err != nil {
+		log.Println("redis isExistUser 连接失败")
+		return false
+	}
+	if exists == 0 {
 		return false
 	}
 	return true
