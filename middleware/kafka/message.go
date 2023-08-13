@@ -4,25 +4,23 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/segmentio/kafka-go"
 	"log"
 	"project/dao/mongo"
 	"project/models"
 )
 
 type MessageMQ struct {
-	Topic    string
-	GroupId  string
-	Producer *kafka.Writer
-	Consumer *kafka.Reader
+	MQ
 }
 
 var MessageMQInstance *MessageMQ
 
 func InitMessageKafka() {
 	MessageMQInstance = &MessageMQ{
-		Topic:   "messages",
-		GroupId: "message_group",
+		MQ{
+			Topic:   "messages",
+			GroupId: "message_group",
+		},
 	}
 
 	// 创建 Message 业务的生产者和消费者实例

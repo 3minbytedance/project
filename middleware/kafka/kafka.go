@@ -8,7 +8,18 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+type Manager struct {
+	Brokers []string
+}
+
 var kafkaManager *Manager
+
+type MQ struct {
+	Topic    string
+	GroupId  string
+	Producer *kafka.Writer
+	Consumer *kafka.Reader
+}
 
 func Init() {
 	// 初始化 Kafka Manager
@@ -17,10 +28,7 @@ func Init() {
 
 	InitMessageKafka()
 	InitCommentKafka()
-}
-
-type Manager struct {
-	Brokers []string
+	InitVideoKafka()
 }
 
 func NewKafkaManager(brokers []string) *Manager {

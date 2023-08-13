@@ -4,17 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/segmentio/kafka-go"
 	"log"
 	"project/dao/mysql"
 	"project/models"
 )
 
 type CommentMQ struct {
-	Topic    string
-	GroupId  string
-	Producer *kafka.Writer
-	Consumer *kafka.Reader
+	MQ
 }
 
 var (
@@ -23,8 +19,10 @@ var (
 
 func InitCommentKafka() {
 	CommentMQInstance = &CommentMQ{
-		Topic:   "comments",
-		GroupId: "comment_group",
+		MQ{
+			Topic:   "comments",
+			GroupId: "comment_group",
+		},
 	}
 
 	// 创建 Comment 业务的生产者和消费者实例
