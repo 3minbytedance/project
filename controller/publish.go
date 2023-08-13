@@ -24,7 +24,7 @@ func Publish(c *gin.Context) {
 	if token == "" || title == "" || err != nil || file.Size == 0 {
 		c.JSON(http.StatusBadRequest, models.Response{
 			StatusCode: 400,
-			StatusMsg:  "参数错"})
+			StatusMsg:  "未登录或参数错"})
 		return
 	}
 	userToken, _ := utils.ParseToken(token)

@@ -28,7 +28,7 @@ type VideoResponse struct {
 // VideoListResponse 用户所有投稿过的视频
 type VideoListResponse struct {
 	Response
-	VideoResponse []VideoResponse `json:"video_list,omitempty"`
+	VideoResponse []VideoResponse `json:"video_list"`
 }
 
 // FeedListResponse 投稿时间倒序的视频列表

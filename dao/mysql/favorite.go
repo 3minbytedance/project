@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	IdTypeVideo     = 1
-	IdTypeUser      = 2
-	Expiration      = time.Hour * 2
-	StoreExpiration = Expiration / 2
+	IdTypeVideo = 1
+	IdTypeUser  = 2
+	//Expiration      = time.Hour * 2
+	//StoreExpiration = Expiration / 2
 )
 
 /* 这个是用来记录用户喜欢的视频的
@@ -147,15 +147,15 @@ func loadSetToRedis(id string, value []int64, rdb *redis.Client) {
 			}
 		}
 	}
-	err := rdb.Expire(daoRedis.Ctx, id, Expiration).Err()
-	if err != nil {
-		log.Println(err)
-	}
+	//err := rdb.Expire(daoRedis.Ctx, id, Expiration).Err()
+	//if err != nil {
+	//	log.Println(err)
+	//}
 }
 
 // loadCountToRedis 将数值存储在redis中
 func loadCountToRedis(id string, count int, rdb *redis.Client) {
-	err := rdb.Set(daoRedis.Ctx, id, count, Expiration).Err()
+	err := rdb.Set(daoRedis.Ctx, id, count).Err()
 	if err != nil {
 		fmt.Println(err)
 	}
