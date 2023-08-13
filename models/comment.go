@@ -1,9 +1,7 @@
 package models
 
 import (
-	"fmt"
 	"gorm.io/gorm"
-	"strconv"
 	"time"
 )
 
@@ -39,23 +37,8 @@ type CommentActionResponse struct {
 	Comment CommentResponse `json:"comment,omitempty"`
 }
 
-// TranslateTime 用来显示评论时间的，比如刚刚，几分钟之前，几小时之前，日期
-func TranslateTime(createTime int64, currentTime int64) string {
-	diff := currentTime - createTime
-	if diff < 0 {
-		fmt.Println("时间差小于0，数据存储可能出错")
-		return "未知"
-	}
-	var res string
-	if diff < 60 {
-		res = "刚刚"
-	} else if diff < 60*60 {
-		res = strconv.Itoa(int(diff/60)) + "分钟前"
-	} else if diff < 60*60*24 {
-		res = strconv.Itoa(int(diff/3600)) + "小时前"
-	} else {
-		year, month, day := time.Unix(createTime, 0).Date()
-		res = strconv.Itoa(year) + "-" + strconv.Itoa(int(month)) + "-" + strconv.Itoa(day)
-	}
-	return res
+// TranslateTime 返回mm-dd格式
+func TranslateTime(createTime int64) string {
+	t := time.Unix(createTime, 0)
+	return t.Format("01-02")
 }

@@ -6,7 +6,6 @@ import (
 	"project/dao/mysql"
 	"project/dao/redis"
 	"project/models"
-	"time"
 )
 
 func AddComment(videoId, userId uint, content string) (models.CommentResponse, error) {
@@ -61,7 +60,7 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	commentResp.Id = int64(commentData.ID)
 	commentResp.User = user
 	commentResp.Content = content
-	commentResp.CreateDate = models.TranslateTime(commentData.CreatedAt.Unix(), time.Now().Unix())
+	commentResp.CreateDate = models.TranslateTime(commentData.CreatedAt.Unix())
 
 	return commentResp, nil
 }
@@ -85,7 +84,7 @@ func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
 			Id:         int64(comment.ID),
 			User:       userResp,
 			Content:    comment.Content,
-			CreateDate: models.TranslateTime(comment.CreatedAt.Unix(), time.Now().Unix()),
+			CreateDate: models.TranslateTime(comment.CreatedAt.Unix()),
 		}
 		commentList = append(commentList, commentResp)
 	}
@@ -121,7 +120,7 @@ func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, err
 	commentResp.Id = int64(comment.ID)
 	commentResp.User = user
 	commentResp.Content = comment.Content
-	commentResp.CreateDate = models.TranslateTime(comment.CreatedAt.Unix(), time.Now().Unix())
+	commentResp.CreateDate = models.TranslateTime(comment.CreatedAt.Unix())
 
 	// 1、 redis评论数-1
 	err = redis.DecrementCommentCountByVideoId(videoId)
