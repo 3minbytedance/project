@@ -13,13 +13,14 @@ func FindVideoByVideoId(videoId uint) (models.Video, bool) {
 // FindVideosByAuthorId 返回查询到的列表及是否出错
 // 若未找到，返回空列表
 func FindVideosByAuthorId(authorId uint) ([]models.Video, bool) {
-	var videos []models.Video
-	return videos, DB.Where("id = ?", authorId).Find(&videos).RowsAffected != 0
+	videos := make([]models.Video, 0)
+	return videos, DB.Where(" author_id = ?", authorId).Find(&videos).RowsAffected != 0
 }
 
 func FindWorkCountsByAuthorId(authorId uint) int64 {
-	var videos []models.Video
-	return DB.Where("id = ?", authorId).Find(&videos).RowsAffected
+	var count int64
+	DB.Model(&models.Video{}).Where("author_id = ?", authorId).Count(&count)
+	return count
 }
 
 // InsertVideo return 是否插入成功
