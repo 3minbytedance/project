@@ -80,14 +80,7 @@ func GetPublishList(c *gin.Context) {
 			StatusMsg:  codeMsgMap[CodeInvalidParam]})
 		return
 	}
-	videoList, found := service.GetPublishList(uint(userID))
-	if !found {
-		c.JSON(http.StatusOK, models.Response{
-			StatusCode: int32(CodeInvalidParam),
-			StatusMsg:  codeMsgMap[CodeInvalidParam],
-		})
-		return
-	}
+	videoList := service.GetPublishList(uint(userID))
 	c.JSON(http.StatusOK, models.VideoListResponse{
 		Response: models.Response{
 			StatusCode: int32(CodeSuccess),

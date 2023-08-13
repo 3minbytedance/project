@@ -6,8 +6,6 @@ import (
 	"strconv"
 )
 
-const ()
-
 // GetCommentCountByVideoId 根据videoId查找评论数
 func GetCommentCountByVideoId(videoId uint) (int64, error) {
 	key := VideoKey + fmt.Sprintf("%d", videoId)

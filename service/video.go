@@ -23,63 +23,6 @@ import (
 
 const oss = "https://tiktok-1319971229.cos.ap-nanjing.myqcloud.com/"
 
-// todo io优化，待测
-func UploadIOVideo(file *multipart.FileHeader) (string, error) {
-	// 生成 UUID
-	fileId := strings.Replace(uuid.New().String(), "-", "", -1)
-
-	// 修改文件名
-	fileName := fileId + ".mp4"
-
-	// 创建临时文件
-	tempFile, err := createTempFile(fileName)
-	if err != nil {
-		return "", err
-	}
-
-	// 打开上传的文件
-	src, err := file.Open()
-	if err != nil {
-		return "", err
-	}
-	defer src.Close()
-
-	// 创建缓冲写入器
-	dest := bufio.NewWriter(tempFile)
-
-	// 将上传的文件内容写入临时文件
-	_, err = io.Copy(dest, src)
-	if err != nil {
-		return "", err
-	}
-
-	// 清空缓冲区并确保文件已写入磁盘
-	if err = dest.Flush(); err != nil {
-		return "", err
-	}
-	return fileName, nil
-}
-
-func createTempFile(fileName string) (*os.File, error) {
-	tempDir := "./public/" // 临时文件夹路径
-
-	// 创建临时文件夹（如果不存在）
-	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
-		err := os.Mkdir(tempDir, 0755)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// 在临时文件夹中创建临时文件
-	tmpfile, err := os.Create(tempDir + fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	return tmpfile, nil
-}
-
 // UploadToOSS  上传至腾讯OSS
 func UploadToOSS(localPath string, remotePath string) error {
 	reqUrl := viper.GetString("oss.tencent")
@@ -150,7 +93,7 @@ func StoreVideoAndImg(videoName string, imgName string, authorId uint, title str
 func GetWorkCount(userId uint) (int64, error) {
 	// 从redis中获取作品数
 	// 1. 缓存中有数据, 直接返回
-	if redis.IsExistUserField(userId,redis.WorkCountField) {
+	if redis.IsExistUserField(userId, redis.WorkCountField) {
 		workCount, err := redis.GetWorkCountByUserId(userId)
 		if err != nil {
 			log.Println("从redis中获取作品数失败：", err)
@@ -172,13 +115,13 @@ func GetWorkCount(userId uint) (int64, error) {
 	return workCount, nil
 }
 
-func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
+func GetPublishList(userID uint) (videoResponses []models.VideoResponse) {
 	videos, found := mysql.FindVideosByAuthorId(userID)
 	if !found {
-		return []models.VideoResponse{}, false
+		return []models.VideoResponse{}
 	}
 	// 将查询结果转换为VideoResponse类型
-	var videoResponses []models.VideoResponse
+	videoResponses = make([]models.VideoResponse, len(videos))
 	for _, video := range videos {
 		user, _ := GetUserInfoByUserId(userID)
 		commentCount, _ := GetCommentCount(video.ID)
@@ -195,16 +138,16 @@ func GetPublishList(userID uint) ([]models.VideoResponse, bool) {
 		videoResponses = append(videoResponses, videoResponse)
 	}
 
-	return videoResponses, true
+	return videoResponses
 }
 
-func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
+func GetFeedList(latestTime string) (videoResponses []models.VideoResponse, nextTime int64, err error) {
 	videos := mysql.GetLatestVideos(latestTime)
 	if len(videos) == 0 {
 		return []models.VideoResponse{}, 0, errors.New("no videos")
 	}
 	// 将查询结果转换为VideoResponse类型
-	var videoResponses []models.VideoResponse
+	videoResponses = make([]models.VideoResponse, len(videos))
 	for _, video := range videos {
 		user, _ := GetUserInfoByUserId(video.AuthorId)
 		commentCount, _ := GetCommentCount(video.ID)
@@ -222,10 +165,67 @@ func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 		videoResponses = append(videoResponses, videoResponse)
 	}
 	//本次返回的视频中，发布最早的时间
-	nextTime := videos[len(videos)-1].CreatedAt
+	nextTime = videos[len(videos)-1].CreatedAt
 	return videoResponses, nextTime, nil
 }
 
 func getFavoriteCount(uint) uint { return 1 }
 
 func isUserFavorite(uint, uint) bool { return false }
+
+// todo io优化，待测
+func UploadIOVideo(file *multipart.FileHeader) (string, error) {
+	// 生成 UUID
+	fileId := strings.Replace(uuid.New().String(), "-", "", -1)
+
+	// 修改文件名
+	fileName := fileId + ".mp4"
+
+	// 创建临时文件
+	tempFile, err := createTempFile(fileName)
+	if err != nil {
+		return "", err
+	}
+
+	// 打开上传的文件
+	src, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+	defer src.Close()
+
+	// 创建缓冲写入器
+	dest := bufio.NewWriter(tempFile)
+
+	// 将上传的文件内容写入临时文件
+	_, err = io.Copy(dest, src)
+	if err != nil {
+		return "", err
+	}
+
+	// 清空缓冲区并确保文件已写入磁盘
+	if err = dest.Flush(); err != nil {
+		return "", err
+	}
+	return fileName, nil
+}
+
+func createTempFile(fileName string) (*os.File, error) {
+	tempDir := "./public/" // 临时文件夹路径
+
+	// 创建临时文件夹（如果不存在）
+	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
+		err := os.Mkdir(tempDir, 0755)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// 在临时文件夹中创建临时文件
+	tmpfile, err := os.Create(tempDir + fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return tmpfile, nil
+}
