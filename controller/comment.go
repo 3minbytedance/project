@@ -73,9 +73,17 @@ func CommentAction(c *gin.Context) {
 }
 
 func CommentList(c *gin.Context) {
+	token := c.Query("token") //TODO 视频流客户端传递这个参数，用处Token续签、未登录的情况下查询关注返回false
 	videoIdStr := c.Query("video_id")
 	videoId, _ := strconv.ParseInt(videoIdStr, 10, 64)
-	commentList, err := service.GetCommentList(uint(videoId))
+	userToken, _ := utils.ParseToken(token)
+	userId := userToken.ID
+	isLogged := false
+	//todo 改为如果token在redis中查到
+	if token != "" {
+		isLogged = true
+	}
+	commentList, err := service.GetCommentList(uint(videoId), isLogged, userId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.CommentListResponse{
 			Response: models.Response{

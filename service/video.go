@@ -57,7 +57,6 @@ func GetVideoCover(fileName string) string {
 	return imgName
 }
 
-
 func StoreVideoAndImg(videoName string, imgName string, authorId uint, title string) {
 	//视频存储到oss
 	go func() {
@@ -77,7 +76,7 @@ func StoreVideoAndImg(videoName string, imgName string, authorId uint, title str
 
 	go func() {
 		mysql.InsertVideo(videoName, imgName, authorId, title)
-		if !redis.IsExistUserField(authorId, redis.WorkCountField){
+		if !redis.IsExistUserField(authorId, redis.WorkCountField) {
 			cnt := mysql.FindWorkCountsByAuthorId(authorId)
 			err := redis.SetWorkCountByUserId(authorId, cnt)
 			if err != nil {
@@ -144,7 +143,7 @@ func GetPublishList(userID uint) (videoResponses []models.VideoResponse) {
 	return videoResponses
 }
 
-func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
+func GetFeedList(latestTime string, isLogged bool, userId uint) ([]models.VideoResponse, int64, error) {
 	videos := mysql.GetLatestVideos(latestTime)
 	if len(videos) == 0 {
 		return []models.VideoResponse{}, 0, errors.New("no videos")
@@ -153,6 +152,9 @@ func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 	videoResponses := make([]models.VideoResponse, 0, len(videos))
 	for _, video := range videos {
 		user, _ := GetUserInfoByUserId(video.AuthorId)
+		if isLogged {
+			user.IsFollow = IsInMyFollowList(userId, user.ID)
+		}
 		commentCount, _ := GetCommentCount(video.ID)
 		videoResponse := models.VideoResponse{
 			ID:            video.ID,

@@ -66,9 +66,8 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	return commentResp, nil
 }
 
-//todo 缺少对返回的user列表判断是否关注
-
-func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
+// GetCommentList isLogged参数是为了返回用户信息中是否和自己关注
+func GetCommentList(videoId uint, isLogged bool, userId uint) ([]models.CommentResponse, error) {
 	// 1、根据videoId查询数据库，获取comments信息
 	comments, err := mysql.FindCommentsByVideoId(videoId)
 	if err != nil {
@@ -78,15 +77,13 @@ func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
 
 	commentList := make([]models.CommentResponse, 0)
 	for _, comment := range comments {
-		user, exist := mysql.FindUserByUserID(comment.UserId)
-		if !exist {
-			fmt.Println("根据评论中的user_id找用户失败")
+		user, _ := GetUserInfoByUserId(comment.UserId)
+		if isLogged {
+			user.IsFollow = IsInMyFollowList(userId, comment.UserId)
 		}
-		//todo 返回的user信息给写死了
-		userResp := models.UserResponse{ID: user.ID, Name: user.Name}
 		commentResp := models.CommentResponse{
 			Id:         int64(comment.ID),
-			User:       userResp,
+			User:       user,
 			Content:    comment.Content,
 			CreateDate: TranslateTime(comment.CreatedAt.Unix()),
 		}

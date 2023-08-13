@@ -9,7 +9,7 @@ import (
 )
 
 func AddFollow(userId, followId uint) error {
-	// 评论信息
+	// 增加关注
 	err := mysql.AddFollow(userId, followId)
 	go func() {
 		//更新自己的关注列表
@@ -168,6 +168,28 @@ func GetUserModelByList(id []uint) ([]models.UserResponse, error) {
 		results = append(results, result)
 	}
 	return results, nil
+}
+
+// IsInMyFollowList 是否followUser在自己的关注列表里
+func IsInMyFollowList(userId uint, followUserId uint) bool {
+	// redis存在key
+	if redis.IsExistUserSetField(userId, redis.FollowList) {
+		found := redis.IsInMyFollowList(userId, followUserId)
+		return found
+	}
+	found := mysql.IsFollowing(userId, followUserId)
+	followListId, err := mysql.GetFollowList(userId)
+	if err != nil {
+		return false
+	}
+	// 往redis赋值
+	go func() {
+		err = redis.SetFollowListByUserId(userId, followListId)
+		if err != nil {
+			return
+		}
+	}()
+	return found
 }
 
 // 找出两个数组共有的元素

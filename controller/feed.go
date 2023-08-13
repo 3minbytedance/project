@@ -5,12 +5,13 @@ import (
 	"net/http"
 	"project/models"
 	"project/service"
+	"project/utils"
 	"strconv"
 	"time"
 )
 
 func Feed(c *gin.Context) {
-	_ = c.Query("token") //TODO 视频流客户端传递这个参数，用处Token续签、未登录的情况下查询关注返回false
+	token := c.Query("token") //TODO 视频流客户端传递这个参数，用处Token续签、未登录的情况下查询关注返回false
 	latestTime := c.Query("latest_time")
 	unixTime, err := strconv.Atoi(latestTime)
 
@@ -24,8 +25,15 @@ func Feed(c *gin.Context) {
 		})
 		return
 	}
+	userToken, _ := utils.ParseToken(token)
+	userId := userToken.ID
+	isLogged := false
+	//todo 改为如果token在redis中查到
+	if token != "" {
+		isLogged = true
+	}
+	videoList, nextTime, err := service.GetFeedList(latestTime, isLogged, userId)
 
-	videoList, nextTime, err := service.GetFeedList(latestTime)
 	if err != nil {
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: int32(CodeInvalidParam),

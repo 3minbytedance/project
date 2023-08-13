@@ -6,8 +6,6 @@ import (
 	"strconv"
 )
 
-const ()
-
 // GetFollowCountById 根据userId查找关注数
 func GetFollowCountById(userId uint) (int, error) {
 	//key := UserKey + fmt.Sprintf("%d", userId)
@@ -107,6 +105,12 @@ func DecreaseFollowerCountByUserId(userId uint, id uint) error {
 	key := fmt.Sprintf("%d_%s", userId, FollowerList)
 	err := Rdb.SRem(Ctx, key, id).Err()
 	return err
+}
+
+func IsInMyFollowList(userId uint, id uint) bool {
+	key := fmt.Sprintf("%d_%s", userId, FollowerList)
+	found, _ := Rdb.SIsMember(Ctx, key, id).Result()
+	return found
 }
 
 //-------------------------------丢弃
