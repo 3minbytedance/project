@@ -2,36 +2,9 @@ package controller
 
 import (
 	"fmt"
-	"os"
 	"project/dao/mysql"
 	"project/models"
 )
-
-var ServerUrl = "https://" + os.Getenv("paas_url")
-var LocalUrl = "http://loaclhost:8080"
-
-var DemoComments = []models.CommentResponse{
-	{
-		Id:         1,
-		User:       DemoUser,
-		Content:    "Test Comment",
-		CreateDate: "05-01",
-	},
-}
-
-// TODO
-var DemoUser = models.UserResponse{
-	Name:            "yyf",
-	FollowCount:     0,
-	FollowerCount:   0,
-	IsFollow:        false,
-	Avatar:          LocalUrl + "/public/avatar3.jpg",
-	BackgroundImage: LocalUrl + "/public/tx.jpeg",
-	Signature:       "这是个大帅逼",
-	TotalFavorited:  "99999",
-	WorkCount:       20,
-	FavoriteCount:   100,
-}
 
 func PrepareData() {
 	// 建表
