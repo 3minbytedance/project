@@ -156,9 +156,7 @@ func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 
 		videoResponses = append(videoResponses, videoResponse)
 	}
-	log.Println("=====")
-	log.Println(videoResponses)
-	log.Println("=======")
+	//todo 客户端刷新也是用这个时间？
 	//本次返回的视频中，发布最早的时间
 	nextTime := videos[len(videos)-1].CreatedAt
 	return videoResponses, nextTime, nil
