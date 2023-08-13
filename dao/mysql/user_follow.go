@@ -52,7 +52,7 @@ func IsFollow(userA uint, userB uint) bool {
 	// 返回评论数和是否查询成功
 	isAfollowB := DB.Model(&models.UserFollow{}).Where("user_id = ? and follow_id = ?", userA, userB).RowsAffected
 	isBfollowA := DB.Model(&models.UserFollow{}).Where("user_id = ? and follow_id = ?", userB, userA).RowsAffected
-	return isBfollowA == 1 && isBfollowA == 1
+	return isAfollowB == 1 && isBfollowA == 1
 }
 
 // 获取关注列表
