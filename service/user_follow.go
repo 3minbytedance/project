@@ -12,13 +12,15 @@ func AddFollow(userId, followId uint) error {
 	// 评论信息
 	err := mysql.AddFollow(userId, followId)
 	go func() {
+		//更新自己的关注列表
 		err := redis.IncreaseFollowCountByUserId(userId, followId)
 		if err != nil {
 			return
 		}
 	}()
 	go func() {
-		err := redis.IncreaseFollowerCountByUserId(followId, followId)
+		//更新对方的粉丝列表
+		err := redis.IncreaseFollowerCountByUserId(followId, userId)
 		if err != nil {
 			return
 		}
@@ -26,16 +28,19 @@ func AddFollow(userId, followId uint) error {
 	return err
 }
 
+// DeleteFollow userId 取关 followId
 func DeleteFollow(userId, followId uint) error {
 	err := mysql.DeleteFollowById(userId, followId)
 	go func() {
+		//删掉自己的关注列表
 		err := redis.DecreaseFollowCountByUserId(userId, followId)
 		if err != nil {
 			return
 		}
 	}()
 	go func() {
-		err := redis.DecreaseFollowerCountByUserId(followId, followId)
+		//删掉对方的粉丝列表
+		err := redis.DecreaseFollowerCountByUserId(followId, userId)
 		if err != nil {
 			return
 		}
@@ -165,7 +170,6 @@ func GetUserModelByList(id []uint) ([]models.UserResponse, error) {
 	return results, nil
 }
 
-// todo 会耗费go的堆栈内存
 // 找出两个数组共有的元素
 func intersection(a, b []uint) (c []uint) {
 	m := make(map[uint]bool)

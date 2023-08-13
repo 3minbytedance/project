@@ -57,7 +57,7 @@ func GetVideoCover(fileName string) string {
 	return imgName
 }
 
-// todo
+
 func StoreVideoAndImg(videoName string, imgName string, authorId uint, title string) {
 	//视频存储到oss
 	go func() {
@@ -77,7 +77,19 @@ func StoreVideoAndImg(videoName string, imgName string, authorId uint, title str
 
 	go func() {
 		mysql.InsertVideo(videoName, imgName, authorId, title)
-		//TODO redis用户上传的视频数+1
+		if !redis.IsExistUserField(authorId, redis.WorkCountField){
+			cnt := mysql.FindWorkCountsByAuthorId(authorId)
+			err := redis.SetWorkCountByUserId(authorId, cnt)
+			if err != nil {
+				log.Println("redis更新评论数失败", err)
+				return
+			}
+			return
+		}
+		err := redis.IncrementWorkCountByUserId(authorId)
+		if err != nil {
+			log.Println(err)
+		}
 	}()
 }
 
@@ -89,19 +101,18 @@ func GetWorkCount(userId uint) (int64, error) {
 		workCount, err := redis.GetWorkCountByUserId(userId)
 		if err != nil {
 			log.Println("从redis中获取作品数失败：", err)
-			//return 0, err
 		}
 		return workCount, nil
 	}
 
 	// 2. 缓存中没有数据，从数据库中获取
 	workCount := mysql.FindWorkCountsByAuthorId(userId)
-	log.Println("从数据库中获取关注数成功：", workCount)
+	log.Println("从数据库中获取作品数成功：", workCount)
 	// 将作品数写入redis
 	go func() {
 		err := redis.SetWorkCountByUserId(userId, workCount)
 		if err != nil {
-			log.Println("将评论数写入redis失败：", err)
+			log.Println("将作品数写入redis失败：", err)
 		}
 	}()
 	return workCount, nil

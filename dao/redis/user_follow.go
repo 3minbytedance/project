@@ -8,7 +8,7 @@ import (
 
 const ()
 
-// 根据userId查找关注数
+// GetFollowCountById 根据userId查找关注数
 func GetFollowCountById(userId uint) (int, error) {
 	//key := UserKey + fmt.Sprintf("%d", userId)
 	//count, err := Rdb.HGet(Ctx, key, FollowCountField).Result()
@@ -22,10 +22,6 @@ func GetFollowCountById(userId uint) (int, error) {
 
 // 根据userId查找粉丝数
 func GetFollowerCountById(userId uint) (int, error) {
-	//key := UserKey + fmt.Sprintf("%d", userId)
-	//count, err := Rdb.HGet(Ctx, key, FollowerCountField).Result()
-	//commentCount, _ := strconv.Atoi(count)
-	//return commentCount, err
 	key := fmt.Sprintf("%d_%s", userId, FollowerList)
 	size, err := Rdb.SCard(Ctx, key).Result()
 	return int(size), err
@@ -92,17 +88,17 @@ func IncreaseFollowCountByUserId(userId uint, id uint) error {
 	return err
 }
 
-// 给Id对应的关注数减一
-func DecreaseFollowCountByUserId(userId uint, id uint) error {
+// DecreaseFollowCountByUserId userId 关注列表取关 followId
+func DecreaseFollowCountByUserId(userId uint, followId uint) error {
 	key := fmt.Sprintf("%d_%s", userId, FollowList)
-	err := Rdb.SRem(Ctx, key, id).Err()
+	err := Rdb.SRem(Ctx, key, followId).Err()
 	return err
 }
 
-// 给videoId对应的粉丝数加一
-func IncreaseFollowerCountByUserId(userId uint, id uint) error {
+// IncreaseFollowerCountByUserId 给userId粉丝列表 + 1
+func IncreaseFollowerCountByUserId(userId uint, followId uint) error {
 	key := fmt.Sprintf("%d_%s", userId, FollowerList)
-	err := Rdb.SAdd(Ctx, key, id).Err()
+	err := Rdb.SAdd(Ctx, key, followId).Err()
 	return err
 }
 
