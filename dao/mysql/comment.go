@@ -18,16 +18,17 @@ func AddComment(comment *models.Comment) (uint, error) {
 	}
 }
 
-func FindCommentsByVideoId(videoId int64) ([]models.Comment, error) {
+func FindCommentsByVideoId(videoId uint) ([]models.Comment, error) {
 	comments := make([]models.Comment, 0)
-	result := DB.Where("video_id = ?", videoId).Find(&comments)
+	result := DB.Where("video_id = ?", videoId).Order("created_at desc").Find(&comments)
 	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
-		return comments, result.Error
+		return nil, result.Error
 	}
+	log.Println(comments)
 	return comments, nil
 }
 
-func FindCommentById(commentId int64) (models.Comment, error) {
+func FindCommentById(commentId uint) (models.Comment, error) {
 	comment := models.Comment{}
 	result := DB.Find(&comment, commentId)
 	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
@@ -36,7 +37,7 @@ func FindCommentById(commentId int64) (models.Comment, error) {
 	return comment, nil
 }
 
-func DeleteCommentById(commentId int64) error {
+func DeleteCommentById(commentId uint) error {
 	result := DB.Delete(&models.Comment{}, commentId)
 	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
 		log.Println("未找到 Comment")
@@ -45,7 +46,7 @@ func DeleteCommentById(commentId int64) error {
 	return nil
 }
 
-func GetCommentCnt(videoId int64) (int64, error) {
+func GetCommentCnt(videoId uint) (int64, error) {
 	var cnt int64
 	err := DB.Model(&models.Comment{}).Where("video_id = ?", videoId).Count(&cnt).Error
 	// 返回评论数和是否查询成功

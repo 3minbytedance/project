@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"project/config"
 	"project/controller"
+	"project/dao/mongo"
 	"project/dao/mysql"
 	"project/dao/redis"
 	"project/router"
@@ -33,7 +34,17 @@ func main() {
 		return
 	}
 
-	// 准备数据
+	// 4. 初始化Mongo
+	if err := mongo.Init(config.Conf); err != nil {
+		fmt.Printf("Init mongo failed, err:%v\n", err)
+		return
+	}
+
+	//先关掉 TODO
+	//// 5. 初始化Kafka
+	//kafka.InitMessageKafka()
+
+	//准备数据
 	controller.PrepareData()
 
 	// 初始化gin引擎
@@ -43,5 +54,5 @@ func main() {
 	router.InitRouter(r)
 
 	// 启动服务
-	r.Run(fmt.Sprintf(":%d", config.Conf.Port)) // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	r.Run(fmt.Sprintf(":%d", config.Conf.Port))
 }

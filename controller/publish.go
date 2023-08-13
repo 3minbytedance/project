@@ -1,88 +1,102 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"net/http"
 	"path/filepath"
-	"project/dao/mysql"
 	"project/models"
+	"project/service"
 	"project/utils"
-	"time"
+	"strconv"
+	"strings"
 )
 
-type VideoListResponse struct {
-	models.Response
-	VideoList []models.VideoRes `json:"video_list"`
-}
+// 限制上传文件的最大大小 200MB
+const maxFileSize = 200 * 1024 * 1024
+const minFileSize = 1 * 1024
 
-// Publish check token then save upload file to public directory
+// TODO
 func Publish(c *gin.Context) {
-	userId, err := utils.GetCurrentUserID(c)
-	if err != nil {
-	}
-
-	if _, exist := mysql.FindUserByID(userId); !exist {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
+	token := c.PostForm("token")
+	title := c.PostForm("title")
+	file, err := c.FormFile("data")
+	if token == "" || title == "" || err != nil || file.Size == 0 {
+		c.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: 400,
+			StatusMsg:  "参数错"})
 		return
-	} else {
-		data, err := c.FormFile("data")
-		if err != nil {
-			c.JSON(http.StatusOK, models.Response{
-				StatusCode: 1,
-				StatusMsg:  err.Error(),
-			})
-			return
-		}
-
-		filename := filepath.Base(data.Filename)
-		finalName := fmt.Sprintf("%d_%s", userId, filename)
-		saveFile := filepath.Join("./public/", finalName)
-		if err := c.SaveUploadedFile(data, saveFile); err != nil {
-			c.JSON(http.StatusOK, models.Response{
-				StatusCode: 1,
-				StatusMsg:  err.Error(),
-			})
-			return
-		}
-		// 更新视频信息
-		video := models.Video{
-			AuthorId:    int64(userId),
-			PlayUrl:     saveFile,
-			PublishTime: time.Now().Unix(),
-		}
-		mysql.DB.Model(models.Video{}).Create(&video)
-		// 视频封面如何获取？用户上传（自定义）+默认生成
-
-		// 更新用户作品数量
-		//mysql.DB.Model(&user).Update("work_count", user.WorkCount+1)
-		//c.JSON(http.StatusOK, models.Response{
-		//	StatusCode: 0,
-		//	StatusMsg:  finalName + " uploaded successfully",
-		//})
 	}
+	userToken, _ := utils.ParseToken(token)
+	userId := userToken.ID
+	// 校验文件类型
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if !isValidFileType(ext) {
+		c.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: 400,
+			StatusMsg:  "无效的文件类型"})
+		return
+	}
+
+	// 校验文件大小
+	if file.Size > maxFileSize || file.Size < minFileSize {
+		c.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: 400,
+			StatusMsg:  "文件过大或过小"})
+		return
+	}
+
+	// 生成 UUID
+	fileId := strings.Replace(uuid.New().String(), "-", "", -1)
+
+	// 修改文件名
+	videoFileName := fileId + ".mp4"
+
+	//todo IO流优化待测，先用gin内置的
+	err = c.SaveUploadedFile(file, "./public/"+videoFileName)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: 400,
+			StatusMsg:  "上传失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.Response{
+		StatusCode: int32(CodeSuccess),
+		StatusMsg:  codeMsgMap[CodeSuccess]})
+
+	// MQ 异步解耦,解决返回json阻塞 TODO
+
+	imgName := service.GetVideoCover(videoFileName)
+	service.StoreVideoAndImg(videoFileName, imgName, userId, title)
 }
 
-// PublishList 每个用户的自己的发布列表
-func PublishList(c *gin.Context) {
-	userId, err := utils.GetCurrentUserID(c)
+// GetPublishList 每个用户的自己的发布列表
+func GetPublishList(c *gin.Context) {
+	userID, err := strconv.Atoi(c.Query("user_id"))
 	if err != nil {
-	}
-
-	if _, exist := mysql.FindUserByID(userId); !exist {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户不存在"})
+		c.JSON(http.StatusOK, models.Response{
+			StatusCode: int32(CodeInvalidParam),
+			StatusMsg:  codeMsgMap[CodeInvalidParam]})
 		return
-	} else {
-		videos, b := mysql.FindVideosByAuthor(int(userId))
-		if !b {
-			c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "用户未发布过作品"})
-			return
-		}
-		c.JSON(http.StatusOK, VideoListResponse{
-			Response: models.Response{
-				StatusCode: 0,
-			},
-			VideoList: videos,
-		})
 	}
+	videoList := service.GetPublishList(uint(userID))
+	c.JSON(http.StatusOK, models.VideoListResponse{
+		Response: models.Response{
+			StatusCode: int32(CodeSuccess),
+			StatusMsg:  codeMsgMap[CodeSuccess],
+		},
+		VideoResponse: videoList,
+	})
+}
+
+// 校验文件类型是否为视频类型
+func isValidFileType(fileExt string) bool {
+	validExts := []string{".mp4", ".avi", ".mov"}
+	for _, ext := range validExts {
+		if fileExt == ext {
+			return true
+		}
+	}
+	return false
 }

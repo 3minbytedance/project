@@ -1,9 +1,7 @@
 package jwt
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"log"
 	"net/http"
 	"project/utils"
 )
@@ -17,10 +15,8 @@ type Response struct {
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.Query("token")
-		//fmt.Println("token", token)
 		// 没携带token
 		if len(token) == 0 {
-
 			// 没有token, 阻止后面函数执行
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
@@ -29,9 +25,7 @@ func Auth() gin.HandlerFunc {
 			})
 
 		} else {
-
 			claims, err := utils.ParseToken(token)
-			fmt.Println("jwt test:", claims.ID)
 			if err != nil {
 				// token有误，阻止后面函数执行
 				c.Abort()
@@ -39,8 +33,6 @@ func Auth() gin.HandlerFunc {
 					StatusCode: -1,
 					StatusMsg:  "Token Error",
 				})
-			} else {
-				log.Println("token correct")
 			}
 			c.Set(utils.ContextUserIDKey, claims.ID)
 			c.Next()
@@ -67,7 +59,6 @@ func AuthWithoutLogin() gin.HandlerFunc {
 					StatusMsg:  "Token Error",
 				})
 			} else {
-				log.Println("token correct")
 				userId = claims.ID
 			}
 			c.Set(utils.ContextUserIDKey, userId)
@@ -97,8 +88,6 @@ func AuthBody() gin.HandlerFunc {
 					StatusCode: -1,
 					StatusMsg:  "Token Error",
 				})
-			} else {
-				log.Println("token correct")
 			}
 			c.Set(utils.ContextUserIDKey, claims.ID)
 			c.Next()

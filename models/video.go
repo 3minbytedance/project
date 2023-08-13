@@ -5,29 +5,37 @@ import (
 )
 
 type Video struct {
-	gorm.Model
-	AuthorId      int64
-	PlayUrl       string `json:"play_url" json:"play_url,omitempty"`
-	CoverUrl      string `json:"cover_url,omitempty"`
-	FavoriteCount int64  `json:"favorite_count,omitempty"`
-	CommentCount  int64  `json:"comment_count,omitempty"`
-	IsFavorite    bool   `json:"is_favorite,omitempty"` // 这是demo中的字段，感觉在视频信息里面存不妥，应该放在favorite表里面
-	// 下面是一些保留字段， 部分是用来推荐的
-	PublishTime int64  // 发布时间
-	Title       string // 视频标题
-	Topic       string // 视频主题类型
-	IsLong      int    // 视频长度是否大于1分钟 0 否， 1是
+	ID        uint `gorm:"primaryKey"`
+	AuthorId  uint `gorm:"index"`
+	VideoUrl  string
+	CoverUrl  string
+	Title     string
+	CreatedAt int64 `gorm:"autoCreateTime"`
+	DeletedAt gorm.DeletedAt
 }
 
-// VideoRes demo中的struct，暂且保留了
-type VideoRes struct {
-	Id            int64    `json:"id,omitempty"`
-	Author        UserInfo `json:"author"`
-	PlayUrl       string   `json:"play_url" json:"play_url,omitempty"`
-	CoverUrl      string   `json:"cover_url,omitempty"`
-	FavoriteCount int64    `json:"favorite_count,omitempty"`
-	CommentCount  int64    `json:"comment_count,omitempty"`
-	IsFavorite    bool     `json:"is_favorite,omitempty"`
+type VideoResponse struct {
+	ID            uint         `json:"id"`
+	Author        UserResponse `json:"author"`
+	PlayUrl       string       `json:"play_url"`
+	CoverUrl      string       `json:"cover_url"`
+	FavoriteCount int64        `json:"favorite_count"` //点赞数
+	CommentCount  int64        `json:"comment_count"`  //评论数
+	IsFavorite    bool         `json:"is_favorite"`    //是否点赞
+	Title         string       `json:"title"`          //视频标题
+}
+
+// VideoListResponse 用户所有投稿过的视频
+type VideoListResponse struct {
+	Response
+	VideoResponse []VideoResponse `json:"video_list,omitempty"`
+}
+
+// FeedListResponse 投稿时间倒序的视频列表
+type FeedListResponse struct {
+	Response
+	NextTime      int64           `json:"next_time"`
+	VideoResponse []VideoResponse `json:"video_list"`
 }
 
 func (*Video) TableName() string {

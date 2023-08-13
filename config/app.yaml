@@ -1,29 +1,55 @@
 name: "douyin"
 mode: "local"
-port: 8080
+port: 8081
 version: "v0.0.1"
 local:
   mysql:
-    username: root
-    password: webservertest
     address: "127.0.0.1"
     port: 3306
+    username: root
+    password: 12345678
     database: douyin
     timeout: 10
   redis:
     address: "127.0.0.1"
     port: 6379
     password: ""
-    db: 0
-    ufvdb: 1
-    vfudb: 2
+    comment_db: 0
     pool_size: 30
     min_idle_conns: 30
+    expire_time: 1800   # 30分钟
+  kafka:
+    address: "127.0.0.1"
+    port: 9092
+  mongo:
+    address: "127.0.0.1"
+    port: 27017
+    username: admin
+    password: admin
+
 remote:
   mysql:
+    address: "127.0.0.1"
+    port: 3306
     username: root
-    password: oYhkEnSG
-    address: 172.16.32.102
-    port: 50819
+    password: a1253767085
     database: douyin
     timeout: 10
+  redis:
+    address: "172.27.161.27"
+    port: 6379
+    password: ""
+    comment_db: 0
+    pool_size: 30
+    min_idle_conns: 30
+    expire_time: 1800   # 30分钟
+  kafka:
+    address: "127.0.0.1"
+    port: 9092
+    username: root
+    password: root
+  mongo:
+    address: "127.0.0.1"
+    port: 27017
+    username: admin
+    password: admin

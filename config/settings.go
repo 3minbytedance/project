@@ -20,11 +20,15 @@ type AppConfig struct {
 	Local struct {
 		*MySQLConfig `mapstructure:"mysql"`
 		*RedisConfig `mapstructure:"redis"`
+		*KafkaConfig `mapstructure:"kafka"`
+		*MongoConfig `mapstructure:"mongo"`
 	} `mapstructure:"local"`
 
 	Remote struct {
 		*MySQLConfig `mapstructure:"mysql"`
 		*RedisConfig `mapstructure:"redis"`
+		*KafkaConfig `mapstructure:"kafka"`
+		*MongoConfig `mapstructure:"mongo"`
 	} `mapstructure:"remote"`
 }
 
@@ -48,6 +52,20 @@ type RedisConfig struct {
 	MinIdleConns      int    `mapstructure:"min_idle_conns"`
 	CommentDB    int    `mapstructure:"comment_db"`
 	ExpireTime   int64  `mapstructure:"expire_time"`
+}
+
+type KafkaConfig struct {
+	Address  string `mapstructure:"address"`
+	Port     int    `mapstructure:"port"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+}
+
+type MongoConfig struct {
+	Address  string `mapstructure:"address"`
+	Port     int    `mapstructure:"port"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
 }
 
 func Init() (err error) {

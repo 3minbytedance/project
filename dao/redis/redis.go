@@ -8,14 +8,13 @@ import (
 	"time"
 )
 
-var (
-	Ctx               = context.Background()
-	RDB               *redis.Client
-	RdbComment        *redis.Client // RdbComment Comment模块Rdb
-	UserFavoriteRDB   *redis.Client
-	VideoFavoritedRDB *redis.Client
-	RdbExpireTime     time.Duration // RdbExpireTime key的过期时间
-)
+var Ctx = context.Background()
+
+// Rdb Comment模块Rdb
+var Rdb *redis.Client
+
+// RdbExpireTime key的过期时间
+var RdbExpireTime time.Duration
 
 func Init(appConfig *config.AppConfig) (err error) {
 	var conf *config.RedisConfig
@@ -27,44 +26,17 @@ func Init(appConfig *config.AppConfig) (err error) {
 	// 获取conf中的过期时间, 单位为s
 	RdbExpireTime = time.Duration(conf.ExpireTime) * time.Second
 
-	RdbComment = redis.NewClient(&redis.Options{
+	Rdb = redis.NewClient(&redis.Options{
 		Addr:         fmt.Sprintf("%s:%d", conf.Address, conf.Port),
 		Password:     conf.Password,  // 密码
 		DB:           conf.CommentDB, // 数据库
 		PoolSize:     conf.PoolSize,  // 连接池大小
 		MinIdleConns: conf.MinIdleConns,
 	})
-	if err = RdbComment.Ping(Ctx).Err(); err != nil {
-		return nil
-	}
-
-	UserFavoriteRDB = redis.NewClient(&redis.Options{
-		Addr:         fmt.Sprintf("%s:%d", conf.Address, conf.Port),
-		Password:     conf.Password,       // 密码
-		DB:           conf.UerFavoriteRDB, // 数据库
-		PoolSize:     conf.PoolSize,       // 连接池大小
-		MinIdleConns: conf.MinIdleConns,
-	})
-	_, err = UserFavoriteRDB.Ping(Ctx).Result()
-	if err != nil {
+	if err = Rdb.Ping(Ctx).Err(); err != nil {
 		return err
 	}
 
-	VideoFavoritedRDB = redis.NewClient(&redis.Options{
-		Addr:         fmt.Sprintf("%s:%d", conf.Address, conf.Port),
-		Password:     conf.Password,          // 密码
-		DB:           conf.VideoFavoritedRDB, // 数据库
-		PoolSize:     conf.PoolSize,          // 连接池大小
-		MinIdleConns: conf.MinIdleConns,
-	})
-	_, err = UserFavoriteRDB.Ping(Ctx).Result()
-	if err != nil {
-		return err
-	}
+	return
 
-	return nil
-}
-
-func Close() {
-	_ = RDB.Close()
 }
