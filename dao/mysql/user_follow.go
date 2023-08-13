@@ -6,7 +6,7 @@ import (
 	"project/models"
 )
 
-// 添加
+// AddFollow 添加关注关系
 func AddFollow(userId, followId uint) error {
 	follow := models.UserFollow{UserId: userId, FollowId: followId}
 	result := DB.Model(&models.UserFollow{}).Create(follow)
@@ -20,7 +20,7 @@ func AddFollow(userId, followId uint) error {
 	}
 }
 
-// delete
+// DeleteFollowById 删除关注关系
 func DeleteFollowById(userId, followId uint) error {
 	follow := models.UserFollow{UserId: userId, FollowId: followId}
 	result := DB.Delete(&models.Comment{}, follow)
@@ -31,7 +31,7 @@ func DeleteFollowById(userId, followId uint) error {
 	return nil
 }
 
-// 关注数
+// GetFollowCnt 关注数
 func GetFollowCnt(userId uint) (int64, error) {
 	var cnt int64
 	err := DB.Model(&models.UserFollow{}).Where("user_id = ?", userId).Count(&cnt).Error
@@ -39,7 +39,7 @@ func GetFollowCnt(userId uint) (int64, error) {
 	return cnt, err
 }
 
-// 粉丝数
+// GetFollowerCnt 粉丝数
 func GetFollowerCnt(userId uint) (int64, error) {
 	var cnt int64
 	err := DB.Model(&models.UserFollow{}).Where("follow_id = ?", userId).Count(&cnt).Error
@@ -47,22 +47,25 @@ func GetFollowerCnt(userId uint) (int64, error) {
 	return cnt, err
 }
 
-// 是否互关
-func IsFollow(userA uint, userB uint) bool {
-	// 返回评论数和是否查询成功
-	isAfollowB := DB.Model(&models.UserFollow{}).Where("user_id = ? and follow_id = ?", userA, userB).RowsAffected
-	isBfollowA := DB.Model(&models.UserFollow{}).Where("user_id = ? and follow_id = ?", userB, userA).RowsAffected
-	return isAfollowB == 1 && isBfollowA == 1
+func IsFollowing(userA uint, userB uint) bool {
+	return DB.Model(&models.UserFollow{}).Where("user_id = ? and follow_id = ?", userA, userB).RowsAffected == 1
 }
 
-// 获取关注列表
+// IsMutualFollow 是否互关
+func IsMutualFollow(userA uint, userB uint) bool {
+	isAFollowB := IsFollowing(userA, userB)
+	isBFollowA := IsFollowing(userB, userA)
+	return isAFollowB && isBFollowA
+}
+
+// GetFollowList 获取关注列表
 func GetFollowList(userId uint) ([]uint, error) {
 	var result []uint
 	err := DB.Model(&models.UserFollow{}).Select("follow_id").Where("user_id = ?", userId).Scan(&result).Error
 	return result, err
 }
 
-// 获取粉丝列表
+// GetFollowerList 获取粉丝列表
 func GetFollowerList(userId uint) ([]uint, error) {
 	var result []uint
 	err := DB.Model(&models.UserFollow{}).Select("user_id").Where("follow_id = ?", userId).Scan(&result).Error

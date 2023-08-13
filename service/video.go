@@ -17,7 +17,6 @@ import (
 	"project/models"
 	"project/utils"
 	"strings"
-	"sync"
 )
 
 const (
@@ -61,10 +60,7 @@ func GetVideoCover(fileName string) string {
 // todo
 func StoreVideoAndImg(videoName string, imgName string, authorId uint, title string) {
 	//视频存储到oss
-	var wg sync.WaitGroup
-	wg.Add(3)
 	go func() {
-		defer wg.Done()
 		if err := UploadToOSS(fileLocalPath+videoName, videoName); err != nil {
 			log.Fatal(err)
 			return
@@ -73,7 +69,6 @@ func StoreVideoAndImg(videoName string, imgName string, authorId uint, title str
 
 	// 图片存储到oss
 	go func() {
-		defer wg.Done()
 		if err := UploadToOSS(fileLocalPath+imgName, imgName); err != nil {
 			log.Fatal(err)
 			return
@@ -81,11 +76,9 @@ func StoreVideoAndImg(videoName string, imgName string, authorId uint, title str
 	}()
 
 	go func() {
-		defer wg.Done()
 		mysql.InsertVideo(videoName, imgName, authorId, title)
 		//TODO redis用户上传的视频数+1
 	}()
-	wg.Wait()
 }
 
 // GetWorkCount 获得作品数
