@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -96,24 +95,28 @@ func UserInfo(c *gin.Context) {
 
 	// 根据userId来寻找用户
 	userId, err := utils.GetCurrentUserID(c)
-	fmt.Println(err)
 	if err != nil {
 		c.JSON(http.StatusOK, models.UserDetailResponse{
-			Response: models.Response{StatusCode: 2},
+			Response: models.Response{
+				StatusCode: 1,
+				StatusMsg:  "查询失败",
+			},
 		})
 		return
 	}
-	userInfo, b := service.GetUserInfoByUserId(uint(userId))
-	if b {
+	userInfo, found := service.GetUserInfoByUserId(userId)
+
+	//TODO 需要判断两个用户间是否关注，返回user is_follow
+	if !found {
 		c.JSON(http.StatusOK, models.UserDetailResponse{
-			Response: models.Response{StatusCode: 0},
-			User:     userInfo,
-		})
-	} else {
-		c.JSON(http.StatusOK, models.UserDetailResponse{
-			Response: models.Response{StatusCode: 1, StatusMsg: "用户不存在"},
+			Response: models.Response{StatusCode: 1, StatusMsg: "查询失败"},
 		})
 	}
+
+	c.JSON(http.StatusOK, models.UserDetailResponse{
+		Response: models.Response{StatusCode: 0},
+		User:     userInfo,
+	})
 }
 
 //

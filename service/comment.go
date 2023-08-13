@@ -28,7 +28,7 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 		// 所以需要先去看一下redis，如果有key，直接+1
 		// 如果没key，更新commentCount再+1
 		// 如果redis不存在key
-		if !redis.IsExistVideoField(videoId,redis.CommentCountField){
+		if !redis.IsExistVideoField(videoId, redis.CommentCountField) {
 			// 获取最新commentCount
 			cnt, err := mysql.GetCommentCnt(videoId)
 			if err != nil {
@@ -61,10 +61,12 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	commentResp.Id = int64(commentData.ID)
 	commentResp.User = user
 	commentResp.Content = content
-	commentResp.CreateDate = models.TranslateTime(commentData.CreatedAt.Unix(), time.Now().Unix())
+	commentResp.CreateDate = TranslateTime(commentData.CreatedAt.Unix())
 
 	return commentResp, nil
 }
+
+//todo 缺少对返回的user列表判断是否关注
 
 func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
 	// 1、根据videoId查询数据库，获取comments信息
@@ -80,12 +82,13 @@ func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
 		if !exist {
 			fmt.Println("根据评论中的user_id找用户失败")
 		}
+		//todo 返回的user信息给写死了
 		userResp := models.UserResponse{ID: user.ID, Name: user.Name}
 		commentResp := models.CommentResponse{
 			Id:         int64(comment.ID),
 			User:       userResp,
 			Content:    comment.Content,
-			CreateDate: models.TranslateTime(comment.CreatedAt.Unix(), time.Now().Unix()),
+			CreateDate: TranslateTime(comment.CreatedAt.Unix()),
 		}
 		commentList = append(commentList, commentResp)
 	}
@@ -98,6 +101,12 @@ func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
 	}()
 
 	return commentList, nil
+}
+
+// TranslateTime 返回mm-dd格式
+func TranslateTime(createTime int64) string {
+	t := time.Unix(createTime, 0)
+	return t.Format("01-02")
 }
 
 func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, error) {
@@ -121,7 +130,7 @@ func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, err
 	commentResp.Id = int64(comment.ID)
 	commentResp.User = user
 	commentResp.Content = comment.Content
-	commentResp.CreateDate = models.TranslateTime(comment.CreatedAt.Unix(), time.Now().Unix())
+	commentResp.CreateDate = TranslateTime(comment.CreatedAt.Unix())
 
 	// 1、 redis评论数-1
 	err = redis.DecrementCommentCountByVideoId(videoId)
