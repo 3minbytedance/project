@@ -21,24 +21,18 @@ func (*Comment) TableName() string {
 
 // CommentResponse 返回数据的Model
 type CommentResponse struct {
-	Id         int64        `json:"id,omitempty"`
+	Id         int64        `json:"id"`
 	User       UserResponse `json:"user"`
-	Content    string       `json:"content,omitempty"`
-	CreateDate string       `json:"create_date,omitempty"`
+	Content    string       `json:"content"`
+	CreateDate string       `json:"create_date"`
 }
 
 type CommentListResponse struct {
 	Response
-	CommentList []CommentResponse `json:"comment_list,omitempty"`
+	CommentList []CommentResponse `json:"comment_list"`
 }
 
 type CommentActionResponse struct {
 	Response
-	Comment CommentResponse `json:"comment,omitempty"`
-}
-
-// TranslateTime 返回mm-dd格式
-func TranslateTime(createTime int64) string {
-	t := time.Unix(createTime, 0)
-	return t.Format("01-02")
+	Comment CommentResponse `json:"comment"`
 }
