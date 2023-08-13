@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	goredis "github.com/redis/go-redis/v9"
 	"log"
 	"project/dao/mysql"
 	"project/dao/redis"
@@ -24,12 +23,12 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	}
 
 	go func() {
+		// todo 待改
 		// 如果当前video的commentCount为0，不确定是没有评论，还是评论刚刚过期，所以不能直接+1
 		// 所以需要先去看一下redis，如果有key，直接+1
 		// 如果没key，更新commentCount再+1
-		_, err := redis.GetCommentCountByVideoId(videoId)
 		// 如果redis不存在key
-		if err == goredis.Nil {
+		if !redis.IsExistVideoField(videoId,redis.CommentCountField){
 			// 获取最新commentCount
 			cnt, err := mysql.GetCommentCnt(videoId)
 			if err != nil {

@@ -80,7 +80,7 @@ func GetFriendList(userId uint) ([]models.UserResponse, error) {
 
 func GetFollowCount(userID uint) (int64, error) {
 	// 1. 缓存中有数据, 直接返回
-	if redis.IsExistUser(userID) {
+	if redis.IsExistUserField(userID,redis.FollowCountField) {
 		count, err := redis.GetFollowCountById(userID)
 		if err != nil {
 			log.Println("从redis中获取关注数失败：", err)
@@ -108,7 +108,7 @@ func GetFollowCount(userID uint) (int64, error) {
 
 func GetFollowerCount(userID uint) (int64, error) {
 	// 1. 缓存中有数据, 直接返回
-	if redis.IsExistUser(userID) {
+	if redis.IsExistUserField(userID,redis.FollowerCountField) {
 		count, err := redis.GetFollowerCountById(userID)
 		if err != nil {
 			log.Println("从redis中获取粉丝数失败：", err)

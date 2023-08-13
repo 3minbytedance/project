@@ -150,7 +150,7 @@ func StoreVideoAndImg(videoName string, imgName string, authorId uint, title str
 func GetWorkCount(userId uint) (int64, error) {
 	// 从redis中获取作品数
 	// 1. 缓存中有数据, 直接返回
-	if redis.IsExistUser(userId) {
+	if redis.IsExistUserField(userId,redis.WorkCountField) {
 		workCount, err := redis.GetWorkCountByUserId(userId)
 		if err != nil {
 			log.Println("从redis中获取作品数失败：", err)
