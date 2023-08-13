@@ -126,7 +126,7 @@ func GetPublishList(userID uint) (videoResponses []models.VideoResponse) {
 	videoResponses = make([]models.VideoResponse, 0, len(videos))
 	for _, video := range videos {
 		user, _ := GetUserInfoByUserId(userID)
-		commentCount, _ := GetCommentCount(video.ID)
+		commentCount := GetCommentCount(video.ID)
 		videoResponse := models.VideoResponse{
 			ID:            video.ID,
 			Author:        user,
@@ -155,7 +155,7 @@ func GetFeedList(latestTime string, isLogged bool, userId uint) ([]models.VideoR
 		if isLogged {
 			user.IsFollow = IsInMyFollowList(userId, user.ID)
 		}
-		commentCount, _ := GetCommentCount(video.ID)
+		commentCount := GetCommentCount(video.ID)
 		videoResponse := models.VideoResponse{
 			ID:            video.ID,
 			Author:        user,

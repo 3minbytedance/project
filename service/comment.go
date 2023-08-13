@@ -147,35 +147,24 @@ func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, err
 }
 
 // GetCommentCount 根据视频ID获取视频的评论数
-func GetCommentCount(videoId uint) (int64, error) {
+func GetCommentCount(videoId uint) int64 {
+	if !redis.IsExistVideoField(videoId, redis.CommentCountField){
+		// 获取最新commentCount
+		cnt, err := mysql.GetCommentCnt(videoId)
+		if err != nil {
+			log.Println("mysql获取评论数失败", err)
+		}
+		// 设置最新commentCount
+		err = redis.SetCommentCountByVideoId(videoId, cnt)
+		if err != nil {
+			log.Println("redis更新评论数失败", err)
+		}
+		return cnt
+	}
 	// 从redis中获取评论数
 	count, err := redis.GetCommentCountByVideoId(videoId)
-	if err != nil {
-		log.Println("从redis中获取评论数失败：", err)
-		return 0, err
+	if err != nil{
+		log.Println("redis获取评论数失败", err)
 	}
-	// 1. 缓存中有数据, 直接返回
-	if err != nil {
-		return 0, err
-	}
-	if count > 0 {
-		log.Println("从redis中获取评论数成功：", count)
-		return count, nil
-	}
-
-	// 2. 缓存中没有数据，从数据库中获取
-	num, err := mysql.GetCommentCnt(videoId)
-	if err != nil {
-		log.Println("从数据库中获取评论数失败：", err.Error())
-		return 0, nil
-	}
-	log.Println("从数据库中获取评论数成功：", num)
-	// 将评论数写入redis
-	go func() {
-		err = redis.SetCommentCountByVideoId(videoId, num)
-		if err != nil {
-			log.Println("将评论数写入redis失败：", err.Error())
-		}
-	}()
-	return num, nil
+	return count
 }
