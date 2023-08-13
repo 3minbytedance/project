@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"project/models"
 	"project/service"
@@ -35,13 +36,15 @@ func Feed(c *gin.Context) {
 	videoList, nextTime, err := service.GetFeedList(latestTime, isLogged, userId)
 
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusOK, models.Response{
-			StatusCode: int32(CodeInvalidParam),
+			StatusCode: int32(CodeSuccess),
 			StatusMsg:  CodeInvalidParam.Msg(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, models.FeedListResponse{
+
 		Response: models.Response{
 			StatusCode: int32(CodeSuccess),
 			StatusMsg:  CodeSuccess.Msg(),

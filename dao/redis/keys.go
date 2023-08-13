@@ -21,8 +21,9 @@ const (
 	NameField          = "name"            //用户名
 	TotalFavoriteField = "total_favorited" //发布视频的总获赞数量
 	FavoriteCountField = "favorite_count"  //喜欢数
-	FollowList         = "follow_list"     //关注列表
-	FollowerList       = "follower_list"   //粉丝列表
+	// FollowList and FollowerList  set类型
+	FollowList   = "follow_list"   //关注列表
+	FollowerList = "follower_list" //粉丝列表
 )
 
 const VideoPage = "video_page_"
