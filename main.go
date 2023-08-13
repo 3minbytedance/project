@@ -41,7 +41,7 @@ func main() {
 	}
 
 	// 5. 初始化Kafka
-	kafka.InitMessageKafka()
+	kafka.Init()
 
 	// 初始化gin引擎
 	r := gin.Default()

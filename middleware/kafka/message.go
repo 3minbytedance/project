@@ -10,36 +10,42 @@ import (
 	"project/models"
 )
 
-var (
-	messageProducer *kafka.Writer
-	messageConsumer *kafka.Reader
-	topic           = "messages"
-	groupId         = "message_group"
-)
+type MessageMQ struct {
+	Topic    string
+	GroupId  string
+	Producer *kafka.Writer
+	Consumer *kafka.Reader
+}
+
+var MessageMQInstance *MessageMQ
 
 func InitMessageKafka() {
-	// 初始化 Kafka Manager
-	brokers := []string{"localhost:9092"}
-	kafkaManager := NewKafkaManager(brokers)
+	MessageMQInstance = &MessageMQ{
+		Topic:   "messages",
+		GroupId: "message_group",
+	}
 
 	// 创建 Message 业务的生产者和消费者实例
-	messageProducer = kafkaManager.NewProducer(topic)
-	messageConsumer = kafkaManager.NewConsumer(topic, groupId)
+	MessageMQInstance.Producer = kafkaManager.NewProducer(MessageMQInstance.Topic)
+	MessageMQInstance.Consumer = kafkaManager.NewConsumer(MessageMQInstance.Topic, MessageMQInstance.GroupId)
 
-	go Consume()
+	go MessageMQInstance.Consume()
 }
 
-func Produce(message *models.Message) {
+func (m *MessageMQ) Produce(message *models.Message) {
 	// 在 Message 业务中使用 Kafka Manager
-	_ = kafkaManager.ProduceMessage(messageProducer, message)
-
+	err := kafkaManager.ProduceMessage(m.Producer, message)
+	if err != nil {
+		log.Println("kafka发送message失败：", err)
+		return
+	}
 }
 
-func Consume() {
+func (m *MessageMQ) Consume() {
 	// 在 Message 业务中使用 Kafka Manager
 	//message := new(models.Message)
 	for {
-		msg, err := messageConsumer.ReadMessage(context.Background())
+		msg, err := m.Consumer.ReadMessage(context.Background())
 		if err != nil {
 			log.Fatal("Failed to read message:", err)
 		}
@@ -47,7 +53,7 @@ func Consume() {
 		fmt.Printf("Received message: %s\n", msg.Value)
 
 		// 发送确认
-		err = messageConsumer.CommitMessages(context.Background(), msg)
+		err = m.Consumer.CommitMessages(context.Background(), msg)
 		if err != nil {
 			log.Println("Failed to commit message:", err)
 		}

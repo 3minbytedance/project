@@ -3,13 +3,21 @@ package kafka
 import (
 	"context"
 	"encoding/json"
-	"project/models"
 	"time"
 
 	"github.com/segmentio/kafka-go"
 )
 
 var kafkaManager *Manager
+
+func Init() {
+	// 初始化 Kafka Manager
+	brokers := []string{"localhost:9092"}
+	kafkaManager = NewKafkaManager(brokers)
+
+	InitMessageKafka()
+	InitCommentKafka()
+}
 
 type Manager struct {
 	Brokers []string
@@ -44,8 +52,9 @@ func (m *Manager) NewConsumer(topic, groupId string) *kafka.Reader {
 	})
 }
 
-func (m *Manager) ProduceMessage(producer *kafka.Writer, message *models.Message) error {
-	messageBytes, err := json.Marshal(*message)
+// ProduceMessage 向 Kafka 写入消息的公共函数, 由于不同业务的消息格式不同, 所以使用 interface{} 代替
+func (m *Manager) ProduceMessage(producer *kafka.Writer, message interface{}) error {
+	messageBytes, err := json.Marshal(message)
 	if err != nil {
 		return err
 	}

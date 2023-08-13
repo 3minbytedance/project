@@ -108,7 +108,7 @@ func SendMessage(fromUserId, toUserId uint, content string) (err error) {
 	//}
 
 	// 聊天记录发向kafka
-	go kafka.Produce(messageData)
+	go kafka.MessageMQInstance.Produce(messageData)
 
 	return
 }
