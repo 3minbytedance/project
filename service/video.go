@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"github.com/google/uuid"
-	"github.com/spf13/viper"
 	cos "github.com/tencentyun/cos-go-sdk-v5"
 	"io"
 	"log"
@@ -21,28 +20,28 @@ import (
 	"sync"
 )
 
-const oss = "https://tiktok-1319971229.cos.ap-nanjing.myqcloud.com/"
+const (
+	fileLocalPath = "./public/"
+	oss           = "https://tiktok-1319971229.cos.ap-nanjing.myqcloud.com/"
+	SecretId      = "AKIDFKMQPakpcN6tkV9oJg6PanzAGC0hGkCZ"
+	SecretKey     = "MWXXLzQlutgMtLl5HH9pPp5CB0cfcMxR"
+	SessionToken  = "SECRETTOKEN"
+)
 
 // UploadToOSS  上传至腾讯OSS
 func UploadToOSS(localPath string, remotePath string) error {
-	reqUrl := viper.GetString("oss.tencent")
+	reqUrl := oss
 	u, _ := url.Parse(reqUrl)
 	b := &cos.BaseURL{BucketURL: u}
 	c := cos.NewClient(b, &http.Client{
 		Transport: &cos.AuthorizationTransport{
-			SecretID:     viper.GetString("oss.SecretID"),
-			SecretKey:    viper.GetString("oss.SecretKey"),
-			SessionToken: "SECRETTOKEN",
+			SecretID:     SecretId,
+			SecretKey:    SecretKey,
+			SessionToken: SessionToken,
 		},
 	})
 
-	// 通过文件流上传对象
-	fd, err := os.Open(localPath)
-	if err != nil {
-		return err
-	}
-	defer fd.Close()
-	_, err = c.Object.Put(context.Background(), remotePath, fd, nil)
+	_, _, err := c.Object.Upload(context.Background(), remotePath, localPath, nil)
 	if err != nil {
 		return err
 	}
@@ -55,7 +54,7 @@ func GetVideoCover(fileName string) string {
 	// 修改文件名
 	imgName := strings.Replace(imgId, "-", "", -1) + ".jpg"
 	//调用ffmpeg 获取封面图
-	utils.GetVideoFrame("./public/"+fileName, "./public/"+imgName)
+	utils.GetVideoFrame(fileLocalPath+fileName, fileLocalPath+imgName)
 	return imgName
 }
 
@@ -66,7 +65,7 @@ func StoreVideoAndImg(videoName string, imgName string, authorId uint, title str
 	wg.Add(3)
 	go func() {
 		defer wg.Done()
-		if err := UploadToOSS("./public/"+videoName, videoName); err != nil {
+		if err := UploadToOSS(fileLocalPath+videoName, videoName); err != nil {
 			log.Fatal(err)
 			return
 		}
@@ -75,7 +74,7 @@ func StoreVideoAndImg(videoName string, imgName string, authorId uint, title str
 	// 图片存储到oss
 	go func() {
 		defer wg.Done()
-		if err := UploadToOSS("./public/"+imgName, imgName); err != nil {
+		if err := UploadToOSS(fileLocalPath+imgName, imgName); err != nil {
 			log.Fatal(err)
 			return
 		}
@@ -211,7 +210,7 @@ func UploadIOVideo(file *multipart.FileHeader) (string, error) {
 }
 
 func createTempFile(fileName string) (*os.File, error) {
-	tempDir := "./public/" // 临时文件夹路径
+	tempDir := fileLocalPath // 临时文件夹路径
 
 	// 创建临时文件夹（如果不存在）
 	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
