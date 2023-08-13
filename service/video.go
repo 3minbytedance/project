@@ -113,7 +113,7 @@ func GetPublishList(userID uint) (videoResponses []models.VideoResponse) {
 		return []models.VideoResponse{}
 	}
 	// 将查询结果转换为VideoResponse类型
-	videoResponses = make([]models.VideoResponse, len(videos))
+	videoResponses = make([]models.VideoResponse, 0, len(videos))
 	for _, video := range videos {
 		user, _ := GetUserInfoByUserId(userID)
 		commentCount, _ := GetCommentCount(video.ID)
@@ -133,13 +133,13 @@ func GetPublishList(userID uint) (videoResponses []models.VideoResponse) {
 	return videoResponses
 }
 
-func GetFeedList(latestTime string) (videoResponses []models.VideoResponse, nextTime int64, err error) {
+func GetFeedList(latestTime string) ([]models.VideoResponse, int64, error) {
 	videos := mysql.GetLatestVideos(latestTime)
 	if len(videos) == 0 {
 		return []models.VideoResponse{}, 0, errors.New("no videos")
 	}
 	// 将查询结果转换为VideoResponse类型
-	videoResponses = make([]models.VideoResponse, len(videos))
+	videoResponses := make([]models.VideoResponse, 0, len(videos))
 	for _, video := range videos {
 		user, _ := GetUserInfoByUserId(video.AuthorId)
 		commentCount, _ := GetCommentCount(video.ID)
@@ -156,8 +156,11 @@ func GetFeedList(latestTime string) (videoResponses []models.VideoResponse, next
 
 		videoResponses = append(videoResponses, videoResponse)
 	}
+	log.Println("=====")
+	log.Println(videoResponses)
+	log.Println("=======")
 	//本次返回的视频中，发布最早的时间
-	nextTime = videos[len(videos)-1].CreatedAt
+	nextTime := videos[len(videos)-1].CreatedAt
 	return videoResponses, nextTime, nil
 }
 
