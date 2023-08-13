@@ -75,5 +75,5 @@ func CheckUserRegisterInfo(username string, password string) (int32, string) {
 		return 3, "用户已注册"
 	}
 
-	return 0, "合法"
+	return 0, "注册成功"
 }
