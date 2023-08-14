@@ -19,7 +19,8 @@ func FavoriteAction(c *gin.Context) {
 	videoId, _ := strconv.Atoi(videoIdStr)
 	actionTypeStr := c.Query("action_type")
 	actionType, _ := strconv.Atoi(actionTypeStr)
-	err := service.FavoriteActions(int64(userId), int64(videoId), actionType)
+
+	err := service.FavoriteActions(userId, uint(videoId), actionType)
 	//count, _ := service.GetFavoritesVideoCount(int64(videoId))
 	if err != nil {
 		c.JSON(http.StatusOK, models.Response{
@@ -41,7 +42,7 @@ func FavoriteList(c *gin.Context) {
 	_ = c.Query("token") //TODO 视频流客户端传递这个参数，用处Token续签、未登录的情况下查询关注返回false
 	userIdStr := c.Query("user_id")
 	userId, _ := strconv.Atoi(userIdStr)
-	videoList, err := service.GetFavoriteList(int64(userId))
+	videoList, err := service.GetFavoriteList(uint(userId))
 	if err != nil {
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: 1,

@@ -10,7 +10,8 @@ const (
 	VideoKey = "video_"
 
 	CommentCountField = "comment_count"
-	FavoriteField     = "favorite_count"
+
+	VideoFavoritedCountField = "favorited_count" // 视频被点赞总数
 )
 
 const (
@@ -20,7 +21,7 @@ const (
 	WorkCountField     = "work_count"      //作品数
 	NameField          = "name"            //用户名
 	TotalFavoriteField = "total_favorited" //发布视频的总获赞数量
-	FavoriteCountField = "favorite_count"  //喜欢数
+	FavoriteList       = "favorite_list"   //喜欢视频列表
 	FollowCountField   = "follow_count"    //关注数
 	FollowerCountField = "follower_count"  //粉丝数
 )
@@ -48,6 +49,20 @@ func IsExistVideoField(videoId uint, field string) bool {
 		return false
 	}
 	if !exists {
+		return false
+	}
+	return true
+}
+
+// IsExistUserSetField 判断set类型的是否存在
+func IsExistUserSetField(userId uint, field string) bool {
+	key := fmt.Sprintf("%d_%S", userId, field)
+	exists, err := Rdb.Exists(Ctx, key).Result()
+	if err != nil {
+		log.Println("redis isExistUser 连接失败")
+		return false
+	}
+	if exists == 0 {
 		return false
 	}
 	return true
