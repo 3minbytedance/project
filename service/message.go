@@ -80,7 +80,7 @@ func process(conn net.Conn) {
 func SendMessage(fromUserId, toUserId uint, content string) (err error) {
 
 	// TODO 1、非好友关系
-	if !IsInMyFollowList(fromUserId,toUserId) {
+	if !IsInMyFollowList(fromUserId,toUserId) || !IsInMyFollowList(toUserId,fromUserId) {
 		return errors.New("对方不是您的好友，无法发送消息。")
 	}
 
