@@ -10,7 +10,7 @@ const (
 	VideoKey = "video_"
 
 	CommentCountField = "comment_count"
-	//点赞数Field todo
+	FavoriteField     = "favorite_count"
 )
 
 const (

@@ -23,23 +23,8 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	}
 
 	go func() {
-		// 如果当前video的commentCount为0，不确定是没有评论，还是评论刚刚过期，所以不能直接+1
-		// 所以需要先去看一下redis，如果有key，直接+1
-		// 如果没key，更新commentCount再+1
-		// 如果redis不存在key
-		if !redis.IsExistVideoField(videoId, redis.CommentCountField) {
-			// 获取最新commentCount
-			cnt, err := mysql.GetCommentCnt(videoId)
-			if err != nil {
-				log.Println("mysql获取评论数失败", err)
-				return
-			}
-			// 设置最新commentCount
-			err = redis.SetCommentCountByVideoId(videoId, cnt)
-			if err != nil {
-				log.Println("redis更新评论数失败", err)
-				return
-			}
+		isSetKey, _ := checkAndSetRedisCommentKey(videoId)
+		if isSetKey {
 			return
 		}
 		// 更新commentCount
@@ -148,7 +133,24 @@ func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, err
 
 // GetCommentCount 根据视频ID获取视频的评论数
 func GetCommentCount(videoId uint) int64 {
-	if !redis.IsExistVideoField(videoId, redis.CommentCountField){
+	isSetKey, count := checkAndSetRedisCommentKey(videoId)
+	if isSetKey {
+		return count
+	}
+	// 从redis中获取评论数
+	count, err := redis.GetCommentCountByVideoId(videoId)
+	if err != nil {
+		log.Println("redis获取评论数失败", err)
+	}
+	return count
+}
+
+// checkAndSetRedisCommentKey
+// 返回true表示不存在这个key，并设置key
+// 返回false表示已存在这个key，cnt数返回0
+func checkAndSetRedisCommentKey(videoId uint) (isSet bool, count int64) {
+	var cnt int64
+	if !redis.IsExistVideoField(videoId, redis.CommentCountField) {
 		// 获取最新commentCount
 		cnt, err := mysql.GetCommentCnt(videoId)
 		if err != nil {
@@ -159,12 +161,7 @@ func GetCommentCount(videoId uint) int64 {
 		if err != nil {
 			log.Println("redis更新评论数失败", err)
 		}
-		return cnt
+		return true, cnt
 	}
-	// 从redis中获取评论数
-	count, err := redis.GetCommentCountByVideoId(videoId)
-	if err != nil{
-		log.Println("redis获取评论数失败", err)
-	}
-	return count
+	return false, cnt
 }
