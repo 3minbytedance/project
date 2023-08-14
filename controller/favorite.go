@@ -24,10 +24,9 @@ func FavoriteAction(c *gin.Context) {
 
 // FavoriteList all users have same favorite video list
 func FavoriteList(c *gin.Context) {
-	//c.JSON(http.StatusOK, VideoListResponse{
-	//	Response: models.Response{
-	//		StatusCode: 0,
-	//	},
-	//	VideoList: DemoVideos,
-	//})
+	c.JSON(http.StatusOK, models.VideoListResponse{
+		Response: models.Response{
+			StatusCode: 0,
+		},
+	})
 }
