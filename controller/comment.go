@@ -47,7 +47,7 @@ func CommentAction(c *gin.Context) {
 
 	// 删除评论
 	case "2":
-		data, err := service.DeleteComment(uint(videoId),  uint(commentId))
+		data, err := service.DeleteComment(uint(videoId), uint(commentId))
 		if err != nil {
 			c.JSON(http.StatusOK, models.CommentActionResponse{
 				Response: models.Response{

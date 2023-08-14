@@ -47,10 +47,10 @@ func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
 		FollowerCount: followerCount,
 		IsFollow:      false,
 		//todo
-		//Avatar:          user.Avatar,
-		//BackgroundImage: user.BackgroundImage,
-		//Signature:       user.Signature,
-		//TotalFavorited:  "0",
+		Avatar:          "",
+		BackgroundImage: "",
+		Signature:       "",
+		//TotalFavorited:  "1000",
 		WorkCount:     workCount, //todo
 		FavoriteCount: 0,
 	}
