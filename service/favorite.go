@@ -26,11 +26,11 @@ func FavoriteActions(userId uint, videoId uint, actionType int) error {
 	switch actionType {
 	case 1:
 		// 点赞
-		// 更新用户喜欢的视频列表
+		// 判断重复点赞
 		if daoRedis.IsInUserFavoriteList(userId, videoId) {
 			return errors.New("该视频已点赞")
 		}
-		// 更新视频被喜欢的用户列表
+		// 更新用户喜欢的视频列表
 		err = daoRedis.AddFavoriteVideoToList(userId, videoId)
 		if err != nil {
 			fmt.Println(err)
@@ -46,7 +46,7 @@ func FavoriteActions(userId uint, videoId uint, actionType int) error {
 		if err != nil {
 			fmt.Println(err)
 		}
-		// 新增到数据库 todo
+		daoMySQL.AddUserFavorite(userId, videoId)
 		return err
 	case 2:
 		// 取消赞
@@ -68,7 +68,10 @@ func FavoriteActions(userId uint, videoId uint, actionType int) error {
 		if err != nil {
 			fmt.Println(err)
 		}
-		// 数据库删除数据 todo
+		err = daoMySQL.DeleteUserFavorite(userId, videoId)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 	return nil
 }
@@ -88,7 +91,7 @@ func GetFavoriteList(userId uint) ([]models.VideoResponse, error) {
 	videoResponses := make([]models.VideoResponse, 0)
 	for _, video := range videos {
 		user, _ := GetUserInfoByUserId(userId)
-		commentCount, _ := GetCommentCount(video.ID)
+		commentCount := GetCommentCount(video.ID)
 		favoriteCount, _ := GetFavoritesVideoCount(video.ID)
 		videoResponse := models.VideoResponse{
 			ID:            video.ID,
@@ -122,12 +125,40 @@ func GetFavoritesVideoCount(videoId uint) (int64, error) {
 		if err != nil {
 			log.Println(err)
 		}
-		err = daoRedis.SetTotalFavoritedByVideoId(videoId, int64(num)) // 加载视频被点赞数量
+		err = daoRedis.SetVideoFavoritedCountByVideoId(videoId, int64(num)) // 加载视频被点赞数量
 		if err != nil {
 			fmt.Println(err)
 		}
 		return int64(num), err
 	}
+}
+
+// GetUserFavoriteCount 根据用户id获取当前用户点赞数
+func GetUserFavoriteCount(userId uint) int64 {
+	exist := daoRedis.IsExistUserSetField(userId, daoRedis.FavoriteList);
+	if exist {
+		count, err := daoRedis.GetUserFavoriteVideoCountById(userId)
+		if err != nil {
+			log.Println(err)
+		}
+		return count
+	}
+	// redis中没有对应的数据，从MYSQL数据库中获取数据
+	favorites, _, err := daoMySQL.GetFavoritesByIdFromMysql(userId, daoMySQL.IdTypeUser)
+	if err != nil {
+		log.Println(err)
+	}
+	idList := getIdListFromFavoriteSlice(favorites, daoMySQL.IdTypeUser)
+	// key 不存在需要同步到redis
+	err = daoRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
+	if err != nil {
+		log.Println(err)
+	}
+	err = daoRedis.SetTotalFavoritedByUserId(userId, getUserTotalFavoritedCount(userId)) // 加载用户发布视频被点赞的总数
+	if err != nil {
+		log.Println(err)
+	}
+	return int64(len(idList))
 }
 
 // GetFavoritesByUserId 获取当前id的点赞的视频id列表
@@ -138,7 +169,7 @@ func GetFavoritesByUserId(userId uint) ([]uint, error) {
 		// redis存在
 		favoritesVideoIdList, err := daoRedis.GetFavoriteListByUserId(userId)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		return favoritesVideoIdList, err
 	} else {
@@ -151,11 +182,11 @@ func GetFavoritesByUserId(userId uint) ([]uint, error) {
 		// key 不存在需要同步到redis
 		err = daoRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		err = daoRedis.SetTotalFavoritedByUserId(userId, getUserTotalFavoritedCount(userId)) // 加载用户发布视频被点赞的总数
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		return idList, err
 	}
@@ -164,7 +195,7 @@ func GetFavoritesByUserId(userId uint) ([]uint, error) {
 // 辅助函数
 // getIdListFromFavoriteSlice 从Favorite的slice中获取id的列表
 func getIdListFromFavoriteSlice(favorites []models.Favorite, idType int) []uint {
-	res := make([]uint, 0)
+	res := make([]uint, 0, len(favorites))
 	for _, fav := range favorites {
 		switch idType {
 		case 1:
@@ -185,10 +216,12 @@ func getUserTotalFavoritedCount(userId uint) int64 {
 	if !exist {
 		return 0
 	}
-	idList := make([]string, 0)
+	idList := make([]string, 0, len(videosByAuthorId))
 	for _, video := range videosByAuthorId {
 		idList = append(idList, strconv.Itoa(int(video.ID)))
 	}
+
+	//todo 待改
 
 	total = daoMySQL.DB.Where("video_id IN ?", idList).Find(&users).RowsAffected
 	return total

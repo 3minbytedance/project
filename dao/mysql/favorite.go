@@ -1,6 +1,8 @@
 package mysql
 
 import (
+	"gorm.io/gorm"
+	"log"
 	"project/models"
 )
 
@@ -27,6 +29,24 @@ func GetFavoritesByIdFromMysql(id uint, idType int) ([]models.Favorite, int, err
 		err = DB.Error
 	}
 	return res, int(rows), err
+}
+
+// AddUserFavorite 添加喜欢关系
+func AddUserFavorite(userId, videoId uint) bool {
+	follow := models.Favorite{UserId: userId, VideoId: videoId}
+	result := DB.Model(&models.Favorite{}).Create(&follow)
+	return result.RowsAffected != 0
+}
+
+// DeleteUserFavorite 删除喜欢关系
+func DeleteUserFavorite(userId, videoId uint) error {
+	favorite := models.Favorite{UserId: userId, VideoId: videoId}
+	result := DB.Delete(&models.Favorite{}, favorite)
+	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
+		log.Println("未找到 Follow", userId, videoId)
+		return result.Error
+	}
+	return nil
 }
 
 //

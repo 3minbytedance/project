@@ -21,9 +21,10 @@ const (
 	WorkCountField     = "work_count"      //作品数
 	NameField          = "name"            //用户名
 	TotalFavoriteField = "total_favorited" //发布视频的总获赞数量
-	FavoriteList       = "favorite_list"   //喜欢视频列表
-	FollowCountField   = "follow_count"    //关注数
-	FollowerCountField = "follower_count"  //粉丝数
+
+	// FavoriteList  set类型
+	FavoriteList = "favorite_list" //喜欢视频列表
+
 	// FollowList and FollowerList  set类型
 	FollowList   = "follow_list"   //关注列表
 	FollowerList = "follower_list" //粉丝列表
@@ -57,6 +58,7 @@ func IsExistVideoField(videoId uint, field string) bool {
 	return true
 }
 
+// IsExistUserSetField 判断set类型的是否存在
 func IsExistUserSetField(userId uint, field string) bool {
 	key := fmt.Sprintf("%d_%S", userId, field)
 	exists, err := Rdb.Exists(Ctx, key).Result()

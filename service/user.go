@@ -40,19 +40,19 @@ func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
 	if err != nil {
 		return models.UserResponse{}, false
 	}
+	favoriteCount := GetUserFavoriteCount(userId)
 	userResponse := models.UserResponse{
-		ID:            user.ID,
-		Name:          user.Name,
-		FollowCount:   followCount,
-		FollowerCount: followerCount,
-		IsFollow:      false,
-		//todo
+		ID:              user.ID,
+		Name:            user.Name,
+		FollowCount:     followCount,
+		FollowerCount:   followerCount,
+		IsFollow:        false,
 		Avatar:          "",
 		BackgroundImage: "",
 		Signature:       "",
 		//TotalFavorited:  "1000",
 		WorkCount:     workCount, //todo
-		FavoriteCount: 0,
+		FavoriteCount: favoriteCount,
 	}
 	return userResponse, true
 }

@@ -12,8 +12,15 @@ import (
 // FavoriteAction 点赞取消赞的操作
 func FavoriteAction(c *gin.Context) {
 	token := c.Query("token")
-	userToken, _ := utils.ParseToken(token)
-	userId := userToken.ID
+
+	var userId uint
+	//isLogged := false
+	//todo 改为如果token在redis中查到
+	if token != "" {
+		userToken, _ := utils.ParseToken(token)
+		userId = userToken.ID
+		//isLogged = true
+	}
 
 	videoIdStr := c.Query("video_id")
 	videoId, _ := strconv.Atoi(videoIdStr)

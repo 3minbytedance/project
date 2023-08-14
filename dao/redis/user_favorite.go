@@ -31,7 +31,7 @@ func IncrementTotalFavoritedByUserId(userId uint) error {
 
 // IncrementFavoritedCountByVideoId 视频被点赞数量加1
 func IncrementFavoritedCountByVideoId(videoId uint) error {
-	key := UserKey + fmt.Sprintf("%d", videoId)
+	key := VideoKey + fmt.Sprintf("%d", videoId)
 	//增加并返回
 	_, err := Rdb.HIncrBy(Ctx, key, VideoFavoritedCountField, 1).Result()
 	return err
@@ -46,22 +46,22 @@ func DecrementTotalFavoritedByUserId(userId uint) error {
 
 // DecrementFavoritedCountByVideoId 视频被点赞数量减1
 func DecrementFavoritedCountByVideoId(videoId uint) error {
-	key := UserKey + fmt.Sprintf("%d", videoId)
-	//增加并返回
-	_, err := Rdb.HIncrBy(Ctx, key, VideoFavoritedCountField, 1).Result()
+	key := VideoKey + fmt.Sprintf("%d", videoId)
+	//减少并返回
+	_, err := Rdb.HIncrBy(Ctx, key, VideoFavoritedCountField, -1).Result()
 	return err
 }
 
-// SetTotalFavoritedByUserId 设置用户视频被点赞总数
+// SetTotalFavoritedByUserId 设置用户发布视频的总的被点赞数
 func SetTotalFavoritedByUserId(userId uint, totalFavorite int64) error {
 	key := UserKey + fmt.Sprintf("%d", userId)
 	err := Rdb.HSet(Ctx, key, TotalFavoriteField, totalFavorite).Err()
 	return err
 }
 
-// SetTotalFavoritedByVideoId 设置视频被点赞总量
-func SetTotalFavoritedByVideoId(videoId uint, totalFavorited int64) error {
-	key := UserKey + fmt.Sprintf("%d", videoId)
+// SetVideoFavoritedCountByVideoId 设置该videoId下被点赞总量
+func SetVideoFavoritedCountByVideoId(videoId uint, totalFavorited int64) error {
+	key := VideoKey + fmt.Sprintf("%d", videoId)
 	err := Rdb.HSet(Ctx, key, VideoFavoritedCountField, totalFavorited).Err()
 	return err
 }
@@ -113,9 +113,9 @@ func IsInUserFavoriteList(userId uint, videoId uint) bool {
 	return found
 }
 
-// GetFavoriteVideoCountById 根据userId查找喜欢的视频数量
-func GetFavoriteVideoCountById(userId uint) (int, error) {
+// GetUserFavoriteVideoCountById 根据userId查找喜欢的视频数量
+func GetUserFavoriteVideoCountById(userId uint) (int64, error) {
 	key := fmt.Sprintf("%d_%s", userId, FavoriteList)
 	size, err := Rdb.SCard(Ctx, key).Result()
-	return int(size), err
+	return size, err
 }

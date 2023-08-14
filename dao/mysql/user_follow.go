@@ -23,9 +23,9 @@ func AddFollow(userId, followId uint) error {
 // DeleteFollowById 删除关注关系
 func DeleteFollowById(userId, followId uint) error {
 	follow := models.UserFollow{UserId: userId, FollowId: followId}
-	result := DB.Delete(&models.Comment{}, follow)
+	result := DB.Delete(&models.UserFollow{}, follow)
 	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
-		log.Println("未找到 Comment")
+		log.Println("未找到 Follow", userId, followId)
 		return result.Error
 	}
 	return nil
