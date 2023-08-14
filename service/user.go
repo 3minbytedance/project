@@ -41,6 +41,7 @@ func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
 		return models.UserResponse{}, false
 	}
 	favoriteCount := GetUserFavoriteCount(userId)
+	totalFavoritedCount := GetUserTotalFavoritedCount(userId)
 	userResponse := models.UserResponse{
 		ID:              user.ID,
 		Name:            user.Name,
@@ -50,9 +51,9 @@ func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
 		Avatar:          "",
 		BackgroundImage: "",
 		Signature:       "",
-		//TotalFavorited:  "1000",
-		WorkCount:     workCount, //todo
-		FavoriteCount: favoriteCount,
+		TotalFavorited:  totalFavoritedCount,
+		WorkCount:       workCount,
+		FavoriteCount:   favoriteCount,
 	}
 	return userResponse, true
 }

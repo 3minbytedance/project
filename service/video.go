@@ -134,7 +134,7 @@ func GetPublishList(userID uint) (videoResponses []models.VideoResponse) {
 			CoverUrl:      oss + video.CoverUrl,
 			FavoriteCount: 0, // TODO
 			CommentCount:  commentCount,
-			IsFavorite:    isUserFavorite(111, video.ID), // TODO  userId,videoID
+			IsFavorite:    IsUserFavorite(userID, video.ID),
 			Title:         video.Title,
 		}
 		videoResponses = append(videoResponses, videoResponse)
@@ -156,14 +156,15 @@ func GetFeedList(latestTime string, isLogged bool, userId uint) ([]models.VideoR
 			user.IsFollow = IsInMyFollowList(userId, user.ID)
 		}
 		commentCount := GetCommentCount(video.ID)
+		favoriteCount, _ := GetFavoritesVideoCount(video.ID)
 		videoResponse := models.VideoResponse{
 			ID:            video.ID,
 			Author:        user,
 			PlayUrl:       oss + video.VideoUrl,
 			CoverUrl:      oss + video.CoverUrl,
-			FavoriteCount: 0, // TODO
+			FavoriteCount: favoriteCount,
 			CommentCount:  commentCount,
-			IsFavorite:    isUserFavorite(111, video.ID), // TODO  userId,videoID
+			IsFavorite:    IsUserFavorite(userId, video.ID),
 			Title:         video.Title,
 		}
 
@@ -174,10 +175,6 @@ func GetFeedList(latestTime string, isLogged bool, userId uint) ([]models.VideoR
 	nextTime := videos[len(videos)-1].CreatedAt
 	return videoResponses, nextTime, nil
 }
-
-func getFavoriteCount(uint) uint { return 1 }
-
-func isUserFavorite(uint, uint) bool { return false }
 
 // todo io优化，待测
 func UploadIOVideo(file *multipart.FileHeader) (string, error) {

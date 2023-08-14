@@ -23,7 +23,7 @@ type UserResponse struct {
 	Avatar          string `json:"avatar,omitempty"`           // 用户头像
 	BackgroundImage string `json:"background_image,omitempty"` // 用户个人页顶部大图
 	Signature       string `json:"signature,omitempty"`        // 个人简介
-	TotalFavorited  string `json:"total_favorited,omitempty"`  // 获赞数量
+	TotalFavorited  int64  `json:"total_favorited,omitempty"`  // 获赞数量
 	WorkCount       int64  `json:"work_count"`                 // 作品数量
 	FavoriteCount   int64  `json:"favorite_count"`             // 点赞数量
 }
