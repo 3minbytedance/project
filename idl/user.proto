@@ -1,0 +1,66 @@
+syntax = "proto3";
+package user;
+option go_package = "user";
+
+message User {
+  uint32 id = 1; // 用户id
+  string name = 2; // 用户名称
+  uint32 follow_count = 3; // 关注总数
+  uint32 follower_count = 4; // 粉丝总数
+  bool is_follow = 5; // true-已关注，false-未关注
+  optional string avatar = 6; // 用户头像
+  optional string background_image = 7; // 用户个人顶部大图
+  optional string signature = 8; // 个人简介
+  optional uint32 total_favorited = 9; // 获赞数量
+  optional uint32 work_count = 10; // 作品数量
+  optional uint32 favorite_count = 11; // 点赞数量
+}
+
+message UserRegisterRequest {
+  string username = 1; // 注册用户名，最长32个字符
+  string password = 2; // 密码，最长32个字符
+}
+
+message UserRegisterResponse{
+  uint32 status_code = 1 [json_name = "status_code"]; // 状态码，0-成功，其他值-失败
+  string status_msg = 2 [json_name = "status_msg"]; // 返回状态描述
+  uint32 user_id = 3 [json_name = "user_id"]; // 用户id
+  string token = 4; // 用户鉴权token
+}
+
+message UserLoginRequest {
+  string username = 1; // 注册用户名，最长32个字符
+  string password = 2; // 密码，最长32个字符
+}
+
+message UserLoginResponse {
+  uint32 status_code = 1 [json_name = "status_code"]; // 状态码，0-成功，其他值-失败
+  string status_msg = 2 [json_name = "status_msg"]; // 返回状态描述
+  uint32 user_id = 3 [json_name = "user_id"]; // 用户id
+  string token = 4; // 用户鉴权token
+}
+
+message UserInfoRequest {
+  uint32 user_id = 1; // 用户id
+}
+
+message UserInfoResponse {
+  uint32 status_code = 1; // 状态码，0-成功，其他值-失败
+  optional string status_msg = 2; // 返回状态描述
+  User user = 3; // 用户信息
+}
+
+message UserExistsRequest {
+  string username = 1;
+}
+
+message UserExistsResponse {
+  bool exist = 1;
+}
+
+service UserService {
+  rpc Register(UserRegisterRequest) returns (UserRegisterResponse);
+  rpc Login(UserLoginRequest) returns (UserLoginResponse);
+  rpc GetUserInfo(UserInfoRequest) returns (UserInfoResponse);
+  rpc CheckUserExists(UserExistsRequest) returns (UserExistsResponse);
+}

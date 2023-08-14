@@ -1,0 +1,5 @@
+package mysql
+
+func CreateComment() {
+
+}
