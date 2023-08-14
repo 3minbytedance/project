@@ -26,11 +26,12 @@ func Feed(c *gin.Context) {
 		})
 		return
 	}
-	userToken, _ := utils.ParseToken(token)
-	userId := userToken.ID
+	var userId uint
 	isLogged := false
 	//todo 改为如果token在redis中查到
 	if token != "" {
+		userToken, _ := utils.ParseToken(token)
+		userId = userToken.ID
 		isLogged = true
 	}
 	videoList, nextTime, err := service.GetFeedList(latestTime, isLogged, userId)
