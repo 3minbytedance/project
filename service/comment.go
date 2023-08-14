@@ -35,7 +35,7 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	}()
 
 	// 查询user
-	user, exist := GetUserInfoByUserId(uint(userId))
+	user, exist := GetUserInfoByUserId(userId)
 	if !exist {
 		fmt.Println("根据评论中的user_id找用户失败, 评论ID为：", commentData.ID)
 		return models.CommentResponse{}, err
@@ -91,8 +91,7 @@ func TranslateTime(createTime int64) string {
 	return t.Format("01-02")
 }
 
-func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, error) {
-
+func DeleteComment(videoId,commentId uint) (models.CommentResponse, error) {
 	// 查询冗余字段
 	// 查询comment
 	comment, err := mysql.FindCommentById(commentId)
@@ -114,18 +113,21 @@ func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, err
 	commentResp.Content = comment.Content
 	commentResp.CreateDate = TranslateTime(comment.CreatedAt.Unix())
 
-	// 1、 redis评论数-1
-	err = redis.DecrementCommentCountByVideoId(videoId)
-	if err != nil {
-		log.Println("redis评论数-1失败")
-		return models.CommentResponse{}, err
-	}
-
-	// 2、 mysql删除comment
+	// 1、 mysql删除comment
 	err = mysql.DeleteCommentById(commentId)
 	if err != nil {
 		fmt.Println("删除Comment失败")
 		return commentResp, err
+	}
+
+	// 2、 redis评论数-1
+	isSet, _ := checkAndSetRedisCommentKey(videoId)
+	if !isSet{
+		err = redis.DecrementCommentCountByVideoId(videoId)
+		if err != nil {
+			log.Println("redis评论数-1失败")
+			return models.CommentResponse{}, err
+		}
 	}
 
 	return commentResp, nil
