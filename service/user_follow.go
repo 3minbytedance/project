@@ -2,23 +2,25 @@ package service
 
 import (
 	"fmt"
-	"log"
 	"project/dao/mysql"
 	"project/dao/redis"
 	"project/models"
+	"strconv"
 )
 
 func AddFollow(userId, followId uint) error {
-	// 评论信息
+	// 增加关注
 	err := mysql.AddFollow(userId, followId)
 	go func() {
-		err := redis.IncreaseFollowCountByUserId(userId)
+		//更新自己的关注列表
+		err := redis.IncreaseFollowCountByUserId(userId, followId)
 		if err != nil {
 			return
 		}
 	}()
 	go func() {
-		err := redis.IncreaseFollowerCountByUserId(followId)
+		//更新对方的粉丝列表
+		err := redis.IncreaseFollowerCountByUserId(followId, userId)
 		if err != nil {
 			return
 		}
@@ -26,16 +28,19 @@ func AddFollow(userId, followId uint) error {
 	return err
 }
 
+// DeleteFollow userId 取关 followId
 func DeleteFollow(userId, followId uint) error {
 	err := mysql.DeleteFollowById(userId, followId)
 	go func() {
-		err := redis.DecreaseFollowCountByUserId(userId)
+		//删掉自己的关注列表
+		err := redis.DecreaseFollowCountByUserId(userId, followId)
 		if err != nil {
 			return
 		}
 	}()
 	go func() {
-		err := redis.DecreaseFollowerCountByUserId(followId)
+		//删掉对方的粉丝列表
+		err := redis.DecreaseFollowerCountByUserId(followId, userId)
 		if err != nil {
 			return
 		}
@@ -44,109 +49,112 @@ func DeleteFollow(userId, followId uint) error {
 }
 
 func GetFollowList(userId uint) ([]models.UserResponse, error) {
-	followListId, err := mysql.GetFollowList(userId)
-	if err != nil {
-		return nil, err
-	}
-
-	results := make([]models.UserResponse, len(followListId))
-	for _, id := range followListId {
-		result, ok := GetUserInfoByUserId(id)
-		if !ok {
-			return nil, fmt.Errorf("GetUserInfoByUserId err")
+	// redis存在key
+	if redis.IsExistUserSetField(userId, redis.FollowList) {
+		followListId, err := redis.GetFollowListById(userId)
+		if err != nil {
+			return nil, err
 		}
-		result.IsFollow = true
-		results = append(results, result)
+		return GetUserModelByList(followListId)
+	} else {
+		followListId, err := mysql.GetFollowList(userId)
+		if err != nil {
+			return nil, err
+		}
+		// 往redis赋值
+		go func() {
+			err = redis.SetFollowListByUserId(userId, followListId)
+			if err != nil {
+				return
+			}
+		}()
+		return GetUserModelByList(followListId)
 	}
-	return results, nil
 }
 
 func GetFollowerList(userId uint) ([]models.UserResponse, error) {
-	followerListId, err := mysql.GetFollowerList(userId)
-	if err != nil {
-		return nil, err
-	}
-	results := make([]models.UserResponse, len(followerListId))
-	for _, id := range followerListId {
-		result, ok := GetUserInfoByUserId(id)
-		if !ok {
-			return nil, fmt.Errorf("GetUserInfoByUserId err")
+	// redis存在key
+	if redis.IsExistUserSetField(userId, redis.FollowerList) {
+		followListId, err := redis.GetFollowerListById(userId)
+		if err != nil {
+			return nil, err
 		}
-		result.IsFollow = mysql.IsFollowing(userId,result.ID)
-		results = append(results, result)
+		return GetUserModelByList(followListId)
+	} else {
+		followListId, err := mysql.GetFollowerList(userId)
+		if err != nil {
+			return nil, err
+		}
+		// 往redis赋值
+		go func() {
+			err = redis.SetFollowerListByUserId(userId, followListId)
+			if err != nil {
+				return
+			}
+		}()
+		return GetUserModelByList(followListId)
 	}
-	return results, nil
 }
 
 func GetFriendList(userId uint) ([]models.UserResponse, error) {
-	follow, err := mysql.GetFollowList(userId)
+	key1 := fmt.Sprintf("%d_%s", userId, redis.FollowerList)
+	key2 := fmt.Sprintf("%d_%s", userId, redis.FollowList)
+	friend, err := redis.Rdb.SUnion(redis.Ctx, key2, key1).Result()
 	if err != nil {
 		return nil, err
 	}
-	follower, err := mysql.GetFollowerList(userId)
-	if err != nil {
-		return nil, err
+	var friend_list []uint
+	for _, value := range friend {
+		k, err := strconv.Atoi(value)
+		if err != nil {
+			return nil, err
+		}
+		friend_list = append(friend_list, uint(k))
 	}
-	friend := intersection(follow, follower)
-
-	results, err := GetUserModelByList(friend)
+	results, err := GetUserModelByList(friend_list)
 	return results, err
 }
 
-func GetFollowCount(userID uint) (int64, error) {
-	// 1. 缓存中有数据, 直接返回
-	if redis.IsExistUserField(userID, redis.FollowCountField) {
-		count, err := redis.GetFollowCountById(userID)
+func GetFollowCount(userId uint) (int64, error) {
+	// redis存在key
+	if redis.IsExistUserSetField(userId, redis.FollowList) {
+		num, err := redis.GetFollowCountById(userId)
+		return int64(num), err
+	} else {
+		followListId, err := mysql.GetFollowList(userId)
 		if err != nil {
-			log.Println("从redis中获取关注数失败：", err)
-			//return 0, err
+			return -1, err
 		}
-		return int64(count), nil
+		// 往redis赋值
+		go func() {
+			err = redis.SetFollowListByUserId(userId, followListId)
+			if err != nil {
+				return
+			}
+		}()
+		return int64(len(followListId)), nil
 	}
-
-	// 2. 缓存中没有数据，从数据库中获取
-	num, err := mysql.GetFollowCnt(userID)
-	if err != nil {
-		log.Println("从数据库中获取关注数失败：", err.Error())
-		return 0, nil
-	}
-	log.Println("从数据库中获取关注数成功：", num)
-	// 将评论数写入redis
-	go func() {
-		err = redis.SetFollowCountByUserId(userID, num)
-		if err != nil {
-			log.Println("将评论数写入redis失败：", err.Error())
-		}
-	}()
-	return num, nil
 }
 
-func GetFollowerCount(userID uint) (int64, error) {
-	// 1. 缓存中有数据, 直接返回
-	if redis.IsExistUserField(userID, redis.FollowerCountField) {
-		count, err := redis.GetFollowerCountById(userID)
+func GetFollowerCount(userId uint) (int64, error) {
+	// redis存在key
+	if redis.IsExistUserSetField(userId, redis.FollowerList) {
+		num, err := redis.GetFollowerCountById(userId)
+		return int64(num), err
+	} else {
+		followListId, err := mysql.GetFollowerList(userId)
 		if err != nil {
-			log.Println("从redis中获取粉丝数失败：", err)
-			//return 0, err
+			return -1, err
 		}
-		return int64(count), nil
+		// 往redis赋值
+		go func() {
+			err = redis.SetFollowerListByUserId(userId, followListId)
+			if err != nil {
+				return
+			}
+		}()
+		return int64(len(followListId)), nil
 	}
-
-	// 2. 缓存中没有数据，从数据库中获取
-	num, err := mysql.GetFollowerCnt(userID)
-	if err != nil {
-		log.Println("从数据库中获取粉丝数失败：", err.Error())
-		return 0, nil
-	}
-	log.Println("从数据库中获取粉丝数成功：", num)
-	// 将评论数写入redis
-	go func() {
-		err = redis.SetFollowerCountByUserId(userID, num)
-		if err != nil {
-			log.Println("将粉丝数写入redis失败：", err.Error())
-		}
-	}()
-	return num, nil
 }
 
 // GetUserModelByList 根据id获取model
@@ -162,8 +170,29 @@ func GetUserModelByList(id []uint) ([]models.UserResponse, error) {
 	return results, nil
 }
 
-//todo 会耗费go的堆栈内存
-//找出两个数组共有的元素
+// IsInMyFollowList 是否followUser在自己的关注列表里
+func IsInMyFollowList(userId uint, followUserId uint) bool {
+	// redis存在key
+	if redis.IsExistUserSetField(userId, redis.FollowList) {
+		found := redis.IsInMyFollowList(userId, followUserId)
+		return found
+	}
+	found := mysql.IsFollowing(userId, followUserId)
+	followListId, err := mysql.GetFollowList(userId)
+	if err != nil {
+		return false
+	}
+	// 往redis赋值
+	go func() {
+		err = redis.SetFollowListByUserId(userId, followListId)
+		if err != nil {
+			return
+		}
+	}()
+	return found
+}
+
+// 找出两个数组共有的元素
 func intersection(a, b []uint) (c []uint) {
 	m := make(map[uint]bool)
 	for _, item := range a {

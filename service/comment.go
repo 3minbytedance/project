@@ -23,24 +23,9 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	}
 
 	go func() {
-		// todo 待改
-		// 如果当前video的commentCount为0，不确定是没有评论，还是评论刚刚过期，所以不能直接+1
-		// 所以需要先去看一下redis，如果有key，直接+1
-		// 如果没key，更新commentCount再+1
-		// 如果redis不存在key
-		if !redis.IsExistVideoField(videoId, redis.CommentCountField) {
-			// 获取最新commentCount
-			cnt, err := mysql.GetCommentCnt(videoId)
-			if err != nil {
-				log.Println("mysql获取评论数失败", err)
-				return
-			}
-			// 设置最新commentCount
-			err = redis.SetCommentCountByVideoId(videoId, cnt)
-			if err != nil {
-				log.Println("redis更新评论数失败", err)
-				return
-			}
+		isSetKey, _ := checkAndSetRedisCommentKey(videoId)
+		if isSetKey {
+			return
 		}
 		// 更新commentCount
 		err = redis.IncrementCommentCountByVideoId(videoId)
@@ -50,7 +35,7 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	}()
 
 	// 查询user
-	user, exist := GetUserInfoByUserId(uint(userId))
+	user, exist := GetUserInfoByUserId(userId)
 	if !exist {
 		fmt.Println("根据评论中的user_id找用户失败, 评论ID为：", commentData.ID)
 		return models.CommentResponse{}, err
@@ -66,9 +51,8 @@ func AddComment(videoId, userId uint, content string) (models.CommentResponse, e
 	return commentResp, nil
 }
 
-//todo 缺少对返回的user列表判断是否关注
-
-func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
+// GetCommentList isLogged参数是为了返回用户信息中是否和自己关注
+func GetCommentList(videoId uint, isLogged bool, userId uint) ([]models.CommentResponse, error) {
 	// 1、根据videoId查询数据库，获取comments信息
 	comments, err := mysql.FindCommentsByVideoId(videoId)
 	if err != nil {
@@ -78,15 +62,13 @@ func GetCommentList(videoId uint) ([]models.CommentResponse, error) {
 
 	commentList := make([]models.CommentResponse, 0)
 	for _, comment := range comments {
-		user, exist := mysql.FindUserByUserID(comment.UserId)
-		if !exist {
-			fmt.Println("根据评论中的user_id找用户失败")
+		user, _ := GetUserInfoByUserId(comment.UserId)
+		if isLogged {
+			user.IsFollow = IsInMyFollowList(userId, comment.UserId)
 		}
-		//todo 返回的user信息给写死了
-		userResp := models.UserResponse{ID: user.ID, Name: user.Name}
 		commentResp := models.CommentResponse{
 			Id:         int64(comment.ID),
-			User:       userResp,
+			User:       user,
 			Content:    comment.Content,
 			CreateDate: TranslateTime(comment.CreatedAt.Unix()),
 		}
@@ -109,8 +91,7 @@ func TranslateTime(createTime int64) string {
 	return t.Format("01-02")
 }
 
-func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, error) {
-
+func DeleteComment(videoId,commentId uint) (models.CommentResponse, error) {
 	// 查询冗余字段
 	// 查询comment
 	comment, err := mysql.FindCommentById(commentId)
@@ -132,53 +113,57 @@ func DeleteComment(videoId, userId, commentId uint) (models.CommentResponse, err
 	commentResp.Content = comment.Content
 	commentResp.CreateDate = TranslateTime(comment.CreatedAt.Unix())
 
-	// 1、 redis评论数-1
-	err = redis.DecrementCommentCountByVideoId(videoId)
-	if err != nil {
-		log.Println("redis评论数-1失败")
-		return models.CommentResponse{}, err
-	}
-
-	// 2、 mysql删除comment
+	// 1、 mysql删除comment
 	err = mysql.DeleteCommentById(commentId)
 	if err != nil {
 		fmt.Println("删除Comment失败")
 		return commentResp, err
 	}
 
+	// 2、 redis评论数-1
+	isSet, _ := checkAndSetRedisCommentKey(videoId)
+	if !isSet{
+		err = redis.DecrementCommentCountByVideoId(videoId)
+		if err != nil {
+			log.Println("redis评论数-1失败")
+			return models.CommentResponse{}, err
+		}
+	}
+
 	return commentResp, nil
 }
 
 // GetCommentCount 根据视频ID获取视频的评论数
-func GetCommentCount(videoId uint) (int64, error) {
+func GetCommentCount(videoId uint) int64 {
+	isSetKey, count := checkAndSetRedisCommentKey(videoId)
+	if isSetKey {
+		return count
+	}
 	// 从redis中获取评论数
 	count, err := redis.GetCommentCountByVideoId(videoId)
 	if err != nil {
-		log.Println("从redis中获取评论数失败：", err)
-		return 0, err
+		log.Println("redis获取评论数失败", err)
 	}
-	// 1. 缓存中有数据, 直接返回
-	if err != nil {
-		return 0, err
-	}
-	if count > 0 {
-		log.Println("从redis中获取评论数成功：", count)
-		return count, nil
-	}
+	return count
+}
 
-	// 2. 缓存中没有数据，从数据库中获取
-	num, err := mysql.GetCommentCnt(videoId)
-	if err != nil {
-		log.Println("从数据库中获取评论数失败：", err.Error())
-		return 0, nil
-	}
-	log.Println("从数据库中获取评论数成功：", num)
-	// 将评论数写入redis
-	go func() {
-		err = redis.SetCommentCountByVideoId(videoId, num)
+// checkAndSetRedisCommentKey
+// 返回true表示不存在这个key，并设置key
+// 返回false表示已存在这个key，cnt数返回0
+func checkAndSetRedisCommentKey(videoId uint) (isSet bool, count int64) {
+	var cnt int64
+	if !redis.IsExistVideoField(videoId, redis.CommentCountField) {
+		// 获取最新commentCount
+		cnt, err := mysql.GetCommentCnt(videoId)
 		if err != nil {
-			log.Println("将评论数写入redis失败：", err.Error())
+			log.Println("mysql获取评论数失败", err)
 		}
-	}()
-	return num, nil
+		// 设置最新commentCount
+		err = redis.SetCommentCountByVideoId(videoId, cnt)
+		if err != nil {
+			log.Println("redis更新评论数失败", err)
+		}
+		return true, cnt
+	}
+	return false, cnt
 }

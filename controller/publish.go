@@ -75,6 +75,7 @@ func Publish(c *gin.Context) {
 func GetPublishList(c *gin.Context) {
 	userID, err := strconv.Atoi(c.Query("user_id"))
 	if err != nil {
+
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: int32(CodeInvalidParam),
 			StatusMsg:  codeMsgMap[CodeInvalidParam]})

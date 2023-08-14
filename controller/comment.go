@@ -47,7 +47,7 @@ func CommentAction(c *gin.Context) {
 
 	// 删除评论
 	case "2":
-		data, err := service.DeleteComment(uint(videoId), uint(userId), uint(commentId))
+		data, err := service.DeleteComment(uint(videoId), uint(commentId))
 		if err != nil {
 			c.JSON(http.StatusOK, models.CommentActionResponse{
 				Response: models.Response{
@@ -73,9 +73,18 @@ func CommentAction(c *gin.Context) {
 }
 
 func CommentList(c *gin.Context) {
+	token := c.Query("token") //TODO 视频流客户端传递这个参数，用处Token续签、未登录的情况下查询关注返回false
 	videoIdStr := c.Query("video_id")
 	videoId, _ := strconv.ParseInt(videoIdStr, 10, 64)
-	commentList, err := service.GetCommentList(uint(videoId))
+	isLogged := false
+	var userId uint
+	//todo 改为如果token在redis中查到
+	if token != "" {
+		userToken, _ := utils.ParseToken(token)
+		userId = userToken.ID
+		isLogged = true
+	}
+	commentList, err := service.GetCommentList(uint(videoId), isLogged, userId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.CommentListResponse{
 			Response: models.Response{
