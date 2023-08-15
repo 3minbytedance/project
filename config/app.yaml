@@ -46,8 +46,8 @@ remote:
   kafka:
     address: "114.115.222.161"
     port: 9092
-    username: root
-    password: root
+    username: admin
+    password: admin
   mongo:
     address: "114.115.222.161"
     port: 27017
