@@ -1,6 +1,6 @@
 name: "douyin"
 mode: "local"
-port: 8081
+port: 8080
 version: "v0.0.1"
 local:
   mysql:
@@ -29,14 +29,14 @@ local:
 
 remote:
   mysql:
-    address: "127.0.0.1"
+    address: "114.115.222.161"
     port: 3306
-    username: root
-    password: a1253767085
-    database: douyin
+    username: doushen
+    password: CEzYXnXpGcx5rZwW
+    database: doushen
     timeout: 10
   redis:
-    address: "172.27.161.27"
+    address: "114.115.222.161"
     port: 6379
     password: ""
     comment_db: 0
@@ -44,12 +44,12 @@ remote:
     min_idle_conns: 30
     expire_time: 1800   # 30分钟
   kafka:
-    address: "127.0.0.1"
+    address: "114.115.222.161"
     port: 9092
     username: root
     password: root
   mongo:
-    address: "127.0.0.1"
+    address: "114.115.222.161"
     port: 27017
-    username: admin
-    password: admin
+    username: douyin
+    password: douyin
