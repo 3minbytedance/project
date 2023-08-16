@@ -31,6 +31,9 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	userData := model.User{}
 	userData.Name = request.Username
 
+	// 用户名存入Bloom Filter
+	common.AddToBloom(request.Username)
+
 	// 将信息存储到数据库中
 	salt := fmt.Sprintf("%06d", rand.Int())
 	userData.Salt = salt
@@ -55,7 +58,7 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 // Login implements the UserServiceImpl interface.
 func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequest) (resp *user.UserLoginResponse, err error) {
 	resp = new(user.UserLoginResponse)
-	user, exist := mysql.FindUserByName(request.Username)
+	exist := common.TestBloom(request.Username)
 	// 用户名不存在
 	if !exist {
 		zap.L().Info("Check user exists err:", zap.Error(err))
@@ -63,6 +66,9 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 		resp.StatusMsg = thrift.StringPtr("Username not exist")
 		return
 	}
+
+	// 用户名存在
+	user, _ := mysql.FindUserByName(request.Username)
 	// 检查密码
 	match := common.CheckPassword(request.Password, user.Salt, user.Password)
 	if !match {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"douyin/common"
 	"douyin/config"
 	"douyin/constant"
 	"douyin/dal/mysql"
@@ -52,6 +53,10 @@ func main() {
 		fmt.Printf("Init redis failed, err:%v\n", err)
 		return
 	}
+
+	// 初始化Bloom Filter
+	common.InitBloomFilter()
+
 	addr, err := net.ResolveTCPAddr("tcp", constant.UserServicePort)
 	if err != nil {
 		panic(err)

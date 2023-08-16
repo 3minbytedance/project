@@ -97,6 +97,8 @@ func AuthBody() app.HandlerFunc {
 	}
 }
 
+// AuthFeed Feed专属token
+
 //var (
 //	JwtMiddleware *jwt.HertzJWTMiddleware
 //	identityKey   = "userId"
@@ -155,7 +157,7 @@ func AuthBody() app.HandlerFunc {
 //			return jwt.MapClaims{}
 //		},
 //		//设置登陆的响应函数
-//		LoginResponse: func(ctx context.Context, c *app.RequestContext, code int, token string, expire time.Time) {
+//		LoginResponse: func(ctx context.Context, c *app.RequestContext, code int, token string, expire time.Time,) {
 //			c.JSON(http.StatusOK, common.H{
 //				"status_code": code,
 //				"status_msg":  "success",
