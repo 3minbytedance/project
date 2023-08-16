@@ -16,7 +16,7 @@ message RelationActionResponse {
 
 message FollowListRequest {
   uint32 actor_id = 1; // 当前登录用户id
-  uint32 user_id = 2; // 对方用户id
+  string token = 2; // 用户token 鉴权
 }
 
 message FollowListResponse {
@@ -27,7 +27,7 @@ message FollowListResponse {
 
 message FollowerListRequest {
   uint32 actor_id = 1; // 当前登录用户id
-  uint32 user_id = 2; // 对方用户id
+  string token = 2; // 用户token 鉴权
 }
 
 message FollowerListResponse {
@@ -38,6 +38,7 @@ message FollowerListResponse {
 
 message FollowListCountRequest {
   uint32 user_id = 1; // 用户id
+  string token = 2; // 用户token 鉴权
 }
 
 message FollowListCountResponse {
@@ -48,6 +49,7 @@ message FollowListCountResponse {
 
 message FollowerListCountRequest {
   uint32 user_id = 1; // 用户id
+  string token = 2; // 用户token 鉴权
 }
 
 message FollowerListCountResponse {
@@ -58,6 +60,7 @@ message FollowerListCountResponse {
 
 message FriendListRequest {
   uint32 user_id = 1; // 当前登录用户id
+  string token = 2; // 用户token 鉴权
 }
 
 message FriendListResponse {
@@ -79,8 +82,8 @@ service RelationService {
   rpc RelationAction(RelationActionRequest) returns (RelationActionResponse);
   rpc GetFollowList(FollowListRequest) returns (FollowListResponse);
   rpc GetFollowerList(FollowerListRequest) returns (FollowerListResponse);
-  rpc GetFollowListCount(FollowListCountRequest) returns (FollowListCountResponse);
-  rpc GetFollowerListCount(FollowerListCountRequest) returns (FollowerListCountResponse);
   rpc GetFriendList(FriendListRequest) returns (FriendListResponse);
   rpc IsFollowed(IsFollowedRequest) returns (IsFollowedResponse);
+  rpc GetFollowListCount(FollowListCountRequest) returns (FollowListCountResponse);
+  rpc GetFollowerListCount(FollowerListCountRequest) returns (FollowerListCountResponse);
 }
