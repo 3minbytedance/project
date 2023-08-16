@@ -2,8 +2,10 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"project/dao/mysql"
+	"project/dao/redis"
 	"project/models"
 	"project/utils"
 )
@@ -24,7 +26,7 @@ func RegisterUser(username string, password string) (id uint, err error) {
 }
 
 func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
-	user, exist := mysql.FindUserByUserID(userId)
+	name, exist := GetName(userId)
 	if !exist {
 		return models.UserResponse{}, false
 	}
@@ -43,8 +45,8 @@ func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
 	favoriteCount := GetUserFavoriteCount(userId)
 	totalFavoritedCount := GetUserTotalFavoritedCount(userId)
 	userResponse := models.UserResponse{
-		ID:              user.ID,
-		Name:            user.Name,
+		ID:              userId,
+		Name:            name,
 		FollowCount:     followCount,
 		FollowerCount:   followerCount,
 		IsFollow:        false,
@@ -56,6 +58,33 @@ func GetUserInfoByUserId(userId uint) (models.UserResponse, bool) {
 		FavoriteCount:   favoriteCount,
 	}
 	return userResponse, true
+}
+
+// GetName 获得作品数
+func GetName(userId uint) (string, bool) {
+	// 从redis中获取用户名
+	// 1. 缓存中有数据, 直接返回
+	if redis.IsExistUserField(userId, redis.NameField) {
+		name, err := redis.GetNameByUserId(userId)
+		if err != nil {
+			log.Println("从redis中获取用户名失败：", err)
+		}
+		return name, true
+	}
+
+	// 2. 缓存中没有数据，从数据库中获取
+	user, exist := mysql.FindUserByUserID(userId)
+	if !exist {
+		return "", false
+	}
+	// 将用户名写入redis
+	go func() {
+		err := redis.SetNameByUserId(userId,user.Name)
+		if err != nil {
+			log.Println("将用户名写入redis失败：", err)
+		}
+	}()
+	return user.Name, true
 }
 
 func GetUserByName(username string) (user models.User, b bool) {
