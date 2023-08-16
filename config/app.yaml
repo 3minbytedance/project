@@ -1,6 +1,6 @@
 name: "douyin"
 mode: "local"
-port: 8081
+port: 8080
 version: "v0.0.1"
 log:
   level: "debug"

@@ -40,10 +40,12 @@ if ! command -v kitex &>/dev/null; then
   exit 1
 fi
 
+# 在kitex_gen目录生成struct传输和调用方法等文件
 mkdir -p kitex_gen
-kitex -module douyin -I idl/ idl/"$1".proto
+kitex -module douyin -I idl/ idl/"$1".thrift
 
+# 生成service文件
 mkdir -p service/"$1"
-cd service/"$1" && kitex -module "douyin" -service "$1" -use douyin/kitex_gen/ -I ../../idl/ ../../idl/"$1".proto
+cd service/"$1" && kitex -module "douyin" -service "$1" -use douyin/kitex_gen/ -I ../../idl/ ../../idl/"$1".thrift
 
 go mod tidy

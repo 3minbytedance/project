@@ -11,9 +11,9 @@ import (
 
 // Client is designed to provide IDL-compatible methods with call-option parameter for kitex framework.
 type Client interface {
-	CommentAction(ctx context.Context, Req *comment.CommentActionRequest, callOptions ...callopt.Option) (r *comment.CommentActionResponse, err error)
-	GetCommentList(ctx context.Context, Req *comment.CommentListRequest, callOptions ...callopt.Option) (r *comment.CommentListRequest, err error)
-	GetCommentCount(ctx context.Context, Req *comment.CommentCountRequest, callOptions ...callopt.Option) (r *comment.CommentCountResponse, err error)
+	CommentAction(ctx context.Context, request *comment.CommentActionRequest, callOptions ...callopt.Option) (r *comment.CommentActionResponse, err error)
+	GetCommentList(ctx context.Context, request *comment.CommentListRequest, callOptions ...callopt.Option) (r *comment.CommentListResponse, err error)
+	GetCommentCount(ctx context.Context, request *comment.CommentCountRequest, callOptions ...callopt.Option) (r *comment.CommentCountResponse, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -45,17 +45,17 @@ type kCommentServiceClient struct {
 	*kClient
 }
 
-func (p *kCommentServiceClient) CommentAction(ctx context.Context, Req *comment.CommentActionRequest, callOptions ...callopt.Option) (r *comment.CommentActionResponse, err error) {
+func (p *kCommentServiceClient) CommentAction(ctx context.Context, request *comment.CommentActionRequest, callOptions ...callopt.Option) (r *comment.CommentActionResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.CommentAction(ctx, Req)
+	return p.kClient.CommentAction(ctx, request)
 }
 
-func (p *kCommentServiceClient) GetCommentList(ctx context.Context, Req *comment.CommentListRequest, callOptions ...callopt.Option) (r *comment.CommentListRequest, err error) {
+func (p *kCommentServiceClient) GetCommentList(ctx context.Context, request *comment.CommentListRequest, callOptions ...callopt.Option) (r *comment.CommentListResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetCommentList(ctx, Req)
+	return p.kClient.GetCommentList(ctx, request)
 }
 
-func (p *kCommentServiceClient) GetCommentCount(ctx context.Context, Req *comment.CommentCountRequest, callOptions ...callopt.Option) (r *comment.CommentCountResponse, err error) {
+func (p *kCommentServiceClient) GetCommentCount(ctx context.Context, request *comment.CommentCountRequest, callOptions ...callopt.Option) (r *comment.CommentCountResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetCommentCount(ctx, Req)
+	return p.kClient.GetCommentCount(ctx, request)
 }

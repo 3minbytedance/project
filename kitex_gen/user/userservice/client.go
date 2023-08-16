@@ -11,10 +11,11 @@ import (
 
 // Client is designed to provide IDL-compatible methods with call-option parameter for kitex framework.
 type Client interface {
-	Register(ctx context.Context, Req *user.UserRegisterRequest, callOptions ...callopt.Option) (r *user.UserRegisterResponse, err error)
-	Login(ctx context.Context, Req *user.UserLoginRequest, callOptions ...callopt.Option) (r *user.UserLoginResponse, err error)
-	GetUserInfo(ctx context.Context, Req *user.UserInfoRequest, callOptions ...callopt.Option) (r *user.UserInfoResponse, err error)
-	CheckUserExists(ctx context.Context, Req *user.UserExistsRequest, callOptions ...callopt.Option) (r *user.UserExistsResponse, err error)
+	Register(ctx context.Context, request *user.UserRegisterRequest, callOptions ...callopt.Option) (r *user.UserRegisterResponse, err error)
+	Login(ctx context.Context, request *user.UserLoginRequest, callOptions ...callopt.Option) (r *user.UserLoginResponse, err error)
+	GetUserInfoById(ctx context.Context, request *user.UserInfoByIdRequest, callOptions ...callopt.Option) (r *user.UserInfoByIdResponse, err error)
+	GetUserInfoByName(ctx context.Context, request *user.UserInfoByNameRequest, callOptions ...callopt.Option) (r *user.UserInfoByNameResponse, err error)
+	CheckUserExists(ctx context.Context, request *user.UserExistsRequest, callOptions ...callopt.Option) (r *user.UserExistsResponse, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -46,22 +47,27 @@ type kUserServiceClient struct {
 	*kClient
 }
 
-func (p *kUserServiceClient) Register(ctx context.Context, Req *user.UserRegisterRequest, callOptions ...callopt.Option) (r *user.UserRegisterResponse, err error) {
+func (p *kUserServiceClient) Register(ctx context.Context, request *user.UserRegisterRequest, callOptions ...callopt.Option) (r *user.UserRegisterResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.Register(ctx, Req)
+	return p.kClient.Register(ctx, request)
 }
 
-func (p *kUserServiceClient) Login(ctx context.Context, Req *user.UserLoginRequest, callOptions ...callopt.Option) (r *user.UserLoginResponse, err error) {
+func (p *kUserServiceClient) Login(ctx context.Context, request *user.UserLoginRequest, callOptions ...callopt.Option) (r *user.UserLoginResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.Login(ctx, Req)
+	return p.kClient.Login(ctx, request)
 }
 
-func (p *kUserServiceClient) GetUserInfo(ctx context.Context, Req *user.UserInfoRequest, callOptions ...callopt.Option) (r *user.UserInfoResponse, err error) {
+func (p *kUserServiceClient) GetUserInfoById(ctx context.Context, request *user.UserInfoByIdRequest, callOptions ...callopt.Option) (r *user.UserInfoByIdResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetUserInfo(ctx, Req)
+	return p.kClient.GetUserInfoById(ctx, request)
 }
 
-func (p *kUserServiceClient) CheckUserExists(ctx context.Context, Req *user.UserExistsRequest, callOptions ...callopt.Option) (r *user.UserExistsResponse, err error) {
+func (p *kUserServiceClient) GetUserInfoByName(ctx context.Context, request *user.UserInfoByNameRequest, callOptions ...callopt.Option) (r *user.UserInfoByNameResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.CheckUserExists(ctx, Req)
+	return p.kClient.GetUserInfoByName(ctx, request)
+}
+
+func (p *kUserServiceClient) CheckUserExists(ctx context.Context, request *user.UserExistsRequest, callOptions ...callopt.Option) (r *user.UserExistsResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.CheckUserExists(ctx, request)
 }

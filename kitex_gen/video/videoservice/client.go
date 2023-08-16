@@ -11,9 +11,9 @@ import (
 
 // Client is designed to provide IDL-compatible methods with call-option parameter for kitex framework.
 type Client interface {
-	VideoFeed(ctx context.Context, Req *video.VideoFeedRequest, callOptions ...callopt.Option) (r *video.VideoFeedResponse, err error)
-	PublishVideo(ctx context.Context, Req *video.PublishVideoRequest, callOptions ...callopt.Option) (r *video.PublishVideoResponse, err error)
-	GetPublishVideoList(ctx context.Context, Req *video.PublishVideoListRequest, callOptions ...callopt.Option) (r *video.PublishVideoListResponse, err error)
+	VideoFeed(ctx context.Context, request *video.VideoFeedRequest, callOptions ...callopt.Option) (r *video.VideoFeedResponse, err error)
+	PublishVideo(ctx context.Context, request *video.PublishVideoRequest, callOptions ...callopt.Option) (r *video.PublishVideoResponse, err error)
+	GetPublishVideoList(ctx context.Context, request *video.PublishVideoListRequest, callOptions ...callopt.Option) (r *video.PublishVideoListResponse, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -45,17 +45,17 @@ type kVideoServiceClient struct {
 	*kClient
 }
 
-func (p *kVideoServiceClient) VideoFeed(ctx context.Context, Req *video.VideoFeedRequest, callOptions ...callopt.Option) (r *video.VideoFeedResponse, err error) {
+func (p *kVideoServiceClient) VideoFeed(ctx context.Context, request *video.VideoFeedRequest, callOptions ...callopt.Option) (r *video.VideoFeedResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.VideoFeed(ctx, Req)
+	return p.kClient.VideoFeed(ctx, request)
 }
 
-func (p *kVideoServiceClient) PublishVideo(ctx context.Context, Req *video.PublishVideoRequest, callOptions ...callopt.Option) (r *video.PublishVideoResponse, err error) {
+func (p *kVideoServiceClient) PublishVideo(ctx context.Context, request *video.PublishVideoRequest, callOptions ...callopt.Option) (r *video.PublishVideoResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.PublishVideo(ctx, Req)
+	return p.kClient.PublishVideo(ctx, request)
 }
 
-func (p *kVideoServiceClient) GetPublishVideoList(ctx context.Context, Req *video.PublishVideoListRequest, callOptions ...callopt.Option) (r *video.PublishVideoListResponse, err error) {
+func (p *kVideoServiceClient) GetPublishVideoList(ctx context.Context, request *video.PublishVideoListRequest, callOptions ...callopt.Option) (r *video.PublishVideoListResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetPublishVideoList(ctx, Req)
+	return p.kClient.GetPublishVideoList(ctx, request)
 }

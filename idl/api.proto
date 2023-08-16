@@ -1,8 +1,0 @@
-syntax = "proto3";
-package api;
-option go_package ="api";
-import "user.proto";
-
-service ApiService {
-
-}

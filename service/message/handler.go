@@ -9,13 +9,13 @@ import (
 type MessageServiceImpl struct{}
 
 // MessageChat implements the MessageServiceImpl interface.
-func (s *MessageServiceImpl) MessageChat(ctx context.Context, req *message.MessageChatRequest) (resp *message.MessageChatResponse, err error) {
+func (s *MessageServiceImpl) MessageChat(ctx context.Context, request *message.MessageChatRequest) (resp *message.MessageChatResponse, err error) {
 	// TODO: Your code here...
 	return
 }
 
 // MessageAction implements the MessageServiceImpl interface.
-func (s *MessageServiceImpl) MessageAction(ctx context.Context, req *message.MessageActionRequest) (resp *message.MessageActionResponse, err error) {
+func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message.MessageActionRequest) (resp *message.MessageActionResponse, err error) {
 	// TODO: Your code here...
 	return
 }

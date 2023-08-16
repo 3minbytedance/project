@@ -1,4 +1,4 @@
-package utils
+package common
 
 import (
 	"github.com/dgrijalva/jwt-go"

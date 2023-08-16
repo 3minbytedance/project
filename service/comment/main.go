@@ -1,13 +1,19 @@
 package main
 
 import (
+	"douyin/config"
 	"douyin/constant"
+	"douyin/dal/mysql"
 	comment "douyin/kitex_gen/comment/commentservice"
+	"douyin/logger"
+	"douyin/mw/redis"
+	"fmt"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"log"
+	"net"
 )
 
 func main() {
@@ -25,8 +31,36 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// 加载配置
+	if err := config.Init(); err != nil {
+		fmt.Printf("load config failed, err:%v\n", err)
+		return
+	}
+	// 加载日志
+	if err := logger.Init(config.Conf.LogConfig, config.Conf.Mode); err != nil {
+		fmt.Printf("init logger failed, err:%v\n", err)
+		return
+	}
+
+	if err := mysql.Init(config.Conf); err != nil {
+		fmt.Printf("Init mysql failed, err:%v\n", err)
+		return
+	}
+
+	// 初始化Redis
+	if err := redis.Init(config.Conf); err != nil {
+		fmt.Printf("Init redis failed, err:%v\n", err)
+		return
+	}
+
+	addr, err := net.ResolveTCPAddr("tcp", constant.CommentServicePort)
+	if err != nil {
+		panic(err)
+	}
+
 	svr := comment.NewServer(
 		new(CommentServiceImpl),
+		server.WithServiceAddr(addr),
 		server.WithSuite(tracing.NewServerSuite()),
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.CommentServiceName}),
 		server.WithRegistry(r),

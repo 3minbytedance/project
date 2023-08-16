@@ -4,7 +4,10 @@ package main
 
 import (
 	"douyin/config"
+	"douyin/dal/mongo"
+	"douyin/dal/mysql"
 	"douyin/logger"
+	"douyin/mw/redis"
 	"fmt"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	hertz_config "github.com/cloudwego/hertz/pkg/common/config"
@@ -21,8 +24,26 @@ func main() {
 		fmt.Printf("init logger failed, err:%v\n", err)
 		return
 	}
+
+	if err := mysql.Init(config.Conf); err != nil {
+		fmt.Printf("Init mysql failed, err:%v\n", err)
+		return
+	}
+
+	// 初始化Redis
+	if err := redis.Init(config.Conf); err != nil {
+		fmt.Printf("Init redis failed, err:%v\n", err)
+		return
+	}
+
+	// 初始化Mongo
+	if err := mongo.Init(config.Conf); err != nil {
+		fmt.Printf("Init mongo failed, err:%v\n", err)
+		return
+	}
+
 	h := server.Default(hertz_config.Option{F: func(o *hertz_config.Options) {
-		o.Addr = "127.0.0.1:8081"
+		o.Addr = "127.0.0.1:8080"
 	}})
 	customizedRegister(h)
 	h.Spin()

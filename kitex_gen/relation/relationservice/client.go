@@ -11,13 +11,13 @@ import (
 
 // Client is designed to provide IDL-compatible methods with call-option parameter for kitex framework.
 type Client interface {
-	RelationAction(ctx context.Context, Req *relation.RelationActionRequest, callOptions ...callopt.Option) (r *relation.RelationActionResponse, err error)
-	GetFollowList(ctx context.Context, Req *relation.FollowListRequest, callOptions ...callopt.Option) (r *relation.FollowListResponse, err error)
-	GetFollowerList(ctx context.Context, Req *relation.FollowerListRequest, callOptions ...callopt.Option) (r *relation.FollowerListResponse, err error)
-	GetFollowListCount(ctx context.Context, Req *relation.FollowListCountRequest, callOptions ...callopt.Option) (r *relation.FollowListCountResponse, err error)
-	GetFollowerListCount(ctx context.Context, Req *relation.FollowerListCountRequest, callOptions ...callopt.Option) (r *relation.FollowerListCountResponse, err error)
-	GetFriendList(ctx context.Context, Req *relation.FriendListRequest, callOptions ...callopt.Option) (r *relation.FriendListResponse, err error)
-	IsFollowed(ctx context.Context, Req *relation.IsFollowedRequest, callOptions ...callopt.Option) (r *relation.IsFollowedResponse, err error)
+	RelationAction(ctx context.Context, request *relation.RelationActionRequest, callOptions ...callopt.Option) (r *relation.RelationActionResponse, err error)
+	GetFollowList(ctx context.Context, request *relation.FollowListRequest, callOptions ...callopt.Option) (r *relation.FollowListResponse, err error)
+	GetFollowerList(ctx context.Context, request *relation.FollowerListRequest, callOptions ...callopt.Option) (r *relation.FollowerListResponse, err error)
+	GetFollowListCount(ctx context.Context, request *relation.FollowListCountRequest, callOptions ...callopt.Option) (r *relation.FollowListCountResponse, err error)
+	GetFollowerListCount(ctx context.Context, request *relation.FollowerListCountRequest, callOptions ...callopt.Option) (r *relation.FollowerListCountResponse, err error)
+	GetFriendList(ctx context.Context, request *relation.FriendListRequest, callOptions ...callopt.Option) (r *relation.FriendListResponse, err error)
+	IsFollowed(ctx context.Context, request *relation.IsFollowedRequest, callOptions ...callopt.Option) (r *relation.IsFollowedResponse, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -49,37 +49,37 @@ type kRelationServiceClient struct {
 	*kClient
 }
 
-func (p *kRelationServiceClient) RelationAction(ctx context.Context, Req *relation.RelationActionRequest, callOptions ...callopt.Option) (r *relation.RelationActionResponse, err error) {
+func (p *kRelationServiceClient) RelationAction(ctx context.Context, request *relation.RelationActionRequest, callOptions ...callopt.Option) (r *relation.RelationActionResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.RelationAction(ctx, Req)
+	return p.kClient.RelationAction(ctx, request)
 }
 
-func (p *kRelationServiceClient) GetFollowList(ctx context.Context, Req *relation.FollowListRequest, callOptions ...callopt.Option) (r *relation.FollowListResponse, err error) {
+func (p *kRelationServiceClient) GetFollowList(ctx context.Context, request *relation.FollowListRequest, callOptions ...callopt.Option) (r *relation.FollowListResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetFollowList(ctx, Req)
+	return p.kClient.GetFollowList(ctx, request)
 }
 
-func (p *kRelationServiceClient) GetFollowerList(ctx context.Context, Req *relation.FollowerListRequest, callOptions ...callopt.Option) (r *relation.FollowerListResponse, err error) {
+func (p *kRelationServiceClient) GetFollowerList(ctx context.Context, request *relation.FollowerListRequest, callOptions ...callopt.Option) (r *relation.FollowerListResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetFollowerList(ctx, Req)
+	return p.kClient.GetFollowerList(ctx, request)
 }
 
-func (p *kRelationServiceClient) GetFollowListCount(ctx context.Context, Req *relation.FollowListCountRequest, callOptions ...callopt.Option) (r *relation.FollowListCountResponse, err error) {
+func (p *kRelationServiceClient) GetFollowListCount(ctx context.Context, request *relation.FollowListCountRequest, callOptions ...callopt.Option) (r *relation.FollowListCountResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetFollowListCount(ctx, Req)
+	return p.kClient.GetFollowListCount(ctx, request)
 }
 
-func (p *kRelationServiceClient) GetFollowerListCount(ctx context.Context, Req *relation.FollowerListCountRequest, callOptions ...callopt.Option) (r *relation.FollowerListCountResponse, err error) {
+func (p *kRelationServiceClient) GetFollowerListCount(ctx context.Context, request *relation.FollowerListCountRequest, callOptions ...callopt.Option) (r *relation.FollowerListCountResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetFollowerListCount(ctx, Req)
+	return p.kClient.GetFollowerListCount(ctx, request)
 }
 
-func (p *kRelationServiceClient) GetFriendList(ctx context.Context, Req *relation.FriendListRequest, callOptions ...callopt.Option) (r *relation.FriendListResponse, err error) {
+func (p *kRelationServiceClient) GetFriendList(ctx context.Context, request *relation.FriendListRequest, callOptions ...callopt.Option) (r *relation.FriendListResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetFriendList(ctx, Req)
+	return p.kClient.GetFriendList(ctx, request)
 }
 
-func (p *kRelationServiceClient) IsFollowed(ctx context.Context, Req *relation.IsFollowedRequest, callOptions ...callopt.Option) (r *relation.IsFollowedResponse, err error) {
+func (p *kRelationServiceClient) IsFollowed(ctx context.Context, request *relation.IsFollowedRequest, callOptions ...callopt.Option) (r *relation.IsFollowedResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.IsFollowed(ctx, Req)
+	return p.kClient.IsFollowed(ctx, request)
 }

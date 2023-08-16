@@ -2,6 +2,7 @@ package comment
 
 import (
 	"context"
+	"douyin/common"
 	"douyin/constant"
 	"douyin/kitex_gen/comment"
 	"douyin/kitex_gen/comment/commentservice"
@@ -10,6 +11,7 @@ import (
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"log"
 	"net/http"
@@ -78,10 +80,11 @@ func Action(ctx context.Context, c *app.RequestContext) {
 			c.JSON(http.StatusOK, "Invalid Params.")
 			return
 		}
+		userIdUint := int32(userId.(uint))
 		req := &comment.CommentActionRequest{
-			UserId:      userId.(uint32),
-			VideoId:     uint32(videoId),
-			ActionType:  uint32(actionType),
+			UserId:      userIdUint,
+			VideoId:     int32(videoId),
+			ActionType:  int32(actionType),
 			CommentText: proto.String(commentText),
 		}
 		resp, err := commentClient.CommentAction(ctx, req)
@@ -93,29 +96,72 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		return
 	case 2: // delete comment
 		if !commentIdExists {
-			c.JSON(http.StatusOK, "Invalid Params.")
+			c.JSON(http.StatusOK, &comment.CommentActionResponse{
+				StatusCode: 1,
+				StatusMsg:  proto.String("Invalid param."),
+			})
 			return
 		}
+		userIdUint := uint32(userId.(uint))
 		req := &comment.CommentActionRequest{
-			UserId:     userId.(uint32),
-			VideoId:    uint32(videoId),
-			ActionType: uint32(actionType),
-			CommentId:  proto.Uint32(uint32(commentId)),
+			UserId:     int32(userIdUint),
+			VideoId:    int32(videoId),
+			ActionType: int32(actionType),
+			CommentId:  proto.Int32(int32(commentId)),
 		}
 
 		resp, err := commentClient.CommentAction(ctx, req)
 		if err != nil {
-			c.JSON(http.StatusOK, err.Error())
+			c.JSON(http.StatusOK, &comment.CommentActionResponse{
+				StatusCode: 1,
+				StatusMsg:  proto.String("Server internal error."),
+			})
 			return
 		}
 		c.JSON(http.StatusOK, resp)
 		return
 	default: // wrong action_type
-		c.JSON(http.StatusOK, "Invalid action type.")
+		c.JSON(http.StatusOK, &comment.CommentActionResponse{
+			StatusCode: 1,
+			StatusMsg:  proto.String("Invalid param."),
+		})
 		return
 	}
 }
 
 func List(ctx context.Context, c *app.RequestContext) {
+	token := c.Query("token") //TODO 视频流客户端传递这个参数，用处Token续签、未登录的情况下查询关注返回false
+	videoIdStr := c.Query("video_id")
+	videoId, err := strconv.ParseInt(videoIdStr, 10, 64)
+	if err != nil {
+		zap.L().Error("Parse videoIdStr err:", zap.Error(err))
+		c.JSON(http.StatusOK, err.Error())
+		return
+	}
+	var userId uint
+	//todo 改为如果token在redis中查到
+	if token != "" {
+		userToken, _ := common.ParseToken(token)
+		userId = userToken.ID
+	} else {
+		userId = 0
+	}
+
+	req := &comment.CommentListRequest{
+		UserId:  int32(userId),
+		VideoId: int32(videoId),
+	}
+
+	resp, err := commentClient.GetCommentList(ctx, req)
+	if err != nil {
+		zap.L().Error("Get comment list from comment client err.", zap.Error(err))
+		c.JSON(http.StatusOK, comment.CommentListResponse{
+			StatusCode:  1,
+			StatusMsg:   proto.String("Server internal error."),
+			CommentList: nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 
 }

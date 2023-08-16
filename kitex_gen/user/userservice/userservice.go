@@ -5,11 +5,8 @@ package userservice
 import (
 	"context"
 	user "douyin/kitex_gen/user"
-	"fmt"
 	client "github.com/cloudwego/kitex/client"
 	kitex "github.com/cloudwego/kitex/pkg/serviceinfo"
-	streaming "github.com/cloudwego/kitex/pkg/streaming"
-	proto "google.golang.org/protobuf/proto"
 )
 
 func serviceInfo() *kitex.ServiceInfo {
@@ -22,10 +19,11 @@ func NewServiceInfo() *kitex.ServiceInfo {
 	serviceName := "UserService"
 	handlerType := (*user.UserService)(nil)
 	methods := map[string]kitex.MethodInfo{
-		"Register":        kitex.NewMethodInfo(registerHandler, newRegisterArgs, newRegisterResult, false),
-		"Login":           kitex.NewMethodInfo(loginHandler, newLoginArgs, newLoginResult, false),
-		"GetUserInfo":     kitex.NewMethodInfo(getUserInfoHandler, newGetUserInfoArgs, newGetUserInfoResult, false),
-		"CheckUserExists": kitex.NewMethodInfo(checkUserExistsHandler, newCheckUserExistsArgs, newCheckUserExistsResult, false),
+		"Register":          kitex.NewMethodInfo(registerHandler, newUserServiceRegisterArgs, newUserServiceRegisterResult, false),
+		"Login":             kitex.NewMethodInfo(loginHandler, newUserServiceLoginArgs, newUserServiceLoginResult, false),
+		"GetUserInfoById":   kitex.NewMethodInfo(getUserInfoByIdHandler, newUserServiceGetUserInfoByIdArgs, newUserServiceGetUserInfoByIdResult, false),
+		"GetUserInfoByName": kitex.NewMethodInfo(getUserInfoByNameHandler, newUserServiceGetUserInfoByNameArgs, newUserServiceGetUserInfoByNameResult, false),
+		"CheckUserExists":   kitex.NewMethodInfo(checkUserExistsHandler, newUserServiceCheckUserExistsArgs, newUserServiceCheckUserExistsResult, false),
 	}
 	extra := map[string]interface{}{
 		"PackageName": "user",
@@ -34,7 +32,7 @@ func NewServiceInfo() *kitex.ServiceInfo {
 		ServiceName:     serviceName,
 		HandlerType:     handlerType,
 		Methods:         methods,
-		PayloadCodec:    kitex.Protobuf,
+		PayloadCodec:    kitex.Thrift,
 		KiteXGenVersion: "v0.6.2",
 		Extra:           extra,
 	}
@@ -42,615 +40,93 @@ func NewServiceInfo() *kitex.ServiceInfo {
 }
 
 func registerHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
-	switch s := arg.(type) {
-	case *streaming.Args:
-		st := s.Stream
-		req := new(user.UserRegisterRequest)
-		if err := st.RecvMsg(req); err != nil {
-			return err
-		}
-		resp, err := handler.(user.UserService).Register(ctx, req)
-		if err != nil {
-			return err
-		}
-		if err := st.SendMsg(resp); err != nil {
-			return err
-		}
-	case *RegisterArgs:
-		success, err := handler.(user.UserService).Register(ctx, s.Req)
-		if err != nil {
-			return err
-		}
-		realResult := result.(*RegisterResult)
-		realResult.Success = success
-	}
-	return nil
-}
-func newRegisterArgs() interface{} {
-	return &RegisterArgs{}
-}
-
-func newRegisterResult() interface{} {
-	return &RegisterResult{}
-}
-
-type RegisterArgs struct {
-	Req *user.UserRegisterRequest
-}
-
-func (p *RegisterArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
-	if !p.IsSetReq() {
-		p.Req = new(user.UserRegisterRequest)
-	}
-	return p.Req.FastRead(buf, _type, number)
-}
-
-func (p *RegisterArgs) FastWrite(buf []byte) (n int) {
-	if !p.IsSetReq() {
-		return 0
-	}
-	return p.Req.FastWrite(buf)
-}
-
-func (p *RegisterArgs) Size() (n int) {
-	if !p.IsSetReq() {
-		return 0
-	}
-	return p.Req.Size()
-}
-
-func (p *RegisterArgs) Marshal(out []byte) ([]byte, error) {
-	if !p.IsSetReq() {
-		return out, fmt.Errorf("No req in RegisterArgs")
-	}
-	return proto.Marshal(p.Req)
-}
-
-func (p *RegisterArgs) Unmarshal(in []byte) error {
-	msg := new(user.UserRegisterRequest)
-	if err := proto.Unmarshal(in, msg); err != nil {
+	realArg := arg.(*user.UserServiceRegisterArgs)
+	realResult := result.(*user.UserServiceRegisterResult)
+	success, err := handler.(user.UserService).Register(ctx, realArg.Request)
+	if err != nil {
 		return err
 	}
-	p.Req = msg
+	realResult.Success = success
 	return nil
 }
-
-var RegisterArgs_Req_DEFAULT *user.UserRegisterRequest
-
-func (p *RegisterArgs) GetReq() *user.UserRegisterRequest {
-	if !p.IsSetReq() {
-		return RegisterArgs_Req_DEFAULT
-	}
-	return p.Req
+func newUserServiceRegisterArgs() interface{} {
+	return user.NewUserServiceRegisterArgs()
 }
 
-func (p *RegisterArgs) IsSetReq() bool {
-	return p.Req != nil
-}
-
-func (p *RegisterArgs) GetFirstArgument() interface{} {
-	return p.Req
-}
-
-type RegisterResult struct {
-	Success *user.UserRegisterResponse
-}
-
-var RegisterResult_Success_DEFAULT *user.UserRegisterResponse
-
-func (p *RegisterResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
-	if !p.IsSetSuccess() {
-		p.Success = new(user.UserRegisterResponse)
-	}
-	return p.Success.FastRead(buf, _type, number)
-}
-
-func (p *RegisterResult) FastWrite(buf []byte) (n int) {
-	if !p.IsSetSuccess() {
-		return 0
-	}
-	return p.Success.FastWrite(buf)
-}
-
-func (p *RegisterResult) Size() (n int) {
-	if !p.IsSetSuccess() {
-		return 0
-	}
-	return p.Success.Size()
-}
-
-func (p *RegisterResult) Marshal(out []byte) ([]byte, error) {
-	if !p.IsSetSuccess() {
-		return out, fmt.Errorf("No req in RegisterResult")
-	}
-	return proto.Marshal(p.Success)
-}
-
-func (p *RegisterResult) Unmarshal(in []byte) error {
-	msg := new(user.UserRegisterResponse)
-	if err := proto.Unmarshal(in, msg); err != nil {
-		return err
-	}
-	p.Success = msg
-	return nil
-}
-
-func (p *RegisterResult) GetSuccess() *user.UserRegisterResponse {
-	if !p.IsSetSuccess() {
-		return RegisterResult_Success_DEFAULT
-	}
-	return p.Success
-}
-
-func (p *RegisterResult) SetSuccess(x interface{}) {
-	p.Success = x.(*user.UserRegisterResponse)
-}
-
-func (p *RegisterResult) IsSetSuccess() bool {
-	return p.Success != nil
-}
-
-func (p *RegisterResult) GetResult() interface{} {
-	return p.Success
+func newUserServiceRegisterResult() interface{} {
+	return user.NewUserServiceRegisterResult()
 }
 
 func loginHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
-	switch s := arg.(type) {
-	case *streaming.Args:
-		st := s.Stream
-		req := new(user.UserLoginRequest)
-		if err := st.RecvMsg(req); err != nil {
-			return err
-		}
-		resp, err := handler.(user.UserService).Login(ctx, req)
-		if err != nil {
-			return err
-		}
-		if err := st.SendMsg(resp); err != nil {
-			return err
-		}
-	case *LoginArgs:
-		success, err := handler.(user.UserService).Login(ctx, s.Req)
-		if err != nil {
-			return err
-		}
-		realResult := result.(*LoginResult)
-		realResult.Success = success
-	}
-	return nil
-}
-func newLoginArgs() interface{} {
-	return &LoginArgs{}
-}
-
-func newLoginResult() interface{} {
-	return &LoginResult{}
-}
-
-type LoginArgs struct {
-	Req *user.UserLoginRequest
-}
-
-func (p *LoginArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
-	if !p.IsSetReq() {
-		p.Req = new(user.UserLoginRequest)
-	}
-	return p.Req.FastRead(buf, _type, number)
-}
-
-func (p *LoginArgs) FastWrite(buf []byte) (n int) {
-	if !p.IsSetReq() {
-		return 0
-	}
-	return p.Req.FastWrite(buf)
-}
-
-func (p *LoginArgs) Size() (n int) {
-	if !p.IsSetReq() {
-		return 0
-	}
-	return p.Req.Size()
-}
-
-func (p *LoginArgs) Marshal(out []byte) ([]byte, error) {
-	if !p.IsSetReq() {
-		return out, fmt.Errorf("No req in LoginArgs")
-	}
-	return proto.Marshal(p.Req)
-}
-
-func (p *LoginArgs) Unmarshal(in []byte) error {
-	msg := new(user.UserLoginRequest)
-	if err := proto.Unmarshal(in, msg); err != nil {
+	realArg := arg.(*user.UserServiceLoginArgs)
+	realResult := result.(*user.UserServiceLoginResult)
+	success, err := handler.(user.UserService).Login(ctx, realArg.Request)
+	if err != nil {
 		return err
 	}
-	p.Req = msg
+	realResult.Success = success
 	return nil
 }
-
-var LoginArgs_Req_DEFAULT *user.UserLoginRequest
-
-func (p *LoginArgs) GetReq() *user.UserLoginRequest {
-	if !p.IsSetReq() {
-		return LoginArgs_Req_DEFAULT
-	}
-	return p.Req
+func newUserServiceLoginArgs() interface{} {
+	return user.NewUserServiceLoginArgs()
 }
 
-func (p *LoginArgs) IsSetReq() bool {
-	return p.Req != nil
+func newUserServiceLoginResult() interface{} {
+	return user.NewUserServiceLoginResult()
 }
 
-func (p *LoginArgs) GetFirstArgument() interface{} {
-	return p.Req
-}
-
-type LoginResult struct {
-	Success *user.UserLoginResponse
-}
-
-var LoginResult_Success_DEFAULT *user.UserLoginResponse
-
-func (p *LoginResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
-	if !p.IsSetSuccess() {
-		p.Success = new(user.UserLoginResponse)
-	}
-	return p.Success.FastRead(buf, _type, number)
-}
-
-func (p *LoginResult) FastWrite(buf []byte) (n int) {
-	if !p.IsSetSuccess() {
-		return 0
-	}
-	return p.Success.FastWrite(buf)
-}
-
-func (p *LoginResult) Size() (n int) {
-	if !p.IsSetSuccess() {
-		return 0
-	}
-	return p.Success.Size()
-}
-
-func (p *LoginResult) Marshal(out []byte) ([]byte, error) {
-	if !p.IsSetSuccess() {
-		return out, fmt.Errorf("No req in LoginResult")
-	}
-	return proto.Marshal(p.Success)
-}
-
-func (p *LoginResult) Unmarshal(in []byte) error {
-	msg := new(user.UserLoginResponse)
-	if err := proto.Unmarshal(in, msg); err != nil {
+func getUserInfoByIdHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*user.UserServiceGetUserInfoByIdArgs)
+	realResult := result.(*user.UserServiceGetUserInfoByIdResult)
+	success, err := handler.(user.UserService).GetUserInfoById(ctx, realArg.Request)
+	if err != nil {
 		return err
 	}
-	p.Success = msg
+	realResult.Success = success
 	return nil
 }
-
-func (p *LoginResult) GetSuccess() *user.UserLoginResponse {
-	if !p.IsSetSuccess() {
-		return LoginResult_Success_DEFAULT
-	}
-	return p.Success
+func newUserServiceGetUserInfoByIdArgs() interface{} {
+	return user.NewUserServiceGetUserInfoByIdArgs()
 }
 
-func (p *LoginResult) SetSuccess(x interface{}) {
-	p.Success = x.(*user.UserLoginResponse)
+func newUserServiceGetUserInfoByIdResult() interface{} {
+	return user.NewUserServiceGetUserInfoByIdResult()
 }
 
-func (p *LoginResult) IsSetSuccess() bool {
-	return p.Success != nil
-}
-
-func (p *LoginResult) GetResult() interface{} {
-	return p.Success
-}
-
-func getUserInfoHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
-	switch s := arg.(type) {
-	case *streaming.Args:
-		st := s.Stream
-		req := new(user.UserInfoRequest)
-		if err := st.RecvMsg(req); err != nil {
-			return err
-		}
-		resp, err := handler.(user.UserService).GetUserInfo(ctx, req)
-		if err != nil {
-			return err
-		}
-		if err := st.SendMsg(resp); err != nil {
-			return err
-		}
-	case *GetUserInfoArgs:
-		success, err := handler.(user.UserService).GetUserInfo(ctx, s.Req)
-		if err != nil {
-			return err
-		}
-		realResult := result.(*GetUserInfoResult)
-		realResult.Success = success
-	}
-	return nil
-}
-func newGetUserInfoArgs() interface{} {
-	return &GetUserInfoArgs{}
-}
-
-func newGetUserInfoResult() interface{} {
-	return &GetUserInfoResult{}
-}
-
-type GetUserInfoArgs struct {
-	Req *user.UserInfoRequest
-}
-
-func (p *GetUserInfoArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
-	if !p.IsSetReq() {
-		p.Req = new(user.UserInfoRequest)
-	}
-	return p.Req.FastRead(buf, _type, number)
-}
-
-func (p *GetUserInfoArgs) FastWrite(buf []byte) (n int) {
-	if !p.IsSetReq() {
-		return 0
-	}
-	return p.Req.FastWrite(buf)
-}
-
-func (p *GetUserInfoArgs) Size() (n int) {
-	if !p.IsSetReq() {
-		return 0
-	}
-	return p.Req.Size()
-}
-
-func (p *GetUserInfoArgs) Marshal(out []byte) ([]byte, error) {
-	if !p.IsSetReq() {
-		return out, fmt.Errorf("No req in GetUserInfoArgs")
-	}
-	return proto.Marshal(p.Req)
-}
-
-func (p *GetUserInfoArgs) Unmarshal(in []byte) error {
-	msg := new(user.UserInfoRequest)
-	if err := proto.Unmarshal(in, msg); err != nil {
+func getUserInfoByNameHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*user.UserServiceGetUserInfoByNameArgs)
+	realResult := result.(*user.UserServiceGetUserInfoByNameResult)
+	success, err := handler.(user.UserService).GetUserInfoByName(ctx, realArg.Request)
+	if err != nil {
 		return err
 	}
-	p.Req = msg
+	realResult.Success = success
 	return nil
 }
-
-var GetUserInfoArgs_Req_DEFAULT *user.UserInfoRequest
-
-func (p *GetUserInfoArgs) GetReq() *user.UserInfoRequest {
-	if !p.IsSetReq() {
-		return GetUserInfoArgs_Req_DEFAULT
-	}
-	return p.Req
+func newUserServiceGetUserInfoByNameArgs() interface{} {
+	return user.NewUserServiceGetUserInfoByNameArgs()
 }
 
-func (p *GetUserInfoArgs) IsSetReq() bool {
-	return p.Req != nil
-}
-
-func (p *GetUserInfoArgs) GetFirstArgument() interface{} {
-	return p.Req
-}
-
-type GetUserInfoResult struct {
-	Success *user.UserInfoResponse
-}
-
-var GetUserInfoResult_Success_DEFAULT *user.UserInfoResponse
-
-func (p *GetUserInfoResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
-	if !p.IsSetSuccess() {
-		p.Success = new(user.UserInfoResponse)
-	}
-	return p.Success.FastRead(buf, _type, number)
-}
-
-func (p *GetUserInfoResult) FastWrite(buf []byte) (n int) {
-	if !p.IsSetSuccess() {
-		return 0
-	}
-	return p.Success.FastWrite(buf)
-}
-
-func (p *GetUserInfoResult) Size() (n int) {
-	if !p.IsSetSuccess() {
-		return 0
-	}
-	return p.Success.Size()
-}
-
-func (p *GetUserInfoResult) Marshal(out []byte) ([]byte, error) {
-	if !p.IsSetSuccess() {
-		return out, fmt.Errorf("No req in GetUserInfoResult")
-	}
-	return proto.Marshal(p.Success)
-}
-
-func (p *GetUserInfoResult) Unmarshal(in []byte) error {
-	msg := new(user.UserInfoResponse)
-	if err := proto.Unmarshal(in, msg); err != nil {
-		return err
-	}
-	p.Success = msg
-	return nil
-}
-
-func (p *GetUserInfoResult) GetSuccess() *user.UserInfoResponse {
-	if !p.IsSetSuccess() {
-		return GetUserInfoResult_Success_DEFAULT
-	}
-	return p.Success
-}
-
-func (p *GetUserInfoResult) SetSuccess(x interface{}) {
-	p.Success = x.(*user.UserInfoResponse)
-}
-
-func (p *GetUserInfoResult) IsSetSuccess() bool {
-	return p.Success != nil
-}
-
-func (p *GetUserInfoResult) GetResult() interface{} {
-	return p.Success
+func newUserServiceGetUserInfoByNameResult() interface{} {
+	return user.NewUserServiceGetUserInfoByNameResult()
 }
 
 func checkUserExistsHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
-	switch s := arg.(type) {
-	case *streaming.Args:
-		st := s.Stream
-		req := new(user.UserExistsRequest)
-		if err := st.RecvMsg(req); err != nil {
-			return err
-		}
-		resp, err := handler.(user.UserService).CheckUserExists(ctx, req)
-		if err != nil {
-			return err
-		}
-		if err := st.SendMsg(resp); err != nil {
-			return err
-		}
-	case *CheckUserExistsArgs:
-		success, err := handler.(user.UserService).CheckUserExists(ctx, s.Req)
-		if err != nil {
-			return err
-		}
-		realResult := result.(*CheckUserExistsResult)
-		realResult.Success = success
-	}
-	return nil
-}
-func newCheckUserExistsArgs() interface{} {
-	return &CheckUserExistsArgs{}
-}
-
-func newCheckUserExistsResult() interface{} {
-	return &CheckUserExistsResult{}
-}
-
-type CheckUserExistsArgs struct {
-	Req *user.UserExistsRequest
-}
-
-func (p *CheckUserExistsArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
-	if !p.IsSetReq() {
-		p.Req = new(user.UserExistsRequest)
-	}
-	return p.Req.FastRead(buf, _type, number)
-}
-
-func (p *CheckUserExistsArgs) FastWrite(buf []byte) (n int) {
-	if !p.IsSetReq() {
-		return 0
-	}
-	return p.Req.FastWrite(buf)
-}
-
-func (p *CheckUserExistsArgs) Size() (n int) {
-	if !p.IsSetReq() {
-		return 0
-	}
-	return p.Req.Size()
-}
-
-func (p *CheckUserExistsArgs) Marshal(out []byte) ([]byte, error) {
-	if !p.IsSetReq() {
-		return out, fmt.Errorf("No req in CheckUserExistsArgs")
-	}
-	return proto.Marshal(p.Req)
-}
-
-func (p *CheckUserExistsArgs) Unmarshal(in []byte) error {
-	msg := new(user.UserExistsRequest)
-	if err := proto.Unmarshal(in, msg); err != nil {
+	realArg := arg.(*user.UserServiceCheckUserExistsArgs)
+	realResult := result.(*user.UserServiceCheckUserExistsResult)
+	success, err := handler.(user.UserService).CheckUserExists(ctx, realArg.Request)
+	if err != nil {
 		return err
 	}
-	p.Req = msg
+	realResult.Success = success
 	return nil
 }
-
-var CheckUserExistsArgs_Req_DEFAULT *user.UserExistsRequest
-
-func (p *CheckUserExistsArgs) GetReq() *user.UserExistsRequest {
-	if !p.IsSetReq() {
-		return CheckUserExistsArgs_Req_DEFAULT
-	}
-	return p.Req
+func newUserServiceCheckUserExistsArgs() interface{} {
+	return user.NewUserServiceCheckUserExistsArgs()
 }
 
-func (p *CheckUserExistsArgs) IsSetReq() bool {
-	return p.Req != nil
-}
-
-func (p *CheckUserExistsArgs) GetFirstArgument() interface{} {
-	return p.Req
-}
-
-type CheckUserExistsResult struct {
-	Success *user.UserExistsResponse
-}
-
-var CheckUserExistsResult_Success_DEFAULT *user.UserExistsResponse
-
-func (p *CheckUserExistsResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
-	if !p.IsSetSuccess() {
-		p.Success = new(user.UserExistsResponse)
-	}
-	return p.Success.FastRead(buf, _type, number)
-}
-
-func (p *CheckUserExistsResult) FastWrite(buf []byte) (n int) {
-	if !p.IsSetSuccess() {
-		return 0
-	}
-	return p.Success.FastWrite(buf)
-}
-
-func (p *CheckUserExistsResult) Size() (n int) {
-	if !p.IsSetSuccess() {
-		return 0
-	}
-	return p.Success.Size()
-}
-
-func (p *CheckUserExistsResult) Marshal(out []byte) ([]byte, error) {
-	if !p.IsSetSuccess() {
-		return out, fmt.Errorf("No req in CheckUserExistsResult")
-	}
-	return proto.Marshal(p.Success)
-}
-
-func (p *CheckUserExistsResult) Unmarshal(in []byte) error {
-	msg := new(user.UserExistsResponse)
-	if err := proto.Unmarshal(in, msg); err != nil {
-		return err
-	}
-	p.Success = msg
-	return nil
-}
-
-func (p *CheckUserExistsResult) GetSuccess() *user.UserExistsResponse {
-	if !p.IsSetSuccess() {
-		return CheckUserExistsResult_Success_DEFAULT
-	}
-	return p.Success
-}
-
-func (p *CheckUserExistsResult) SetSuccess(x interface{}) {
-	p.Success = x.(*user.UserExistsResponse)
-}
-
-func (p *CheckUserExistsResult) IsSetSuccess() bool {
-	return p.Success != nil
-}
-
-func (p *CheckUserExistsResult) GetResult() interface{} {
-	return p.Success
+func newUserServiceCheckUserExistsResult() interface{} {
+	return user.NewUserServiceCheckUserExistsResult()
 }
 
 type kClient struct {
@@ -663,40 +139,50 @@ func newServiceClient(c client.Client) *kClient {
 	}
 }
 
-func (p *kClient) Register(ctx context.Context, Req *user.UserRegisterRequest) (r *user.UserRegisterResponse, err error) {
-	var _args RegisterArgs
-	_args.Req = Req
-	var _result RegisterResult
+func (p *kClient) Register(ctx context.Context, request *user.UserRegisterRequest) (r *user.UserRegisterResponse, err error) {
+	var _args user.UserServiceRegisterArgs
+	_args.Request = request
+	var _result user.UserServiceRegisterResult
 	if err = p.c.Call(ctx, "Register", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) Login(ctx context.Context, Req *user.UserLoginRequest) (r *user.UserLoginResponse, err error) {
-	var _args LoginArgs
-	_args.Req = Req
-	var _result LoginResult
+func (p *kClient) Login(ctx context.Context, request *user.UserLoginRequest) (r *user.UserLoginResponse, err error) {
+	var _args user.UserServiceLoginArgs
+	_args.Request = request
+	var _result user.UserServiceLoginResult
 	if err = p.c.Call(ctx, "Login", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) GetUserInfo(ctx context.Context, Req *user.UserInfoRequest) (r *user.UserInfoResponse, err error) {
-	var _args GetUserInfoArgs
-	_args.Req = Req
-	var _result GetUserInfoResult
-	if err = p.c.Call(ctx, "GetUserInfo", &_args, &_result); err != nil {
+func (p *kClient) GetUserInfoById(ctx context.Context, request *user.UserInfoByIdRequest) (r *user.UserInfoByIdResponse, err error) {
+	var _args user.UserServiceGetUserInfoByIdArgs
+	_args.Request = request
+	var _result user.UserServiceGetUserInfoByIdResult
+	if err = p.c.Call(ctx, "GetUserInfoById", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) CheckUserExists(ctx context.Context, Req *user.UserExistsRequest) (r *user.UserExistsResponse, err error) {
-	var _args CheckUserExistsArgs
-	_args.Req = Req
-	var _result CheckUserExistsResult
+func (p *kClient) GetUserInfoByName(ctx context.Context, request *user.UserInfoByNameRequest) (r *user.UserInfoByNameResponse, err error) {
+	var _args user.UserServiceGetUserInfoByNameArgs
+	_args.Request = request
+	var _result user.UserServiceGetUserInfoByNameResult
+	if err = p.c.Call(ctx, "GetUserInfoByName", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) CheckUserExists(ctx context.Context, request *user.UserExistsRequest) (r *user.UserExistsResponse, err error) {
+	var _args user.UserServiceCheckUserExistsArgs
+	_args.Request = request
+	var _result user.UserServiceCheckUserExistsResult
 	if err = p.c.Call(ctx, "CheckUserExists", &_args, &_result); err != nil {
 		return
 	}
