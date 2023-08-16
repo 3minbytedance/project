@@ -1,9 +1,9 @@
 package mysql
 
 import (
+	"douyin/dal/model"
 	"gorm.io/gorm"
 	"log"
-	"project/models"
 )
 
 func AddComment(comment *models.Comment) (uint, error) {

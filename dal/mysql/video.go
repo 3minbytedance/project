@@ -1,7 +1,7 @@
 package mysql
 
 import (
-	"project/models"
+	"douyin/dal/model"
 	"time"
 )
 

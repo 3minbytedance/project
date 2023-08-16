@@ -32,7 +32,7 @@ func InitUserKafka() {
 }
 
 // ProduceCreateUserMsg 发布创建用户的消息, 向mysql中创建用户时, 调用此方法
-func (m *UserMQ) ProduceCreateUserMsg(message *model.User) {
+func (m *UserMQ) ProduceCreateUserMsg(message *models.User) {
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
 		fmt.Println("kafka发送添加点赞的消息失败：", err)
@@ -49,7 +49,7 @@ func (m *UserMQ) Consume() {
 		}
 
 		// 解析消息
-		var user model.User
+		var user models.User
 		err = json.Unmarshal(msg.Value, &user)
 		if err != nil {
 			fmt.Println("[UserMQ]解析消息失败:", err)
@@ -57,7 +57,7 @@ func (m *UserMQ) Consume() {
 		}
 
 		// 创建用户
-		err := mysql.CreateUser(&user)
+		_, err = mysql.CreateUser(&user)
 		if err != nil {
 			fmt.Println("[UserMQ]创建用户失败:", err)
 		}

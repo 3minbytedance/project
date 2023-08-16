@@ -30,7 +30,7 @@ func InitMessageKafka() {
 	go MessageMQInstance.Consume()
 }
 
-func (m *MessageMQ) Produce(message *model.Message) {
+func (m *MessageMQ) Produce(message *models.Message) {
 	// 在 Message 业务中使用 Kafka Manager
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
@@ -56,7 +56,7 @@ func (m *MessageMQ) Consume() {
 			log.Println("Failed to commit message:", err)
 		}
 
-		message := new(model.Message)
+		message := new(models.Message)
 		err = json.Unmarshal(msg.Value, message)
 		if err != nil {
 			log.Println("kafka获取message反序列化失败：", err)

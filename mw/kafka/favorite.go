@@ -85,8 +85,8 @@ func (m *FavoriteMQ) Consume() {
 		switch message.Type {
 		case 0:
 			// 添加点赞
-			err = mysql.AddUserFavorite(message.UserId, message.VideoId)
-			if err != nil {
+			ok := mysql.AddUserFavorite(message.UserId, message.VideoId)
+			if !ok {
 				fmt.Println("[FavoriteMQ]添加点赞失败:", err)
 				continue
 			}

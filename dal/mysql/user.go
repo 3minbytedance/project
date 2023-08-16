@@ -1,10 +1,9 @@
 package mysql
 
 import (
+	"douyin/dal/model"
 	"fmt"
 	"math/rand"
-	"project/models"
-	"project/utils"
 )
 
 func FindUserByName(name string) (user models.User, exist bool) {
