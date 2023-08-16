@@ -39,10 +39,7 @@ func IsExistUserField(userId uint, field string) bool {
 		log.Println("redis isExistUser 连接失败")
 		return false
 	}
-	if !exists {
-		return false
-	}
-	return true
+	return exists
 }
 
 func IsExistVideoField(videoId uint, field string) bool {
@@ -52,10 +49,7 @@ func IsExistVideoField(videoId uint, field string) bool {
 		log.Println("redis isExistVideo 连接失败")
 		return false
 	}
-	if !exists {
-		return false
-	}
-	return true
+	return exists
 }
 
 // IsExistUserSetField 判断set类型的是否存在
@@ -66,8 +60,5 @@ func IsExistUserSetField(userId uint, field string) bool {
 		log.Println("redis isExistUser 连接失败")
 		return false
 	}
-	if exists == 0 {
-		return false
-	}
-	return true
+	return exists != 0
 }

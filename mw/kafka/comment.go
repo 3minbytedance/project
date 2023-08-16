@@ -33,7 +33,7 @@ func InitCommentKafka() {
 }
 
 // ProduceAddCommentMsg 发布添加评论的消息, 向mysql中添加评论时, 调用此方法
-func (m *CommentMQ) ProduceAddCommentMsg(message *models.Comment) {
+func (m *CommentMQ) ProduceAddCommentMsg(message *model.Comment) {
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
 		fmt.Println("kafka发送添加评论的消息失败：", err)
@@ -73,9 +73,9 @@ func (m *CommentMQ) Consume() {
 			continue
 		}
 
-		// 解析消息, 消息类型可能为models.Comment, 也可能为CommentId, 如果是前者, 则添加评论, 如果是后者, 则删除评论
-		// 解析为models.Comment, 则向数据库中添加评论
-		message := new(models.Comment)
+		// 解析消息, 消息类型可能为model.Comment, 也可能为CommentId, 如果是前者, 则添加评论, 如果是后者, 则删除评论
+		// 解析为model.Comment, 则向数据库中添加评论
+		message := new(model.Comment)
 		err = json.Unmarshal(result, message)
 		if err == nil {
 			_, err = mysql.AddComment(message)
