@@ -72,10 +72,7 @@ func GetFavoriteListByUserId(userId uint) ([]uint, error) {
 	list, err := Rdb.SMembers(Ctx, key).Result()
 	var result []uint
 	for _, i := range list {
-		k, err := strconv.Atoi(i)
-		if err != nil {
-			return nil, err
-		}
+		k, _ := strconv.Atoi(i)
 		result = append(result, uint(k))
 	}
 	return result, err

@@ -88,7 +88,7 @@ func GetFavoriteList(userId uint) ([]models.VideoResponse, error) {
 		videos = append(videos, videoByVideoId)
 	}
 	// 从video的阿斗videoResponse
-	videoResponses := make([]models.VideoResponse, 0)
+	videoResponses := make([]models.VideoResponse, 0, len(videos))
 	for _, video := range videos {
 		user, _ := GetUserInfoByUserId(video.AuthorId)
 		commentCount := GetCommentCount(video.ID)

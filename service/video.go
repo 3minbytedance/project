@@ -127,12 +127,13 @@ func GetPublishList(userID uint) (videoResponses []models.VideoResponse) {
 	for _, video := range videos {
 		user, _ := GetUserInfoByUserId(userID)
 		commentCount := GetCommentCount(video.ID)
+		favoriteCount, _ := GetFavoritesVideoCount(video.ID)
 		videoResponse := models.VideoResponse{
 			ID:            video.ID,
 			Author:        user,
 			PlayUrl:       oss + video.VideoUrl,
 			CoverUrl:      oss + video.CoverUrl,
-			FavoriteCount: 0, // TODO
+			FavoriteCount: favoriteCount,
 			CommentCount:  commentCount,
 			IsFavorite:    IsUserFavorite(userID, video.ID),
 			Title:         video.Title,
