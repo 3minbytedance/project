@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"douyin/common"
 	"douyin/constant"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
@@ -14,6 +15,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 var userClient userservice.Client
@@ -46,7 +48,6 @@ func init() {
 }
 
 func Register(ctx context.Context, c *app.RequestContext) {
-
 	username := c.Query("username")
 	password := c.Query("password")
 
@@ -88,21 +89,26 @@ func Login(ctx context.Context, c *app.RequestContext) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func UserInfo(ctx context.Context, c *app.RequestContext) {
-	username := c.Query("username")
-	password := c.Query("password")
+func Info(ctx context.Context, c *app.RequestContext) {
+	actorId, _ := c.Get(common.ContextUserIDKey)
 
-	resp, err := userClient.Login(ctx, &user.UserLoginRequest{
-		Username: username,
-		Password: password,
-	})
+	userId := c.Query("userId")
+	userIdInt64, err := strconv.ParseUint(userId, 10, 64)
 	if err != nil {
-		zap.L().Error("Invoke userClient Login err:", zap.Error(err))
-		c.JSON(http.StatusOK, &user.UserLoginResponse{
+		zap.L().Error("Parse userId error", zap.Error(err))
+	}
+
+	resp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+		ActorId: int32(actorId.(uint)),
+		UserId:  int32(userIdInt64),
+	})
+
+	if err != nil {
+		zap.L().Error("Invoke userClient getUserInfoById err:", zap.Error(err))
+		c.JSON(http.StatusOK, &user.UserInfoByIdResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Server Internal error"),
-			UserId:     0,
-			Token:      "",
+			StatusMsg:  thrift.StringPtr("Server internal error"),
+			User:       nil,
 		})
 		return
 	}

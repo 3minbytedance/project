@@ -39,7 +39,8 @@ struct UserLoginResponse {
 }
 
 struct UserInfoByIdRequest {
-    1: i32 user_id, // 用户id
+    1: i32 actor_id, // 调用者id
+    2: i32 user_id,  // 用户id
 }
 
 struct UserInfoByIdResponse {

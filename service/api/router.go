@@ -6,6 +6,7 @@ import (
 	"douyin/service/api/biz/comment"
 	"douyin/service/api/biz/message"
 	"douyin/service/api/biz/user"
+	"douyin/service/api/mw"
 	"github.com/cloudwego/hertz/pkg/app/server"
 )
 
@@ -17,14 +18,15 @@ func customizedRegister(r *server.Hertz) {
 	{
 		userGroup.POST("/register", user.Register)
 		userGroup.POST("/login", user.Login)
+		userGroup.GET("", mw.AuthWithoutLogin(), user.Info)
 	}
-	userGroup.GET("", user.UserInfo)
+
 	// video service
 
 	// comment service
 	commentGroup := douyin.Group("/comment")
 	{
-		commentGroup.POST("/action", comment.Action)
+		commentGroup.POST("/action", mw.Auth(), comment.Action)
 		commentGroup.GET("/list", comment.List)
 	}
 

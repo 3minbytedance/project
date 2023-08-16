@@ -99,6 +99,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	resp.StatusCode = 0
 	resp.StatusMsg = thrift.StringPtr("success")
 	resp.User = pack.User(&user)
+	// todo: 封装好友关系等信息
 	return
 }
 
