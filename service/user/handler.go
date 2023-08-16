@@ -29,7 +29,7 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	}
 
 	userData := model.User{}
-	userData.Username = request.Username
+	userData.Name = request.Username
 
 	// 将信息存储到数据库中
 	salt := fmt.Sprintf("%06d", rand.Int())
@@ -71,7 +71,7 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 		resp.StatusMsg = thrift.StringPtr("Wrong password.")
 		return
 	}
-	token := common.GenerateToken(user.ID, user.Username)
+	token := common.GenerateToken(user.ID, user.Name)
 	resp.StatusCode = 0
 	resp.StatusMsg = thrift.StringPtr("success")
 	resp.Token = token

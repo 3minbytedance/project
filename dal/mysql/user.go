@@ -5,6 +5,7 @@ import (
 	"douyin/dal/model"
 	"fmt"
 	"go.uber.org/zap"
+
 	"gorm.io/gorm"
 	"math/rand"
 )
@@ -33,14 +34,14 @@ func FindUserByUserID(id uint) (user model.User, exist bool) {
 		return user, false
 	}
 	return user, true
+
 }
 
 // TODO 待改
 
 func RegisterUserInfo(username string, password string) (int32, string, uint) {
-
 	user := model.User{}
-	user.Username = username
+	user.Name = username
 
 	// id默认自增
 	//user.Id = uuid.New()

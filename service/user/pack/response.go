@@ -13,7 +13,7 @@ func User(userModel *model.User) *user.User {
 	}
 	return &user.User{
 		Id:              int32(userModel.ID),
-		Name:            userModel.Username,
+		Name:            userModel.Name,
 		FollowCount:     0,
 		FollowerCount:   0,
 		IsFollow:        false,

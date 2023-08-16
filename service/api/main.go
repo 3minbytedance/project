@@ -25,6 +25,7 @@ func main() {
 		return
 	}
 
+	// 初始化mysql
 	if err := mysql.Init(config.Conf); err != nil {
 		fmt.Printf("Init mysql failed, err:%v\n", err)
 		return
