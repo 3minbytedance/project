@@ -2,8 +2,10 @@ package kafka
 
 import (
 	"context"
+	"douyin/config"
 	"encoding/json"
 	"github.com/segmentio/kafka-go"
+	"strconv"
 	"time"
 )
 
@@ -20,14 +22,23 @@ type MQ struct {
 	Consumer *kafka.Reader
 }
 
-func Init() {
+func Init(appConfig *config.AppConfig) (err error) {
+	var conf *config.KafkaConfig
+	if appConfig.Mode == config.LocalMode {
+		conf = appConfig.Local.KafkaConfig
+	} else {
+		conf = appConfig.Remote.KafkaConfig
+	}
+	brokerUrl := conf.Address + ":" + strconv.Itoa(conf.Port)
 	// 初始化 Kafka Manager
-	brokers := []string{"localhost:9092"}
+	brokers := []string{brokerUrl}
 	kafkaManager = NewKafkaManager(brokers)
 
 	InitMessageKafka()
 	InitCommentKafka()
 	InitVideoKafka()
+
+	return nil
 }
 
 func NewKafkaManager(brokers []string) *Manager {
