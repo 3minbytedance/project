@@ -10,6 +10,9 @@ import (
 
 func AddFollow(userId, followId uint) error {
 	// 增加关注
+	if userId == followId {
+		return nil
+	}
 	err := mysql.AddFollow(userId, followId)
 	go func() {
 		//更新自己的关注列表
@@ -30,6 +33,9 @@ func AddFollow(userId, followId uint) error {
 
 // DeleteFollow userId 取关 followId
 func DeleteFollow(userId, followId uint) error {
+	if userId == followId {
+		return nil
+	}
 	err := mysql.DeleteFollowById(userId, followId)
 	go func() {
 		//删掉自己的关注列表
@@ -172,6 +178,9 @@ func GetUserModelByList(id []uint) ([]models.UserResponse, error) {
 
 // IsInMyFollowList 是否followUser在自己的关注列表里
 func IsInMyFollowList(userId uint, followUserId uint) bool {
+	if userId == followUserId {
+		return true
+	}
 	// redis存在key
 	if redis.IsExistUserSetField(userId, redis.FollowList) {
 		found := redis.IsInMyFollowList(userId, followUserId)
