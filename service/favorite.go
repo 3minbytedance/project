@@ -20,7 +20,7 @@ func FavoriteActions(userId uint, videoId uint, actionType int) error {
 	if err != nil {
 		return err
 	}
-	_ = GetUserTotalFavoritedCount(userId)
+	GetUserTotalFavoritedCount(userId)
 	video, _ := daoMySQL.FindVideoByVideoId(videoId)
 	// 如果err不为空，那么一定存在数据库中了
 	switch actionType {
@@ -148,13 +148,17 @@ func GetUserFavoriteCount(userId uint) int64 {
 	if err != nil {
 		log.Println(err)
 	}
-	idList := getIdListFromFavoriteSlice(favorites, daoMySQL.IdTypeUser)
-	// key 不存在需要同步到redis
-	err = daoRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
-	if err != nil {
-		log.Println(err)
+	if len(favorites) != 0 {
+		idList := getIdListFromFavoriteSlice(favorites, daoMySQL.IdTypeUser)
+		// key 不存在需要同步到redis
+		err = daoRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
+		if err != nil {
+			log.Println(err)
+		}
+		return int64(len(idList))
 	}
-	return int64(len(idList))
+
+	return 0
 }
 
 // GetFavoritesByUserId 获取当前id的点赞的视频id列表
@@ -175,14 +179,16 @@ func GetFavoritesByUserId(userId uint) ([]uint, error) {
 	if err != nil {
 		log.Println(err)
 	}
-	idList := getIdListFromFavoriteSlice(favorites, daoMySQL.IdTypeUser)
-	// key 不存在需要同步到redis
-	err = daoRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
-	if err != nil {
-		log.Println(err)
+	if len(favorites) != 0 {
+		idList := getIdListFromFavoriteSlice(favorites, daoMySQL.IdTypeUser)
+		// key 不存在需要同步到redis
+		err = daoRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
+		if err != nil {
+			log.Println(err)
+		}
 	}
-	return idList, err
 
+	return []uint{}, err
 }
 
 // 辅助函数
@@ -191,10 +197,10 @@ func getIdListFromFavoriteSlice(favorites []models.Favorite, idType int) []uint 
 	res := make([]uint, 0, len(favorites))
 	for _, fav := range favorites {
 		switch idType {
-		case 1:
-			res = append(res, fav.ID)
-		case 2:
+		case daoMySQL.IdTypeUser:
 			res = append(res, fav.VideoId)
+		case daoMySQL.IdTypeVideo:
+			res = append(res, fav.UserId)
 		}
 	}
 	return res
@@ -238,11 +244,13 @@ func IsUserFavorite(userId, videoId uint) bool {
 		if err != nil {
 			log.Println(err)
 		}
-		idList := getIdListFromFavoriteSlice(favorites, daoMySQL.IdTypeUser)
-		// key 不存在需要同步到redis
-		err = daoRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
-		if err != nil {
-			log.Println(err)
+		if len(favorites) != 0 {
+			idList := getIdListFromFavoriteSlice(favorites, daoMySQL.IdTypeUser)
+			// key 不存在需要同步到redis
+			err = daoRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}
 	return daoRedis.IsInUserFavoriteList(userId, videoId)
