@@ -42,6 +42,7 @@ func FavoriteActions(userId uint, videoId uint, actionType int) error {
 			fmt.Println(err)
 		}
 		// 更新视频作者的被点赞量
+		GetUserTotalFavoritedCount(video.AuthorId)
 		err = daoRedis.IncrementTotalFavoritedByUserId(video.AuthorId)
 		if err != nil {
 			fmt.Println(err)
@@ -63,6 +64,7 @@ func FavoriteActions(userId uint, videoId uint, actionType int) error {
 		if err != nil {
 			fmt.Println(err)
 		}
+		GetUserTotalFavoritedCount(video.AuthorId)
 		// 更新视频作者的被点赞量
 		err = daoRedis.DecrementTotalFavoritedByUserId(video.AuthorId)
 		if err != nil {
