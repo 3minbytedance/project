@@ -27,7 +27,7 @@ func customizedRegister(r *server.Hertz) {
 	commentGroup := douyin.Group("/comment")
 	{
 		commentGroup.POST("/action", mw.Auth(), comment.Action)
-		commentGroup.GET("/list", comment.List)
+		commentGroup.GET("/list", mw.AuthWithoutLogin(), comment.List)
 	}
 
 	// favorite service
@@ -37,7 +37,7 @@ func customizedRegister(r *server.Hertz) {
 	// message service
 	messageGroup := douyin.Group("/message")
 	{
-		messageGroup.POST("/action", message.Action)
-		messageGroup.GET("/chat", message.Chat)
+		messageGroup.POST("/action", mw.Auth(), message.Action)
+		messageGroup.GET("/chat", mw.Auth(), message.Chat)
 	}
 }

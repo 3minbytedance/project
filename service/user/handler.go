@@ -19,12 +19,18 @@ type UserServiceImpl struct{}
 // Register implements the UserServiceImpl interface.
 func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegisterRequest) (resp *user.UserRegisterResponse, err error) {
 	resp = new(user.UserRegisterResponse)
-	_, exist := mysql.FindUserByName(request.Username)
+	_, exist, err := mysql.FindUserByName(request.Username)
+	if err != nil {
+		zap.L().Error("Find user by name:", zap.Error(err))
+		resp.StatusCode = 1
+		resp.StatusMsg = thrift.StringPtr("Server internal error.")
+		return
+	}
 	// 检查用户名是否存在
 	if exist {
-		zap.L().Info("User exists")
+		zap.L().Info("User already exists")
 		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("User exists.")
+		resp.StatusMsg = thrift.StringPtr("User already exists.")
 		return
 	}
 
@@ -61,14 +67,20 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	exist := common.TestBloom(request.Username)
 	// 用户名不存在
 	if !exist {
-		zap.L().Info("Check user exists err:", zap.Error(err))
+		zap.L().Info("Check user exists info:", zap.Bool("exist", exist))
 		resp.StatusCode = 1
 		resp.StatusMsg = thrift.StringPtr("Username not exist")
 		return
 	}
 
 	// 用户名存在
-	user, _ := mysql.FindUserByName(request.Username)
+	user, _, err := mysql.FindUserByName(request.Username)
+	if err != nil {
+		zap.L().Info("Find user by name err:", zap.Error(err))
+		resp.StatusCode = 1
+		resp.StatusMsg = thrift.StringPtr("Server Internal error")
+		return
+	}
 	// 检查密码
 	match := common.CheckPassword(request.Password, user.Salt, user.Password)
 	if !match {
@@ -88,10 +100,15 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 // GetUserInfoById implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.UserInfoByIdRequest) (resp *user.UserInfoByIdResponse, err error) {
 	resp = new(user.UserInfoByIdResponse)
-	user, exist := mysql.FindUserByUserID(uint(request.UserId))
+	user, exist, err := mysql.FindUserByUserID(uint(request.UserId))
+	if err != nil {
+		zap.L().Info("Check user exists err:", zap.Error(err))
+		resp.StatusCode = 1
+		resp.StatusMsg = thrift.StringPtr("Server Internal error")
+		return
+	}
 	// 用户名不存在
 	if !exist {
-		zap.L().Info("Check user exists err:", zap.Error(err))
 		resp.StatusCode = 1
 		resp.StatusMsg = thrift.StringPtr("User ID not exist")
 		return

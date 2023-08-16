@@ -15,7 +15,17 @@ func TestBloom(t *testing.T) {
 	common.AddToBloom("use1")
 	common.AddToBloom("use2")
 
-	assert.True(t, common.TestBloom("user1"))
+	assert.True(t, common.TestBloom("usera1"))
 	assert.False(t, common.TestBloom("user5"))
+}
+
+func TestSensitiveFilter(t *testing.T) {
+	err := common.InitSensitiveFilter()
+	if err != nil {
+		t.Log(err)
+		return
+	}
+	word := common.ReplaceWord("傻逼吧卧槽啊你妈的")
+	assert.True(t, word == "sad")
 
 }
