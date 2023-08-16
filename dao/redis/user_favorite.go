@@ -81,9 +81,10 @@ func GetFavoriteListByUserId(userId uint) ([]uint, error) {
 // SetFavoriteListByUserId 设置用户的点赞视频列表
 func SetFavoriteListByUserId(userid uint, id []uint) error {
 	key := fmt.Sprintf("%d_%s", userid, FavoriteList)
+
 	b := make([]interface{}, len(id))
-	for i := range id {
-		b[i] = id[i]
+	for i, v := range id {
+		b[i] = v
 	}
 	err := Rdb.SAdd(Ctx, key, b...).Err()
 	return err
@@ -108,6 +109,18 @@ func IsInUserFavoriteList(userId uint, videoId uint) bool {
 	key := fmt.Sprintf("%d_%s", userId, FavoriteList)
 	found, _ := Rdb.SIsMember(Ctx, key, videoId).Result()
 	return found
+}
+
+func IsUserFavoriteNil(userId uint) bool {
+	key := fmt.Sprintf("%d_%s", userId, FavoriteList)
+	found, _ := Rdb.SIsMember(Ctx, key, 0).Result()
+	return found
+}
+
+func DeleteUserFavoriteNil(userId uint) error {
+	key := fmt.Sprintf("%d_%s", userId, FavoriteList)
+	err := Rdb.SRem(Ctx, key, 0).Err()
+	return err
 }
 
 // GetUserFavoriteVideoCountById 根据userId查找喜欢的视频数量
