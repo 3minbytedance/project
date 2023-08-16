@@ -7,6 +7,7 @@ import (
 )
 
 const ContextUserIDKey = "userId"
+const TokenValid = "tokenValid"
 
 var ErrorUserNotLogin = errors.New("用户未登录")
 

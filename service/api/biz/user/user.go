@@ -87,3 +87,24 @@ func Login(ctx context.Context, c *app.RequestContext) {
 	}
 	c.JSON(http.StatusOK, resp)
 }
+
+func UserInfo(ctx context.Context, c *app.RequestContext) {
+	username := c.Query("username")
+	password := c.Query("password")
+
+	resp, err := userClient.Login(ctx, &user.UserLoginRequest{
+		Username: username,
+		Password: password,
+	})
+	if err != nil {
+		zap.L().Error("Invoke userClient Login err:", zap.Error(err))
+		c.JSON(http.StatusOK, &user.UserLoginResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("Server Internal error"),
+			UserId:     0,
+			Token:      "",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, resp)
+}

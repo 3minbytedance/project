@@ -49,21 +49,26 @@ func AuthWithoutLogin() app.HandlerFunc {
 		token := c.Query("token")
 		var userId uint
 		if len(token) == 0 {
-			// 没有token, 设置userId为0
+			// 没有token, 设置userId为0，tokenValid为false
+			c.Set(common.TokenValid, false)
 			userId = 0
 		} else {
 			claims, err := common.ParseToken(token)
 			if err != nil {
-				// token有误，阻止后面函数执行
-				c.Abort()
-				c.JSON(http.StatusUnauthorized, Response{
-					StatusCode: -1,
-					StatusMsg:  "Token Error",
-				})
+				// token有误，设置userId为0,tokenValid为false
+				userId = 0
+				c.Set(common.TokenValid, false)
+
+				//c.Abort()
+				//c.JSON(http.StatusUnauthorized, Response{
+				//	StatusCode: -1,
+				//	StatusMsg:  "Token Error",
+				//})
 			} else {
 				userId = claims.ID
 			}
 			c.Set(common.ContextUserIDKey, userId)
+			c.Set(common.TokenValid, true)
 			c.Next(ctx)
 		}
 	}
