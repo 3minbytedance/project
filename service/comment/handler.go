@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"douyin/common"
 	"douyin/constant"
 	"douyin/dal/model"
 	"douyin/dal/mysql"
@@ -56,7 +57,7 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		commentData := model.Comment{
 			UserId:  uint(request.UserId),
 			VideoId: uint(request.VideoId),
-			Content: request.GetCommentText(),
+			Content: common.ReplaceWord(request.GetCommentText()),
 		}
 		_, err = mysql.AddComment(&commentData)
 		if err != nil {
