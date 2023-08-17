@@ -48,9 +48,10 @@ func init() {
 }
 
 func Action(ctx context.Context, c *app.RequestContext) {
-	userId, userIdExists := c.Get("userId")
+	userId, err := common.GetCurrentUserID(c)
 	// not logged in
-	if !userIdExists {
+	if err != nil {
+		zap.L().Error("Get user id from ctx", zap.Error(err))
 		c.JSON(http.StatusOK, "Unauthorized operation.")
 		return
 	}
@@ -80,7 +81,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 			c.JSON(http.StatusOK, "Invalid Params.")
 			return
 		}
-		userIdUint := int32(userId.(uint))
+		userIdUint := int32(userId)
 		req := &comment.CommentActionRequest{
 			UserId:      userIdUint,
 			VideoId:     int32(videoId),
@@ -102,7 +103,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 			})
 			return
 		}
-		userIdUint := uint32(userId.(uint))
+		userIdUint := uint32(userId)
 		req := &comment.CommentActionRequest{
 			UserId:     int32(userIdUint),
 			VideoId:    int32(videoId),
@@ -130,7 +131,11 @@ func Action(ctx context.Context, c *app.RequestContext) {
 }
 
 func List(ctx context.Context, c *app.RequestContext) {
-	userId, _ := c.Get(common.ContextUserIDKey)
+	userId, err := common.GetCurrentUserID(c)
+	// not logged in
+	if err != nil {
+		zap.L().Error("Get user id from ctx", zap.Error(err))
+	}
 	videoIdStr := c.Query("video_id")
 	videoId, err := strconv.ParseInt(videoIdStr, 10, 64)
 	if err != nil {
@@ -140,7 +145,7 @@ func List(ctx context.Context, c *app.RequestContext) {
 	}
 
 	req := &comment.CommentListRequest{
-		UserId:  int32(userId.(uint)),
+		UserId:  int32(userId),
 		VideoId: int32(videoId),
 	}
 

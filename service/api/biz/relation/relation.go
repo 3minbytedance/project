@@ -49,9 +49,9 @@ func init() {
 }
 
 func Action(ctx context.Context, c *app.RequestContext) {
-	userId, userIdExists := c.Get("userId")
-	// not logged in
-	if !userIdExists {
+	userId, err := common.GetCurrentUserID(c)
+	if err != nil {
+		zap.L().Error("Get user id from ctx", zap.Error(err))
 		c.JSON(http.StatusOK, "Unauthorized operation.")
 		return
 	}
@@ -71,7 +71,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		c.JSON(http.StatusOK, "Invalid Params.")
 		return
 	}
-	userIdUint := int32(userId.(uint))
+	userIdUint := int32(userId)
 	req := &relation.RelationActionRequest{
 		UserId:     userIdUint,
 		ToUserId:   int32(to_user_id),
@@ -102,16 +102,15 @@ func Action(ctx context.Context, c *app.RequestContext) {
 }
 
 func FollowList(ctx context.Context, c *app.RequestContext) {
-	// 已经有鉴权中间件，鉴过token了
-	userId, userIdExists := c.Get(common.ContextUserIDKey)
-	// not logged in
-	if !userIdExists {
+	userId, err := common.GetCurrentUserID(c)
+	if err != nil {
+		zap.L().Error("Get user id from ctx", zap.Error(err))
 		c.JSON(http.StatusOK, "Unauthorized operation.")
 		return
 	}
 
 	req := &relation.FollowListRequest{
-		UserId: int32(userId.(uint)),
+		UserId: int32(userId),
 	}
 
 	resp, err := relationClient.GetFollowList(ctx, req)

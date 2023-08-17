@@ -849,7 +849,7 @@ func (p *MessageActionRequest) FastRead(buf []byte) (int, error) {
 		}
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.I32 {
 				l, err = p.FastReadField1(buf[offset:])
 				offset += l
 				if err != nil {
@@ -942,7 +942,7 @@ ReadStructEndError:
 func (p *MessageActionRequest) FastReadField1(buf []byte) (int, error) {
 	offset := 0
 
-	if v, l, err := bthrift.Binary.ReadString(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadI32(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
@@ -1004,9 +1004,9 @@ func (p *MessageActionRequest) FastWriteNocopy(buf []byte, binaryWriter bthrift.
 	offset := 0
 	offset += bthrift.Binary.WriteStructBegin(buf[offset:], "MessageActionRequest")
 	if p != nil {
+		offset += p.fastWriteField1(buf[offset:], binaryWriter)
 		offset += p.fastWriteField2(buf[offset:], binaryWriter)
 		offset += p.fastWriteField3(buf[offset:], binaryWriter)
-		offset += p.fastWriteField1(buf[offset:], binaryWriter)
 		offset += p.fastWriteField4(buf[offset:], binaryWriter)
 	}
 	offset += bthrift.Binary.WriteFieldStop(buf[offset:])
@@ -1030,8 +1030,8 @@ func (p *MessageActionRequest) BLength() int {
 
 func (p *MessageActionRequest) fastWriteField1(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "from_user_id", thrift.STRING, 1)
-	offset += bthrift.Binary.WriteStringNocopy(buf[offset:], binaryWriter, p.FromUserId)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "from_user_id", thrift.I32, 1)
+	offset += bthrift.Binary.WriteI32(buf[offset:], p.FromUserId)
 
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
@@ -1066,8 +1066,8 @@ func (p *MessageActionRequest) fastWriteField4(buf []byte, binaryWriter bthrift.
 
 func (p *MessageActionRequest) field1Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("from_user_id", thrift.STRING, 1)
-	l += bthrift.Binary.StringLengthNocopy(p.FromUserId)
+	l += bthrift.Binary.FieldBeginLength("from_user_id", thrift.I32, 1)
+	l += bthrift.Binary.I32Length(p.FromUserId)
 
 	l += bthrift.Binary.FieldEndLength()
 	return l

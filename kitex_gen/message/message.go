@@ -1031,7 +1031,7 @@ func (p *MessageChatResponse) Field3DeepEqual(src []*Message) bool {
 }
 
 type MessageActionRequest struct {
-	FromUserId string `thrift:"from_user_id,1" frugal:"1,default,string" json:"from_user_id"`
+	FromUserId int32  `thrift:"from_user_id,1" frugal:"1,default,i32" json:"from_user_id"`
 	ToUserId   int32  `thrift:"to_user_id,2" frugal:"2,default,i32" json:"to_user_id"`
 	ActionType int32  `thrift:"action_type,3" frugal:"3,default,i32" json:"action_type"`
 	Content    string `thrift:"content,4" frugal:"4,default,string" json:"content"`
@@ -1045,7 +1045,7 @@ func (p *MessageActionRequest) InitDefault() {
 	*p = MessageActionRequest{}
 }
 
-func (p *MessageActionRequest) GetFromUserId() (v string) {
+func (p *MessageActionRequest) GetFromUserId() (v int32) {
 	return p.FromUserId
 }
 
@@ -1060,7 +1060,7 @@ func (p *MessageActionRequest) GetActionType() (v int32) {
 func (p *MessageActionRequest) GetContent() (v string) {
 	return p.Content
 }
-func (p *MessageActionRequest) SetFromUserId(val string) {
+func (p *MessageActionRequest) SetFromUserId(val int32) {
 	p.FromUserId = val
 }
 func (p *MessageActionRequest) SetToUserId(val int32) {
@@ -1100,7 +1100,7 @@ func (p *MessageActionRequest) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1170,7 +1170,7 @@ ReadStructEndError:
 }
 
 func (p *MessageActionRequest) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.FromUserId = v
@@ -1247,10 +1247,10 @@ WriteStructEndError:
 }
 
 func (p *MessageActionRequest) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("from_user_id", thrift.STRING, 1); err != nil {
+	if err = oprot.WriteFieldBegin("from_user_id", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.FromUserId); err != nil {
+	if err := oprot.WriteI32(p.FromUserId); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -1342,9 +1342,9 @@ func (p *MessageActionRequest) DeepEqual(ano *MessageActionRequest) bool {
 	return true
 }
 
-func (p *MessageActionRequest) Field1DeepEqual(src string) bool {
+func (p *MessageActionRequest) Field1DeepEqual(src int32) bool {
 
-	if strings.Compare(p.FromUserId, src) != 0 {
+	if p.FromUserId != src {
 		return false
 	}
 	return true
