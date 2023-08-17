@@ -32,6 +32,8 @@ const (
 
 const VideoPage = "video_page_"
 
+const TokenKey = "token_"
+
 func IsExistUserField(userId uint, field string) bool {
 	key := UserKey + fmt.Sprintf("%d", userId)
 	exists, err := Rdb.HExists(Ctx, key, field).Result()

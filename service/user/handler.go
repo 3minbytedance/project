@@ -6,6 +6,7 @@ import (
 	"douyin/dal/model"
 	"douyin/dal/mysql"
 	user "douyin/kitex_gen/user"
+	"douyin/mw/redis"
 	"douyin/service/user/pack"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
@@ -58,6 +59,14 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	resp.StatusMsg = thrift.StringPtr("success")
 	resp.UserId = int32(userId)
 	resp.Token = common.GenerateToken(userId, request.Username)
+
+	err = redis.SetToken(resp.Token, userId)
+	if err != nil {
+		zap.L().Error("Set token err:", zap.Error(err))
+		resp.StatusCode = 1
+		resp.StatusMsg = thrift.StringPtr("Server internal error.")
+		return
+	}
 	return
 }
 
@@ -94,6 +103,14 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	resp.StatusMsg = thrift.StringPtr("success")
 	resp.Token = token
 	resp.UserId = int32(user.ID)
+
+	err = redis.SetToken(token, user.ID)
+	if err != nil {
+		zap.L().Error("Set token err:", zap.Error(err))
+		resp.StatusCode = 1
+		resp.StatusMsg = thrift.StringPtr("Server internal error.")
+		return
+	}
 	return
 }
 

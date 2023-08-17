@@ -3,6 +3,7 @@ package mw
 import (
 	"context"
 	"douyin/common"
+	"douyin/mw/redis"
 	"github.com/cloudwego/hertz/pkg/app"
 	"go.uber.org/zap"
 	"net/http"
@@ -27,9 +28,11 @@ func Auth() app.HandlerFunc {
 			})
 
 		} else {
-			claims, err := common.ParseToken(token)
-			zap.L().Debug("TOKEN USER INFO:", zap.Any("claim", claims.ID))
-			if err != nil {
+			// claims, err := common.ParseToken(token)
+			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则返回0
+			claimsId := redis.GetToken(token)
+			zap.L().Debug("TOKEN USER INFO:", zap.Any("claim", claimsId))
+			if claimsId == 0 {
 				// token有误，阻止后面函数执行
 				c.Abort()
 				c.JSON(http.StatusUnauthorized, Response{
@@ -37,7 +40,7 @@ func Auth() app.HandlerFunc {
 					StatusMsg:  "Token Error",
 				})
 			}
-			c.Set(common.ContextUserIDKey, claims.ID)
+			c.Set(common.ContextUserIDKey, claimsId)
 			c.Next(ctx)
 		}
 	}
@@ -53,13 +56,15 @@ func AuthWithoutLogin() app.HandlerFunc {
 			c.Set(common.TokenValid, false)
 			userId = 0
 		} else {
-			claims, err := common.ParseToken(token)
-			if err != nil {
+			// claims, err := common.ParseToken(token)
+			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则返回0
+			claimsId := redis.GetToken(token)
+			if claimsId == 0 {
 				// token有误，设置userId为0,tokenValid为false
 				userId = 0
 				c.Set(common.TokenValid, false)
 			} else {
-				userId = claims.ID
+				userId = claimsId
 			}
 			c.Set(common.ContextUserIDKey, userId)
 			c.Set(common.TokenValid, true)
@@ -81,8 +86,10 @@ func AuthBody() app.HandlerFunc {
 				StatusMsg:  "Unauthorized",
 			})
 		} else {
-			claims, err := common.ParseToken(token)
-			if err != nil {
+			// claims, err := common.ParseToken(token)
+			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则返回0
+			claimsId := redis.GetToken(token)
+			if claimsId == 0 {
 				// token有误，阻止后面函数执行
 				c.Abort()
 				c.JSON(http.StatusUnauthorized, Response{
@@ -90,7 +97,7 @@ func AuthBody() app.HandlerFunc {
 					StatusMsg:  "Token Error",
 				})
 			}
-			c.Set(common.ContextUserIDKey, claims.ID)
+			c.Set(common.ContextUserIDKey, claimsId)
 			c.Next(ctx)
 		}
 	}
