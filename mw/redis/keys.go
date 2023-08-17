@@ -30,7 +30,7 @@ const (
 	FollowerList = "follower_list" //粉丝列表
 )
 
-const VideoPage = "video_page_"
+
 
 const TokenKey = "token_"
 
@@ -63,4 +63,10 @@ func IsExistUserSetField(userId uint, field string) bool {
 		return false
 	}
 	return exists != 0
+}
+
+// 根据参数合成并删除key
+func DelKey(userId uint, field string) {
+	key := fmt.Sprintf("%d_%S", userId, field)
+	Rdb.Del(Ctx, key)
 }

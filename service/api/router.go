@@ -23,7 +23,12 @@ func customizedRegister(r *server.Hertz) {
 	}
 
 	// video service
-
+	douyin.POST("/feed", )
+	videoGroup := douyin.Group("/publish")
+	{
+		videoGroup.POST("/list", )
+		videoGroup.POST("/action", )
+	}
 	// comment service
 	commentGroup := douyin.Group("/comment")
 	{
