@@ -143,7 +143,14 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 // GetUserInfoById implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.UserInfoByIdRequest) (resp *user.UserInfoByIdResponse, err error) {
 	resp = new(user.UserInfoByIdResponse)
-	user, exist, err := mysql.FindUserByUserID(uint(request.GetUserId()))
+	// userId不为0 -> 查询userId的用户信息，顺便查是不是actorId的关注，然后设置isFavorite
+	// userId为0 -> 单纯查询actorId信息
+	queryId := request.GetActorId()
+	if request.GetUserId() != 0 {
+		queryId = request.GetUserId()
+	}
+	user, exist, err := mysql.FindUserByUserID(uint(queryId))
+
 	if err != nil {
 		zap.L().Error("Check user exists err:", zap.Error(err))
 		resp.StatusCode = 1
@@ -163,8 +170,8 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	// 检查是否已关注
 	zap.L().Info("IDS", zap.Any("actorId", request.ActorId), zap.Any("userId", request.UserId))
 	relationResp, err := relationClient.IsFollowing(ctx, &relation.IsFollowingRequest{
-		ActorId: request.ActorId,
-		UserId:  request.UserId,
+		ActorId: request.GetActorId(),
+		UserId:  request.GetUserId(),
 	})
 	if err != nil {
 		zap.L().Error("Check user exists err:", zap.Error(err))

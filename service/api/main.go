@@ -4,35 +4,28 @@ package main
 
 import (
 	"douyin/config"
-	"douyin/dal"
 	"douyin/logger"
-	"douyin/mw"
-	"fmt"
+	"douyin/mw/redis"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	hertz_config "github.com/cloudwego/hertz/pkg/common/config"
+	"go.uber.org/zap"
 )
 
 func main() {
 	// 加载配置
 	if err := config.Init(); err != nil {
-		fmt.Printf("load config failed, err:%v\n", err)
+		zap.L().Error("Load config failed, err:%v\n", zap.Error(err))
 		return
 	}
 	// 加载日志
 	if err := logger.Init(config.Conf.LogConfig, config.Conf.Mode); err != nil {
-		fmt.Printf("init logger failed, err:%v\n", err)
+		zap.L().Error("Init logger failed, err:%v\n", zap.Error(err))
 		return
 	}
 
-	// 初始化数据库: mysql + mongo
-	if err := dal.Init(config.Conf); err != nil {
-		fmt.Printf("Init database failed, err:%v\n", err)
-		return
-	}
-
-	// 初始化中间件: redis + kafka
-	if err := mw.Init(config.Conf); err != nil {
-		fmt.Printf("Init middleware failed, err:%v\n", err)
+	// 初始化中间件: redis
+	if err := redis.Init(config.Conf); err != nil {
+		zap.L().Error("Init redis failed, err:%v\n", zap.Error(err))
 		return
 	}
 

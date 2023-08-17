@@ -81,7 +81,7 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		}()
 
 		// 查询user
-		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{ActorId: request.UserId})
+		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{ActorId: request.GetUserId()})
 		if err != nil {
 			resp.StatusCode = 1
 			resp.StatusMsg = thrift.StringPtr(err.Error())
@@ -141,7 +141,7 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 	commentList := make([]*comment.Comment, 0)
 	for _, com := range comments {
 		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: request.UserId,
+			ActorId: request.GetUserId(),
 			UserId:  int32(com.UserId),
 		})
 		if err != nil {

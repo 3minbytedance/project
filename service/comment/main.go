@@ -8,7 +8,6 @@ import (
 	comment "douyin/kitex_gen/comment/commentservice"
 	"douyin/logger"
 	"douyin/mw"
-	"fmt"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -35,24 +34,24 @@ func main() {
 
 	// 加载配置
 	if err := config.Init(); err != nil {
-		fmt.Printf("load config failed, err:%v\n", err)
+		zap.L().Error("Load config failed, err:%v\n", zap.Error(err))
 		return
 	}
 	// 加载日志
 	if err := logger.Init(config.Conf.LogConfig, config.Conf.Mode); err != nil {
-		fmt.Printf("init logger failed, err:%v\n", err)
+		zap.L().Error("Init logger failed, err:%v\n", zap.Error(err))
 		return
 	}
 
 	// 初始化数据库: mysql
 	if err := mysql.Init(config.Conf); err != nil {
-		fmt.Printf("Init mysql failed, err:%v\n", err)
+		zap.L().Error("Init mysql failed, err:%v\n", zap.Error(err))
 		return
 	}
 
 	// 初始化中间件: redis + kafka
 	if err := mw.Init(config.Conf); err != nil {
-		fmt.Printf("Init middleware failed, err:%v\n", err)
+		zap.L().Error("Init middleware failed, err:%v\n", zap.Error(err))
 		return
 	}
 
