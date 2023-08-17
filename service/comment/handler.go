@@ -45,18 +45,18 @@ type CommentServiceImpl struct{}
 func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment.CommentActionRequest) (resp *comment.CommentActionResponse, err error) {
 	resp = new(comment.CommentActionResponse)
 	zap.L().Info("CommentClient action start",
-		zap.Int32("user_id", request.UserId),
-		zap.Int32("video_id", request.VideoId),
-		zap.Int32("action_type", request.ActionType),
+		zap.Int32("user_id", request.GetUserId()),
+		zap.Int32("video_id", request.GetVideoId()),
+		zap.Int32("action_type", request.GetActionType()),
 		zap.Int32("comment_id", request.GetCommentId()),
 		zap.String("comment_text", request.GetCommentText()),
 	)
 
-	switch request.ActionType {
+	switch request.GetActionType() {
 	case 1: // 新增评论
 		commentData := model.Comment{
-			UserId:  uint(request.UserId),
-			VideoId: uint(request.VideoId),
+			UserId:  uint(request.GetUserId()),
+			VideoId: uint(request.GetVideoId()),
 			Content: common.ReplaceWord(request.GetCommentText()),
 		}
 		_, err = mysql.AddComment(&commentData)
@@ -68,14 +68,15 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 
 		// 设置redis
 		go func() {
-			isSetKey, _ := checkAndSetRedisCommentKey(uint(request.VideoId))
+			// 如果video不存在于redis，查询数据库并插入redis评论数
+			isSetKey, _ := checkAndSetRedisCommentKey(uint(request.GetVideoId()))
 			if isSetKey {
 				return
 			}
-			// 更新commentCount
-			err = redis.IncrementCommentCountByVideoId(uint(request.VideoId))
+			// 如果video存在于redis，更新commentCount
+			err = redis.IncrementCommentCountByVideoId(uint(request.GetVideoId()))
 			if err != nil {
-				log.Printf("更新videoId为%v的评论数失败  %v\n", request.VideoId, err.Error())
+				log.Printf("更新videoId为%v的评论数失败  %v\n", request.GetVideoId(), err.Error())
 			}
 		}()
 
@@ -96,9 +97,32 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		}, nil
 
 	case 2:
-		return
+		// 设置redis
+		go func() {
+			err = redis.DecrementCommentCountByVideoId(uint(request.GetVideoId()))
+			if err != nil {
+				zap.L().Error("DecrementCommentCountByVideoId error", zap.Error(err))
+				return
+			}
+		}()
+
+		err = mysql.DeleteCommentById(uint(request.GetCommentId()))
+		if err != nil {
+			zap.L().Error("DeleteCommentById error", zap.Error(err))
+			return &comment.CommentActionResponse{
+				StatusCode: 1,
+				StatusMsg:  thrift.StringPtr("Internal server error"),
+			}, err
+		}
+		return &comment.CommentActionResponse{
+			StatusCode: 0,
+			StatusMsg:  thrift.StringPtr("success"),
+		}, nil
 	default:
-		return
+		return &comment.CommentActionResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("Invalid Param"),
+		}, nil
 	}
 
 }

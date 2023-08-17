@@ -56,6 +56,7 @@ func main() {
 
 	// 初始化Bloom Filter
 	common.InitBloomFilter()
+	common.LoadUsernamesToBloomFilter()
 
 	addr, err := net.ResolveTCPAddr("tcp", constant.UserServicePort)
 	if err != nil {

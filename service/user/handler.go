@@ -99,14 +99,14 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 // Login implements the UserServiceImpl interface.
 func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequest) (resp *user.UserLoginResponse, err error) {
 	resp = new(user.UserLoginResponse)
-	//exist := common.TestBloom(request.Username)
-	//// 用户名不存在
-	//if !exist {
-	//	zap.L().Info("Check user exists info:", zap.Bool("exist", exist))
-	//	resp.StatusCode = 1
-	//	resp.StatusMsg = thrift.StringPtr("Username not exist")
-	//	return
-	//}
+	exist := common.TestBloom(request.Username)
+	// 用户名不存在
+	if !exist {
+		zap.L().Info("Check user exists info:", zap.Bool("exist", exist))
+		resp.StatusCode = 1
+		resp.StatusMsg = thrift.StringPtr("Username not exist")
+		return
+	}
 
 	// 用户名存在
 	user, _, err := mysql.FindUserByName(request.Username)
@@ -143,7 +143,7 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 // GetUserInfoById implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.UserInfoByIdRequest) (resp *user.UserInfoByIdResponse, err error) {
 	resp = new(user.UserInfoByIdResponse)
-	user, exist, err := mysql.FindUserByUserID(uint(request.ActorId))
+	user, exist, err := mysql.FindUserByUserID(uint(request.GetUserId()))
 	if err != nil {
 		zap.L().Error("Check user exists err:", zap.Error(err))
 		resp.StatusCode = 1
@@ -161,6 +161,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	resp.User = pack.User(&user)
 
 	// 检查是否已关注
+	zap.L().Info("IDS", zap.Any("actorId", request.ActorId), zap.Any("userId", request.UserId))
 	relationResp, err := relationClient.IsFollowing(ctx, &relation.IsFollowingRequest{
 		ActorId: request.ActorId,
 		UserId:  request.UserId,

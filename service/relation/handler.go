@@ -54,7 +54,7 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		redis.DelKey(uint(request.UserId), redis.FollowList)
 		redis.DelKey(uint(request.ToUserId), redis.FollowerList)
 
-		err := mysql.AddFollow(uint(request.UserId), uint(request.ToUserId))
+		err = mysql.AddFollow(uint(request.UserId), uint(request.ToUserId))
 		if err != nil {
 			resp.StatusCode = 1
 			resp.StatusMsg = thrift.StringPtr(err.Error())
@@ -75,7 +75,7 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		redis.DelKey(uint(request.UserId), redis.FollowList)
 		redis.DelKey(uint(request.ToUserId), redis.FollowerList)
 
-		err := mysql.DeleteFollowById(uint(request.UserId), uint(request.ToUserId))
+		err = mysql.DeleteFollowById(uint(request.UserId), uint(request.ToUserId))
 		if err != nil {
 			resp.StatusCode = 1
 			resp.StatusMsg = thrift.StringPtr(err.Error())

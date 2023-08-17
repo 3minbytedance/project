@@ -1,6 +1,12 @@
 package common
 
-import "github.com/bits-and-blooms/bloom/v3"
+import (
+	"douyin/dal/model"
+	"douyin/dal/mysql"
+	"github.com/bits-and-blooms/bloom/v3"
+	"go.uber.org/zap"
+	"log"
+)
 
 var bloomFilter *bloom.BloomFilter
 
@@ -15,4 +21,18 @@ func AddToBloom(data string) {
 
 func TestBloom(data string) bool {
 	return bloomFilter.Test([]byte(data))
+}
+
+func LoadUsernamesToBloomFilter() {
+	var usernames []string
+	err := mysql.DB.Model(&model.User{}).Pluck("name", &usernames).Error
+	if err != nil {
+		log.Fatal("Failed to retrieve usernames from database:", err)
+	}
+
+	for _, username := range usernames {
+		AddToBloom(username)
+	}
+
+	zap.L().Info("Loaded %d usernames to the bloom filter.\n", zap.Int("size", len(usernames)))
 }

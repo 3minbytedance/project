@@ -3,6 +3,7 @@ package redis
 import (
 	"fmt"
 	_ "github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"strconv"
 )
 
@@ -68,24 +69,25 @@ func GetFriendListById(userId uint) ([]uint, error) {
 }
 
 // 设置关注列表
-func SetFollowListByUserId(userid uint, id []uint) error {
+func SetFollowListByUserId(userid uint, ids []uint) error {
 	key := fmt.Sprintf("%d_%s", userid, FollowList)
 	// 转换为[]interface{}
-	b := make([]interface{}, len(id))
-	for i := range id {
-		b[i] = id[i]
+	b := make([]interface{}, len(ids))
+	for i, _ := range ids {
+		b[i] = ids[i]
 	}
+	zap.L().Info("LIST", zap.Any("List", b))
 	err := Rdb.SAdd(Ctx, key, b...).Err()
 	return err
 }
 
 // 设置粉丝列表
-func SetFollowerListByUserId(userid uint, id []uint) error {
+func SetFollowerListByUserId(userid uint, ids []uint) error {
 	key := fmt.Sprintf("%d_%s", userid, FollowerList)
 	// 转换为[]interface{}
-	b := make([]interface{}, len(id))
-	for i := range id {
-		b[i] = id[i]
+	b := make([]interface{}, len(ids))
+	for i, _ := range ids {
+		b[i] = ids[i]
 	}
 	err := Rdb.SAdd(Ctx, key, b...).Err()
 	return err
