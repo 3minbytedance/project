@@ -42,6 +42,7 @@ func main() {
 		return
 	}
 
+	// 初始化mysql
 	if err := mysql.Init(config.Conf); err != nil {
 		zap.L().Error("Init mysql error", zap.Error(err))
 		return

@@ -48,7 +48,11 @@ func GetFollowerCnt(userId uint) (int64, error) {
 }
 
 func IsFollowing(userA uint, userB uint) bool {
-	return DB.Model(&model.UserFollow{}).Where("user_id = ? and follow_id = ?", userA, userB).RowsAffected == 1
+	var count int64
+	DB.Model(&model.UserFollow{}).
+		Where("user_id = ? AND follow_id = ?", userA, userB).
+		Count(&count)
+	return count > 0
 }
 
 // IsMutualFollow 是否互关

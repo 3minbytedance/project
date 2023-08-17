@@ -65,12 +65,12 @@ struct FriendListResponse {
 3: list<user.User> user_list, // 用户列表
 }
 
-struct IsFollowedRequest {
-1: i32 user_id,
-2: i32 to_user_id,
+struct IsFollowingRequest {
+1: i32 actor_id,
+2: i32 user_id,
 }
 
-struct IsFollowedResponse {
+struct IsFollowingResponse {
 1: bool result,
 }
 
@@ -81,5 +81,5 @@ FollowerListResponse GetFollowerList(1: FollowerListRequest Request),
 FollowListCountResponse GetFollowListCount(1: FollowListCountRequest Request),
 FollowerListCountResponse GetFollowerListCount(1: FollowerListCountRequest Request),
 FriendListResponse GetFriendList(1: FriendListRequest Request),
-IsFollowedResponse IsFollowed(1: IsFollowedRequest Request),
+IsFollowingResponse IsFollowing(1: IsFollowingRequest Request),
 }

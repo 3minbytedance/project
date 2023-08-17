@@ -3034,39 +3034,39 @@ func (p *FriendListResponse) Field3DeepEqual(src []*user.User) bool {
 	return true
 }
 
-type IsFollowedRequest struct {
-	UserId   int32 `thrift:"user_id,1" frugal:"1,default,i32" json:"user_id"`
-	ToUserId int32 `thrift:"to_user_id,2" frugal:"2,default,i32" json:"to_user_id"`
+type IsFollowingRequest struct {
+	ActorId int32 `thrift:"actor_id,1" frugal:"1,default,i32" json:"actor_id"`
+	UserId  int32 `thrift:"user_id,2" frugal:"2,default,i32" json:"user_id"`
 }
 
-func NewIsFollowedRequest() *IsFollowedRequest {
-	return &IsFollowedRequest{}
+func NewIsFollowingRequest() *IsFollowingRequest {
+	return &IsFollowingRequest{}
 }
 
-func (p *IsFollowedRequest) InitDefault() {
-	*p = IsFollowedRequest{}
+func (p *IsFollowingRequest) InitDefault() {
+	*p = IsFollowingRequest{}
 }
 
-func (p *IsFollowedRequest) GetUserId() (v int32) {
+func (p *IsFollowingRequest) GetActorId() (v int32) {
+	return p.ActorId
+}
+
+func (p *IsFollowingRequest) GetUserId() (v int32) {
 	return p.UserId
 }
-
-func (p *IsFollowedRequest) GetToUserId() (v int32) {
-	return p.ToUserId
+func (p *IsFollowingRequest) SetActorId(val int32) {
+	p.ActorId = val
 }
-func (p *IsFollowedRequest) SetUserId(val int32) {
+func (p *IsFollowingRequest) SetUserId(val int32) {
 	p.UserId = val
 }
-func (p *IsFollowedRequest) SetToUserId(val int32) {
-	p.ToUserId = val
+
+var fieldIDToName_IsFollowingRequest = map[int16]string{
+	1: "actor_id",
+	2: "user_id",
 }
 
-var fieldIDToName_IsFollowedRequest = map[int16]string{
-	1: "user_id",
-	2: "to_user_id",
-}
-
-func (p *IsFollowedRequest) Read(iprot thrift.TProtocol) (err error) {
+func (p *IsFollowingRequest) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
@@ -3125,7 +3125,7 @@ ReadStructBeginError:
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
 ReadFieldError:
-	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_IsFollowedRequest[fieldId]), err)
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_IsFollowingRequest[fieldId]), err)
 SkipFieldError:
 	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
@@ -3135,7 +3135,16 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *IsFollowedRequest) ReadField1(iprot thrift.TProtocol) error {
+func (p *IsFollowingRequest) ReadField1(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI32(); err != nil {
+		return err
+	} else {
+		p.ActorId = v
+	}
+	return nil
+}
+
+func (p *IsFollowingRequest) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
@@ -3144,18 +3153,9 @@ func (p *IsFollowedRequest) ReadField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *IsFollowedRequest) ReadField2(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI32(); err != nil {
-		return err
-	} else {
-		p.ToUserId = v
-	}
-	return nil
-}
-
-func (p *IsFollowedRequest) Write(oprot thrift.TProtocol) (err error) {
+func (p *IsFollowingRequest) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("IsFollowedRequest"); err != nil {
+	if err = oprot.WriteStructBegin("IsFollowingRequest"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
@@ -3186,11 +3186,11 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *IsFollowedRequest) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("user_id", thrift.I32, 1); err != nil {
+func (p *IsFollowingRequest) writeField1(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("actor_id", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI32(p.UserId); err != nil {
+	if err := oprot.WriteI32(p.ActorId); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -3203,11 +3203,11 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *IsFollowedRequest) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("to_user_id", thrift.I32, 2); err != nil {
+func (p *IsFollowingRequest) writeField2(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("user_id", thrift.I32, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI32(p.ToUserId); err != nil {
+	if err := oprot.WriteI32(p.UserId); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -3220,67 +3220,67 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *IsFollowedRequest) String() string {
+func (p *IsFollowingRequest) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("IsFollowedRequest(%+v)", *p)
+	return fmt.Sprintf("IsFollowingRequest(%+v)", *p)
 }
 
-func (p *IsFollowedRequest) DeepEqual(ano *IsFollowedRequest) bool {
+func (p *IsFollowingRequest) DeepEqual(ano *IsFollowingRequest) bool {
 	if p == ano {
 		return true
 	} else if p == nil || ano == nil {
 		return false
 	}
-	if !p.Field1DeepEqual(ano.UserId) {
+	if !p.Field1DeepEqual(ano.ActorId) {
 		return false
 	}
-	if !p.Field2DeepEqual(ano.ToUserId) {
+	if !p.Field2DeepEqual(ano.UserId) {
 		return false
 	}
 	return true
 }
 
-func (p *IsFollowedRequest) Field1DeepEqual(src int32) bool {
+func (p *IsFollowingRequest) Field1DeepEqual(src int32) bool {
+
+	if p.ActorId != src {
+		return false
+	}
+	return true
+}
+func (p *IsFollowingRequest) Field2DeepEqual(src int32) bool {
 
 	if p.UserId != src {
 		return false
 	}
 	return true
 }
-func (p *IsFollowedRequest) Field2DeepEqual(src int32) bool {
 
-	if p.ToUserId != src {
-		return false
-	}
-	return true
-}
-
-type IsFollowedResponse struct {
+type IsFollowingResponse struct {
 	Result_ bool `thrift:"result,1" frugal:"1,default,bool" json:"result"`
 }
 
-func NewIsFollowedResponse() *IsFollowedResponse {
-	return &IsFollowedResponse{}
+func NewIsFollowingResponse() *IsFollowingResponse {
+	return &IsFollowingResponse{}
 }
 
-func (p *IsFollowedResponse) InitDefault() {
-	*p = IsFollowedResponse{}
+func (p *IsFollowingResponse) InitDefault() {
+	*p = IsFollowingResponse{}
 }
 
-func (p *IsFollowedResponse) GetResult_() (v bool) {
+func (p *IsFollowingResponse) GetResult_() (v bool) {
 	return p.Result_
 }
-func (p *IsFollowedResponse) SetResult_(val bool) {
+func (p *IsFollowingResponse) SetResult_(val bool) {
 	p.Result_ = val
 }
 
-var fieldIDToName_IsFollowedResponse = map[int16]string{
+var fieldIDToName_IsFollowingResponse = map[int16]string{
 	1: "result",
 }
 
-func (p *IsFollowedResponse) Read(iprot thrift.TProtocol) (err error) {
+func (p *IsFollowingResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
@@ -3329,7 +3329,7 @@ ReadStructBeginError:
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
 ReadFieldError:
-	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_IsFollowedResponse[fieldId]), err)
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_IsFollowingResponse[fieldId]), err)
 SkipFieldError:
 	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
@@ -3339,7 +3339,7 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *IsFollowedResponse) ReadField1(iprot thrift.TProtocol) error {
+func (p *IsFollowingResponse) ReadField1(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadBool(); err != nil {
 		return err
 	} else {
@@ -3348,9 +3348,9 @@ func (p *IsFollowedResponse) ReadField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *IsFollowedResponse) Write(oprot thrift.TProtocol) (err error) {
+func (p *IsFollowingResponse) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("IsFollowedResponse"); err != nil {
+	if err = oprot.WriteStructBegin("IsFollowingResponse"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
@@ -3377,7 +3377,7 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *IsFollowedResponse) writeField1(oprot thrift.TProtocol) (err error) {
+func (p *IsFollowingResponse) writeField1(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("result", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -3394,14 +3394,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *IsFollowedResponse) String() string {
+func (p *IsFollowingResponse) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("IsFollowedResponse(%+v)", *p)
+	return fmt.Sprintf("IsFollowingResponse(%+v)", *p)
 }
 
-func (p *IsFollowedResponse) DeepEqual(ano *IsFollowedResponse) bool {
+func (p *IsFollowingResponse) DeepEqual(ano *IsFollowingResponse) bool {
 	if p == ano {
 		return true
 	} else if p == nil || ano == nil {
@@ -3413,7 +3413,7 @@ func (p *IsFollowedResponse) DeepEqual(ano *IsFollowedResponse) bool {
 	return true
 }
 
-func (p *IsFollowedResponse) Field1DeepEqual(src bool) bool {
+func (p *IsFollowingResponse) Field1DeepEqual(src bool) bool {
 
 	if p.Result_ != src {
 		return false
@@ -3434,7 +3434,7 @@ type RelationService interface {
 
 	GetFriendList(ctx context.Context, request *FriendListRequest) (r *FriendListResponse, err error)
 
-	IsFollowed(ctx context.Context, request *IsFollowedRequest) (r *IsFollowedResponse, err error)
+	IsFollowing(ctx context.Context, request *IsFollowingRequest) (r *IsFollowingResponse, err error)
 }
 
 type RelationServiceClient struct {
@@ -3517,11 +3517,11 @@ func (p *RelationServiceClient) GetFriendList(ctx context.Context, request *Frie
 	}
 	return _result.GetSuccess(), nil
 }
-func (p *RelationServiceClient) IsFollowed(ctx context.Context, request *IsFollowedRequest) (r *IsFollowedResponse, err error) {
-	var _args RelationServiceIsFollowedArgs
+func (p *RelationServiceClient) IsFollowing(ctx context.Context, request *IsFollowingRequest) (r *IsFollowingResponse, err error) {
+	var _args RelationServiceIsFollowingArgs
 	_args.Request = request
-	var _result RelationServiceIsFollowedResult
-	if err = p.Client_().Call(ctx, "IsFollowed", &_args, &_result); err != nil {
+	var _result RelationServiceIsFollowingResult
+	if err = p.Client_().Call(ctx, "IsFollowing", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -3553,7 +3553,7 @@ func NewRelationServiceProcessor(handler RelationService) *RelationServiceProces
 	self.AddToProcessorMap("GetFollowListCount", &relationServiceProcessorGetFollowListCount{handler: handler})
 	self.AddToProcessorMap("GetFollowerListCount", &relationServiceProcessorGetFollowerListCount{handler: handler})
 	self.AddToProcessorMap("GetFriendList", &relationServiceProcessorGetFriendList{handler: handler})
-	self.AddToProcessorMap("IsFollowed", &relationServiceProcessorIsFollowed{handler: handler})
+	self.AddToProcessorMap("IsFollowing", &relationServiceProcessorIsFollowing{handler: handler})
 	return self
 }
 func (p *RelationServiceProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
@@ -3862,16 +3862,16 @@ func (p *relationServiceProcessorGetFriendList) Process(ctx context.Context, seq
 	return true, err
 }
 
-type relationServiceProcessorIsFollowed struct {
+type relationServiceProcessorIsFollowing struct {
 	handler RelationService
 }
 
-func (p *relationServiceProcessorIsFollowed) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	args := RelationServiceIsFollowedArgs{}
+func (p *relationServiceProcessorIsFollowing) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	args := RelationServiceIsFollowingArgs{}
 	if err = args.Read(iprot); err != nil {
 		iprot.ReadMessageEnd()
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("IsFollowed", thrift.EXCEPTION, seqId)
+		oprot.WriteMessageBegin("IsFollowing", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
 		oprot.WriteMessageEnd()
 		oprot.Flush(ctx)
@@ -3880,11 +3880,11 @@ func (p *relationServiceProcessorIsFollowed) Process(ctx context.Context, seqId 
 
 	iprot.ReadMessageEnd()
 	var err2 error
-	result := RelationServiceIsFollowedResult{}
-	var retval *IsFollowedResponse
-	if retval, err2 = p.handler.IsFollowed(ctx, args.Request); err2 != nil {
-		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing IsFollowed: "+err2.Error())
-		oprot.WriteMessageBegin("IsFollowed", thrift.EXCEPTION, seqId)
+	result := RelationServiceIsFollowingResult{}
+	var retval *IsFollowingResponse
+	if retval, err2 = p.handler.IsFollowing(ctx, args.Request); err2 != nil {
+		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing IsFollowing: "+err2.Error())
+		oprot.WriteMessageBegin("IsFollowing", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
 		oprot.WriteMessageEnd()
 		oprot.Flush(ctx)
@@ -3892,7 +3892,7 @@ func (p *relationServiceProcessorIsFollowed) Process(ctx context.Context, seqId 
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("IsFollowed", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin("IsFollowing", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
 	if err2 = result.Write(oprot); err == nil && err2 != nil {
@@ -5986,39 +5986,39 @@ func (p *RelationServiceGetFriendListResult) Field0DeepEqual(src *FriendListResp
 	return true
 }
 
-type RelationServiceIsFollowedArgs struct {
-	Request *IsFollowedRequest `thrift:"Request,1" frugal:"1,default,IsFollowedRequest" json:"Request"`
+type RelationServiceIsFollowingArgs struct {
+	Request *IsFollowingRequest `thrift:"Request,1" frugal:"1,default,IsFollowingRequest" json:"Request"`
 }
 
-func NewRelationServiceIsFollowedArgs() *RelationServiceIsFollowedArgs {
-	return &RelationServiceIsFollowedArgs{}
+func NewRelationServiceIsFollowingArgs() *RelationServiceIsFollowingArgs {
+	return &RelationServiceIsFollowingArgs{}
 }
 
-func (p *RelationServiceIsFollowedArgs) InitDefault() {
-	*p = RelationServiceIsFollowedArgs{}
+func (p *RelationServiceIsFollowingArgs) InitDefault() {
+	*p = RelationServiceIsFollowingArgs{}
 }
 
-var RelationServiceIsFollowedArgs_Request_DEFAULT *IsFollowedRequest
+var RelationServiceIsFollowingArgs_Request_DEFAULT *IsFollowingRequest
 
-func (p *RelationServiceIsFollowedArgs) GetRequest() (v *IsFollowedRequest) {
+func (p *RelationServiceIsFollowingArgs) GetRequest() (v *IsFollowingRequest) {
 	if !p.IsSetRequest() {
-		return RelationServiceIsFollowedArgs_Request_DEFAULT
+		return RelationServiceIsFollowingArgs_Request_DEFAULT
 	}
 	return p.Request
 }
-func (p *RelationServiceIsFollowedArgs) SetRequest(val *IsFollowedRequest) {
+func (p *RelationServiceIsFollowingArgs) SetRequest(val *IsFollowingRequest) {
 	p.Request = val
 }
 
-var fieldIDToName_RelationServiceIsFollowedArgs = map[int16]string{
+var fieldIDToName_RelationServiceIsFollowingArgs = map[int16]string{
 	1: "Request",
 }
 
-func (p *RelationServiceIsFollowedArgs) IsSetRequest() bool {
+func (p *RelationServiceIsFollowingArgs) IsSetRequest() bool {
 	return p.Request != nil
 }
 
-func (p *RelationServiceIsFollowedArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *RelationServiceIsFollowingArgs) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
@@ -6067,7 +6067,7 @@ ReadStructBeginError:
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
 ReadFieldError:
-	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_RelationServiceIsFollowedArgs[fieldId]), err)
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_RelationServiceIsFollowingArgs[fieldId]), err)
 SkipFieldError:
 	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
@@ -6077,17 +6077,17 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *RelationServiceIsFollowedArgs) ReadField1(iprot thrift.TProtocol) error {
-	p.Request = NewIsFollowedRequest()
+func (p *RelationServiceIsFollowingArgs) ReadField1(iprot thrift.TProtocol) error {
+	p.Request = NewIsFollowingRequest()
 	if err := p.Request.Read(iprot); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *RelationServiceIsFollowedArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *RelationServiceIsFollowingArgs) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("IsFollowed_args"); err != nil {
+	if err = oprot.WriteStructBegin("IsFollowing_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
@@ -6114,7 +6114,7 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *RelationServiceIsFollowedArgs) writeField1(oprot thrift.TProtocol) (err error) {
+func (p *RelationServiceIsFollowingArgs) writeField1(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("Request", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -6131,14 +6131,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *RelationServiceIsFollowedArgs) String() string {
+func (p *RelationServiceIsFollowingArgs) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("RelationServiceIsFollowedArgs(%+v)", *p)
+	return fmt.Sprintf("RelationServiceIsFollowingArgs(%+v)", *p)
 }
 
-func (p *RelationServiceIsFollowedArgs) DeepEqual(ano *RelationServiceIsFollowedArgs) bool {
+func (p *RelationServiceIsFollowingArgs) DeepEqual(ano *RelationServiceIsFollowingArgs) bool {
 	if p == ano {
 		return true
 	} else if p == nil || ano == nil {
@@ -6150,7 +6150,7 @@ func (p *RelationServiceIsFollowedArgs) DeepEqual(ano *RelationServiceIsFollowed
 	return true
 }
 
-func (p *RelationServiceIsFollowedArgs) Field1DeepEqual(src *IsFollowedRequest) bool {
+func (p *RelationServiceIsFollowingArgs) Field1DeepEqual(src *IsFollowingRequest) bool {
 
 	if !p.Request.DeepEqual(src) {
 		return false
@@ -6158,39 +6158,39 @@ func (p *RelationServiceIsFollowedArgs) Field1DeepEqual(src *IsFollowedRequest) 
 	return true
 }
 
-type RelationServiceIsFollowedResult struct {
-	Success *IsFollowedResponse `thrift:"success,0,optional" frugal:"0,optional,IsFollowedResponse" json:"success,omitempty"`
+type RelationServiceIsFollowingResult struct {
+	Success *IsFollowingResponse `thrift:"success,0,optional" frugal:"0,optional,IsFollowingResponse" json:"success,omitempty"`
 }
 
-func NewRelationServiceIsFollowedResult() *RelationServiceIsFollowedResult {
-	return &RelationServiceIsFollowedResult{}
+func NewRelationServiceIsFollowingResult() *RelationServiceIsFollowingResult {
+	return &RelationServiceIsFollowingResult{}
 }
 
-func (p *RelationServiceIsFollowedResult) InitDefault() {
-	*p = RelationServiceIsFollowedResult{}
+func (p *RelationServiceIsFollowingResult) InitDefault() {
+	*p = RelationServiceIsFollowingResult{}
 }
 
-var RelationServiceIsFollowedResult_Success_DEFAULT *IsFollowedResponse
+var RelationServiceIsFollowingResult_Success_DEFAULT *IsFollowingResponse
 
-func (p *RelationServiceIsFollowedResult) GetSuccess() (v *IsFollowedResponse) {
+func (p *RelationServiceIsFollowingResult) GetSuccess() (v *IsFollowingResponse) {
 	if !p.IsSetSuccess() {
-		return RelationServiceIsFollowedResult_Success_DEFAULT
+		return RelationServiceIsFollowingResult_Success_DEFAULT
 	}
 	return p.Success
 }
-func (p *RelationServiceIsFollowedResult) SetSuccess(x interface{}) {
-	p.Success = x.(*IsFollowedResponse)
+func (p *RelationServiceIsFollowingResult) SetSuccess(x interface{}) {
+	p.Success = x.(*IsFollowingResponse)
 }
 
-var fieldIDToName_RelationServiceIsFollowedResult = map[int16]string{
+var fieldIDToName_RelationServiceIsFollowingResult = map[int16]string{
 	0: "success",
 }
 
-func (p *RelationServiceIsFollowedResult) IsSetSuccess() bool {
+func (p *RelationServiceIsFollowingResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *RelationServiceIsFollowedResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *RelationServiceIsFollowingResult) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
@@ -6239,7 +6239,7 @@ ReadStructBeginError:
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
 ReadFieldError:
-	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_RelationServiceIsFollowedResult[fieldId]), err)
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_RelationServiceIsFollowingResult[fieldId]), err)
 SkipFieldError:
 	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
@@ -6249,17 +6249,17 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *RelationServiceIsFollowedResult) ReadField0(iprot thrift.TProtocol) error {
-	p.Success = NewIsFollowedResponse()
+func (p *RelationServiceIsFollowingResult) ReadField0(iprot thrift.TProtocol) error {
+	p.Success = NewIsFollowingResponse()
 	if err := p.Success.Read(iprot); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *RelationServiceIsFollowedResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *RelationServiceIsFollowingResult) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("IsFollowed_result"); err != nil {
+	if err = oprot.WriteStructBegin("IsFollowing_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
@@ -6286,7 +6286,7 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *RelationServiceIsFollowedResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *RelationServiceIsFollowingResult) writeField0(oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
 		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
@@ -6305,14 +6305,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 0 end error: ", p), err)
 }
 
-func (p *RelationServiceIsFollowedResult) String() string {
+func (p *RelationServiceIsFollowingResult) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("RelationServiceIsFollowedResult(%+v)", *p)
+	return fmt.Sprintf("RelationServiceIsFollowingResult(%+v)", *p)
 }
 
-func (p *RelationServiceIsFollowedResult) DeepEqual(ano *RelationServiceIsFollowedResult) bool {
+func (p *RelationServiceIsFollowingResult) DeepEqual(ano *RelationServiceIsFollowingResult) bool {
 	if p == ano {
 		return true
 	} else if p == nil || ano == nil {
@@ -6324,7 +6324,7 @@ func (p *RelationServiceIsFollowedResult) DeepEqual(ano *RelationServiceIsFollow
 	return true
 }
 
-func (p *RelationServiceIsFollowedResult) Field0DeepEqual(src *IsFollowedResponse) bool {
+func (p *RelationServiceIsFollowingResult) Field0DeepEqual(src *IsFollowingResponse) bool {
 
 	if !p.Success.DeepEqual(src) {
 		return false

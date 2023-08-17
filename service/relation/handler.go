@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"douyin/dal/mysql"
 	relation "douyin/kitex_gen/relation"
+	"douyin/mw/redis"
+	"go.uber.org/zap"
 )
 
 // RelationServiceImpl implements the last service interface defined in the IDL.
@@ -44,8 +47,28 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 	return
 }
 
-// IsFollowed implements the RelationServiceImpl interface.
-func (s *RelationServiceImpl) IsFollowed(ctx context.Context, request *relation.IsFollowedRequest) (resp *relation.IsFollowedResponse, err error) {
-	// TODO: Your code here...
-	return
+// IsFollowing implements the RelationServiceImpl interface.
+func (s *RelationServiceImpl) IsFollowing(ctx context.Context, request *relation.IsFollowingRequest) (resp *relation.IsFollowingResponse, err error) {
+	// redis存在key
+	if redis.IsExistUserSetField(uint(request.ActorId), redis.FollowList) {
+		found := redis.IsInMyFollowList(uint(request.ActorId), uint(request.UserId))
+		return &relation.IsFollowingResponse{Result_: found}, nil
+	}
+	// 从数据库查询是否已关注
+	found := mysql.IsFollowing(uint(request.ActorId), uint(request.UserId))
+	// 获取所有关注列表id
+	followListId, err := mysql.GetFollowList(uint(request.ActorId))
+	if err != nil {
+		zap.L().Error("GetFollowList error", zap.Error(err))
+		return &relation.IsFollowingResponse{Result_: found}, err
+	}
+	// 往redis赋值
+	go func() {
+		err = redis.SetFollowListByUserId(uint(request.ActorId), followListId)
+		if err != nil {
+			zap.L().Error("SetFollowListByUserId error", zap.Error(err))
+			return
+		}
+	}()
+	return &relation.IsFollowingResponse{Result_: found}, err
 }

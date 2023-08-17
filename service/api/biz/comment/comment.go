@@ -130,7 +130,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 }
 
 func List(ctx context.Context, c *app.RequestContext) {
-	token := c.Query("token") //TODO 视频流客户端传递这个参数，用处Token续签、未登录的情况下查询关注返回false
+	userId, _ := c.Get(common.ContextUserIDKey)
 	videoIdStr := c.Query("video_id")
 	videoId, err := strconv.ParseInt(videoIdStr, 10, 64)
 	if err != nil {
@@ -138,17 +138,9 @@ func List(ctx context.Context, c *app.RequestContext) {
 		c.JSON(http.StatusOK, err.Error())
 		return
 	}
-	var userId uint
-	//todo 改为如果token在redis中查到
-	if token != "" {
-		userToken, _ := common.ParseToken(token)
-		userId = userToken.ID
-	} else {
-		userId = 0
-	}
 
 	req := &comment.CommentListRequest{
-		UserId:  int32(userId),
+		UserId:  int32(userId.(uint)),
 		VideoId: int32(videoId),
 	}
 

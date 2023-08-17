@@ -25,7 +25,7 @@ func NewServiceInfo() *kitex.ServiceInfo {
 		"GetFollowListCount":   kitex.NewMethodInfo(getFollowListCountHandler, newRelationServiceGetFollowListCountArgs, newRelationServiceGetFollowListCountResult, false),
 		"GetFollowerListCount": kitex.NewMethodInfo(getFollowerListCountHandler, newRelationServiceGetFollowerListCountArgs, newRelationServiceGetFollowerListCountResult, false),
 		"GetFriendList":        kitex.NewMethodInfo(getFriendListHandler, newRelationServiceGetFriendListArgs, newRelationServiceGetFriendListResult, false),
-		"IsFollowed":           kitex.NewMethodInfo(isFollowedHandler, newRelationServiceIsFollowedArgs, newRelationServiceIsFollowedResult, false),
+		"IsFollowing":          kitex.NewMethodInfo(isFollowingHandler, newRelationServiceIsFollowingArgs, newRelationServiceIsFollowingResult, false),
 	}
 	extra := map[string]interface{}{
 		"PackageName": "relation",
@@ -149,22 +149,22 @@ func newRelationServiceGetFriendListResult() interface{} {
 	return relation.NewRelationServiceGetFriendListResult()
 }
 
-func isFollowedHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
-	realArg := arg.(*relation.RelationServiceIsFollowedArgs)
-	realResult := result.(*relation.RelationServiceIsFollowedResult)
-	success, err := handler.(relation.RelationService).IsFollowed(ctx, realArg.Request)
+func isFollowingHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*relation.RelationServiceIsFollowingArgs)
+	realResult := result.(*relation.RelationServiceIsFollowingResult)
+	success, err := handler.(relation.RelationService).IsFollowing(ctx, realArg.Request)
 	if err != nil {
 		return err
 	}
 	realResult.Success = success
 	return nil
 }
-func newRelationServiceIsFollowedArgs() interface{} {
-	return relation.NewRelationServiceIsFollowedArgs()
+func newRelationServiceIsFollowingArgs() interface{} {
+	return relation.NewRelationServiceIsFollowingArgs()
 }
 
-func newRelationServiceIsFollowedResult() interface{} {
-	return relation.NewRelationServiceIsFollowedResult()
+func newRelationServiceIsFollowingResult() interface{} {
+	return relation.NewRelationServiceIsFollowingResult()
 }
 
 type kClient struct {
@@ -237,11 +237,11 @@ func (p *kClient) GetFriendList(ctx context.Context, request *relation.FriendLis
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) IsFollowed(ctx context.Context, request *relation.IsFollowedRequest) (r *relation.IsFollowedResponse, err error) {
-	var _args relation.RelationServiceIsFollowedArgs
+func (p *kClient) IsFollowing(ctx context.Context, request *relation.IsFollowingRequest) (r *relation.IsFollowingResponse, err error) {
+	var _args relation.RelationServiceIsFollowingArgs
 	_args.Request = request
-	var _result relation.RelationServiceIsFollowedResult
-	if err = p.c.Call(ctx, "IsFollowed", &_args, &_result); err != nil {
+	var _result relation.RelationServiceIsFollowingResult
+	if err = p.c.Call(ctx, "IsFollowing", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil

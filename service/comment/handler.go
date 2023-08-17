@@ -80,7 +80,7 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		}()
 
 		// 查询user
-		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{UserId: request.UserId})
+		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{ActorId: request.UserId})
 		if err != nil {
 			resp.StatusCode = 1
 			resp.StatusMsg = thrift.StringPtr(err.Error())
@@ -105,7 +105,37 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 
 // GetCommentList implements the CommentServiceImpl interface.
 func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *comment.CommentListRequest) (resp *comment.CommentListResponse, err error) {
-	// TODO: Your code here...
+	comments, err := mysql.FindCommentsByVideoId(uint(request.VideoId))
+	if err != nil {
+		zap.L().Error("根据视频ID取评论失败", zap.Error(err))
+		return &comment.CommentListResponse{
+			StatusCode:  1,
+			StatusMsg:   thrift.StringPtr("获取评论列表失败"),
+			CommentList: nil,
+		}, err
+	}
+	commentList := make([]*comment.Comment, 0)
+	for _, com := range comments {
+		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+			ActorId: request.UserId,
+			UserId:  int32(com.UserId),
+		})
+		if err != nil {
+			zap.L().Error("查询评论用户信息失败", zap.Error(err))
+			return &comment.CommentListResponse{
+				StatusCode:  1,
+				StatusMsg:   thrift.StringPtr("查询评论用户信息失败"),
+				CommentList: nil,
+			}, err
+		}
+		commentList = append(commentList, pack.Comment(&com, userResp.User))
+	}
+	return &comment.CommentListResponse{
+		StatusCode:  0,
+		StatusMsg:   thrift.StringPtr("success"),
+		CommentList: commentList,
+	}, nil
+
 	return
 }
 

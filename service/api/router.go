@@ -37,9 +37,9 @@ func customizedRegister(r *server.Hertz) {
 	relationGroup := douyin.Group("/relation")
 	{
 		relationGroup.POST("/action", mw.Auth(), relation.Action)
-		relationGroup.GET("/follow/list", mw.Auth(), relation.Follow_List)
-		relationGroup.GET("/follower/list", mw.Auth(), relation.Follower_List)
-		relationGroup.GET("/friend/list", mw.Auth(), relation.Friend_List)
+		relationGroup.GET("/follow/list", mw.Auth(), relation.FollowList)
+		relationGroup.GET("/follower/list", mw.Auth(), relation.FollowerList)
+		relationGroup.GET("/friend/list", mw.Auth(), relation.FriendList)
 	}
 	// message service
 	messageGroup := douyin.Group("/message")
