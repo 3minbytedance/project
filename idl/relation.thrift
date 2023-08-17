@@ -14,8 +14,7 @@ struct RelationActionResponse {
 }
 
 struct FollowListRequest {
-1: i32 actor_id, // 当前登录用户id
-2: i32 user_id, // 对方用户id
+1: i32 user_id, // 对方用户id
 }
 
 struct FollowListResponse {
@@ -25,8 +24,7 @@ struct FollowListResponse {
 }
 
 struct FollowerListRequest {
-1: i32 actor_id, // 当前登录用户id
-2: i32 user_id, // 对方用户id
+1: i32 user_id, // 用户id
 }
 
 struct FollowerListResponse {
