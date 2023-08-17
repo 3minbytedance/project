@@ -5,6 +5,7 @@ package main
 import (
 	"douyin/service/api/biz/comment"
 	"douyin/service/api/biz/message"
+	"douyin/service/api/biz/relation"
 	"douyin/service/api/biz/user"
 	"douyin/service/api/mw"
 	"github.com/cloudwego/hertz/pkg/app/server"
@@ -33,7 +34,13 @@ func customizedRegister(r *server.Hertz) {
 	// favorite service
 
 	// relation service
-
+	relationGroup := douyin.Group("/relation")
+	{
+		relationGroup.POST("/action", mw.Auth(), relation.Action)
+		relationGroup.GET("/follow/list", mw.Auth(), relation.Follow_List)
+		relationGroup.GET("/follower/list", mw.Auth(), relation.Follower_List)
+		relationGroup.GET("/friend/list", mw.Auth(), relation.Friend_List)
+	}
 	// message service
 	messageGroup := douyin.Group("/message")
 	{
