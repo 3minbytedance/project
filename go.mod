@@ -9,6 +9,7 @@ require (
 	github.com/cloudwego/kitex v0.6.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fsnotify/fsnotify v1.5.4
+	github.com/google/uuid v1.3.0
 	github.com/importcjj/sensitive v0.0.0-20200106142752-42d1c505be7b
 	github.com/kitex-contrib/obs-opentelemetry v0.2.3
 	github.com/kitex-contrib/registry-etcd v0.1.1

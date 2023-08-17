@@ -72,6 +72,15 @@ struct IsFollowingResponse {
 1: bool result,
 }
 
+struct IsFriendRequest {
+1: i32 actor_id,
+2: i32 user_id,
+}
+
+struct IsFriendResponse {
+1: bool result,
+}
+
 service RelationService {
 RelationActionResponse RelationAction(1: RelationActionRequest Request),
 FollowListResponse GetFollowList(1: FollowListRequest Request),
@@ -80,4 +89,5 @@ FollowListCountResponse GetFollowListCount(1: FollowListCountRequest Request),
 FollowerListCountResponse GetFollowerListCount(1: FollowerListCountRequest Request),
 FriendListResponse GetFriendList(1: FriendListRequest Request),
 IsFollowingResponse IsFollowing(1: IsFollowingRequest Request),
+IsFriendResponse IsFriend(1: IsFriendRequest Request),
 }

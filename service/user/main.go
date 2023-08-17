@@ -7,7 +7,7 @@ import (
 	"douyin/dal/mysql"
 	user "douyin/kitex_gen/user/userservice"
 	"douyin/logger"
-	"douyin/mw/redis"
+	"douyin/mw"
 	"fmt"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
@@ -43,14 +43,15 @@ func main() {
 		return
 	}
 
+	// 初始化数据库: mysql
 	if err := mysql.Init(config.Conf); err != nil {
 		fmt.Printf("Init mysql failed, err:%v\n", err)
 		return
 	}
 
-	// 初始化Redis
-	if err := redis.Init(config.Conf); err != nil {
-		fmt.Printf("Init redis failed, err:%v\n", err)
+	// 初始化中间件: redis + kafka
+	if err := mw.Init(config.Conf); err != nil {
+		fmt.Printf("Init middleware failed, err:%v\n", err)
 		return
 	}
 

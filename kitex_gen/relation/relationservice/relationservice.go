@@ -26,6 +26,7 @@ func NewServiceInfo() *kitex.ServiceInfo {
 		"GetFollowerListCount": kitex.NewMethodInfo(getFollowerListCountHandler, newRelationServiceGetFollowerListCountArgs, newRelationServiceGetFollowerListCountResult, false),
 		"GetFriendList":        kitex.NewMethodInfo(getFriendListHandler, newRelationServiceGetFriendListArgs, newRelationServiceGetFriendListResult, false),
 		"IsFollowing":          kitex.NewMethodInfo(isFollowingHandler, newRelationServiceIsFollowingArgs, newRelationServiceIsFollowingResult, false),
+		"IsFriend":             kitex.NewMethodInfo(isFriendHandler, newRelationServiceIsFriendArgs, newRelationServiceIsFriendResult, false),
 	}
 	extra := map[string]interface{}{
 		"PackageName": "relation",
@@ -167,6 +168,24 @@ func newRelationServiceIsFollowingResult() interface{} {
 	return relation.NewRelationServiceIsFollowingResult()
 }
 
+func isFriendHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*relation.RelationServiceIsFriendArgs)
+	realResult := result.(*relation.RelationServiceIsFriendResult)
+	success, err := handler.(relation.RelationService).IsFriend(ctx, realArg.Request)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newRelationServiceIsFriendArgs() interface{} {
+	return relation.NewRelationServiceIsFriendArgs()
+}
+
+func newRelationServiceIsFriendResult() interface{} {
+	return relation.NewRelationServiceIsFriendResult()
+}
+
 type kClient struct {
 	c client.Client
 }
@@ -242,6 +261,16 @@ func (p *kClient) IsFollowing(ctx context.Context, request *relation.IsFollowing
 	_args.Request = request
 	var _result relation.RelationServiceIsFollowingResult
 	if err = p.c.Call(ctx, "IsFollowing", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) IsFriend(ctx context.Context, request *relation.IsFriendRequest) (r *relation.IsFriendResponse, err error) {
+	var _args relation.RelationServiceIsFriendArgs
+	_args.Request = request
+	var _result relation.RelationServiceIsFriendResult
+	if err = p.c.Call(ctx, "IsFriend", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil

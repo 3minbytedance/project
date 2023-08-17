@@ -99,7 +99,7 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 
 // GetFollowList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relation.FollowListRequest) (resp *relation.FollowListResponse, err error) {
-	CheckAndSetRedisRealationKey(uint(request.UserId), redis.FollowList)
+	CheckAndSetRedisRelationKey(uint(request.UserId), redis.FollowList)
 	id, err := redis.GetFollowListById(uint(request.UserId))
 	if err != nil {
 		return &relation.FollowListResponse{
@@ -133,7 +133,7 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 
 // GetFollowerList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *relation.FollowerListRequest) (resp *relation.FollowerListResponse, err error) {
-	CheckAndSetRedisRealationKey(uint(request.UserId), redis.FollowerList)
+	CheckAndSetRedisRelationKey(uint(request.UserId), redis.FollowerList)
 	id, err := redis.GetFollowerListById(uint(request.UserId))
 	if err != nil {
 		return &relation.FollowerListResponse{
@@ -167,7 +167,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 
 // GetFollowListCount implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, request *relation.FollowListCountRequest) (resp *relation.FollowListCountResponse, err error) {
-	CheckAndSetRedisRealationKey(uint(request.UserId), redis.FollowList)
+	CheckAndSetRedisRelationKey(uint(request.UserId), redis.FollowList)
 	count, err := redis.GetFollowCountById(uint(request.UserId))
 	if err != nil {
 		return &relation.FollowListCountResponse{
@@ -185,7 +185,7 @@ func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, request *r
 
 // GetFollowerListCount implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, request *relation.FollowerListCountRequest) (resp *relation.FollowerListCountResponse, err error) {
-	CheckAndSetRedisRealationKey(uint(request.UserId), redis.FollowerList)
+	CheckAndSetRedisRelationKey(uint(request.UserId), redis.FollowerList)
 	count, err := redis.GetFollowerCountById(uint(request.UserId))
 	if err != nil {
 		return &relation.FollowerListCountResponse{
@@ -203,8 +203,8 @@ func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, request 
 
 // GetFriendList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relation.FriendListRequest) (resp *relation.FriendListResponse, err error) {
-	CheckAndSetRedisRealationKey(uint(request.UserId), redis.FollowList)
-	CheckAndSetRedisRealationKey(uint(request.UserId), redis.FollowerList)
+	CheckAndSetRedisRelationKey(uint(request.UserId), redis.FollowList)
+	CheckAndSetRedisRelationKey(uint(request.UserId), redis.FollowerList)
 	id, err := redis.GetFriendListById(uint(request.UserId))
 	if err != nil {
 		return &relation.FriendListResponse{
@@ -262,9 +262,9 @@ func (s *RelationServiceImpl) IsFollowing(ctx context.Context, request *relation
 	return &relation.IsFollowingResponse{Result_: found}, err
 }
 
-// 返回true表示不存在这个key，并设置key
+// CheckAndSetRedisRelationKey 返回true表示不存在这个key，并设置key
 // 返回false表示已存在这个key
-func CheckAndSetRedisRealationKey(userId uint, key string) bool {
+func CheckAndSetRedisRelationKey(userId uint, key string) bool {
 	if redis.IsExistUserSetField(userId, key) {
 		return false
 	} else {
@@ -289,4 +289,10 @@ func CheckAndSetRedisRealationKey(userId uint, key string) bool {
 		}
 		return true
 	}
+}
+
+// IsFriend implements the RelationServiceImpl interface.
+func (s *RelationServiceImpl) IsFriend(ctx context.Context, request *relation.IsFriendRequest) (resp *relation.IsFriendResponse, err error) {
+	// TODO: Your code here...
+	return
 }

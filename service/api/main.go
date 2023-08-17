@@ -4,10 +4,9 @@ package main
 
 import (
 	"douyin/config"
-	"douyin/dal/mongo"
-	"douyin/dal/mysql"
+	"douyin/dal"
 	"douyin/logger"
-	"douyin/mw/redis"
+	"douyin/mw"
 	"fmt"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	hertz_config "github.com/cloudwego/hertz/pkg/common/config"
@@ -25,21 +24,15 @@ func main() {
 		return
 	}
 
-	// 初始化mysql
-	if err := mysql.Init(config.Conf); err != nil {
-		fmt.Printf("Init mysql failed, err:%v\n", err)
+	// 初始化数据库: mysql + mongo
+	if err := dal.Init(config.Conf); err != nil {
+		fmt.Printf("Init database failed, err:%v\n", err)
 		return
 	}
 
-	// 初始化Redis
-	if err := redis.Init(config.Conf); err != nil {
-		fmt.Printf("Init redis failed, err:%v\n", err)
-		return
-	}
-
-	// 初始化Mongo
-	if err := mongo.Init(config.Conf); err != nil {
-		fmt.Printf("Init mongo failed, err:%v\n", err)
+	// 初始化中间件: redis + kafka
+	if err := mw.Init(config.Conf); err != nil {
+		fmt.Printf("Init middleware failed, err:%v\n", err)
 		return
 	}
 

@@ -5,7 +5,7 @@ struct Message {
     2: i32 to_user_id, // 该消息接收者的id
     3: i32 from_user_id, // 该消息发送者的id
     4: string content, // 消息内容
-    5: optional string create_time, // 消息创建时间
+    5: optional i64 create_time, // 消息创建时间
 }
 
 struct MessageChatRequest {
