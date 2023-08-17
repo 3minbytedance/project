@@ -5,6 +5,7 @@ import (
 	"douyin/constant"
 	"douyin/dal/mysql"
 	relation "douyin/kitex_gen/relation"
+	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	"douyin/mw/redis"
 	"github.com/apache/thrift/lib/go/thrift"
@@ -98,32 +99,141 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 
 // GetFollowList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relation.FollowListRequest) (resp *relation.FollowListResponse, err error) {
-	// TODO: Your code here...
-	return
+	CheckAndSetRedisRealationKey(uint(request.UserId), redis.FollowList)
+	id, err := redis.GetFollowListById(uint(request.UserId))
+	if err != nil {
+		return &relation.FollowListResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("获取Follow list失败"),
+			UserList:   nil,
+		}, err
+	}
+	followlist := make([]*user.User, 0)
+	for _, com := range id {
+		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+			ActorId: request.UserId,
+			UserId:  int32(com),
+		})
+		if err != nil {
+			zap.L().Error("查询Follow用户信息失败", zap.Error(err))
+			return &relation.FollowListResponse{
+				StatusCode: 1,
+				StatusMsg:  thrift.StringPtr("查询Follow list用户信息失败"),
+				UserList:   nil,
+			}, err
+		}
+		followlist = append(followlist, userResp.User)
+	}
+	return &relation.FollowListResponse{
+		StatusCode: 0,
+		StatusMsg:  thrift.StringPtr("success"),
+		UserList:   followlist,
+	}, nil
 }
 
 // GetFollowerList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *relation.FollowerListRequest) (resp *relation.FollowerListResponse, err error) {
-	// TODO: Your code here...
-	return
+	CheckAndSetRedisRealationKey(uint(request.UserId), redis.FollowerList)
+	id, err := redis.GetFollowerListById(uint(request.UserId))
+	if err != nil {
+		return &relation.FollowerListResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("获取Follow list失败"),
+			UserList:   nil,
+		}, err
+	}
+	followerlist := make([]*user.User, 0)
+	for _, com := range id {
+		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+			ActorId: request.UserId,
+			UserId:  int32(com),
+		})
+		if err != nil {
+			zap.L().Error("查询Follower用户信息失败", zap.Error(err))
+			return &relation.FollowerListResponse{
+				StatusCode: 1,
+				StatusMsg:  thrift.StringPtr("查询Follower list用户信息失败"),
+				UserList:   nil,
+			}, err
+		}
+		followerlist = append(followerlist, userResp.User)
+	}
+	return &relation.FollowerListResponse{
+		StatusCode: 0,
+		StatusMsg:  thrift.StringPtr("success"),
+		UserList:   followerlist,
+	}, nil
 }
 
 // GetFollowListCount implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, request *relation.FollowListCountRequest) (resp *relation.FollowListCountResponse, err error) {
-	// TODO: Your code here...
-	return
+	CheckAndSetRedisRealationKey(uint(request.UserId), redis.FollowList)
+	count, err := redis.GetFollowCountById(uint(request.UserId))
+	if err != nil {
+		return &relation.FollowListCountResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("获取follow list count失败"),
+			Count:      0,
+		}, err
+	}
+	return &relation.FollowListCountResponse{
+		StatusCode: 0,
+		StatusMsg:  thrift.StringPtr("success"),
+		Count:      int32(count),
+	}, nil
 }
 
 // GetFollowerListCount implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, request *relation.FollowerListCountRequest) (resp *relation.FollowerListCountResponse, err error) {
-	// TODO: Your code here...
-	return
+	CheckAndSetRedisRealationKey(uint(request.UserId), redis.FollowerList)
+	count, err := redis.GetFollowerCountById(uint(request.UserId))
+	if err != nil {
+		return &relation.FollowerListCountResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("获取follow list count失败"),
+			Count:      0,
+		}, err
+	}
+	return &relation.FollowerListCountResponse{
+		StatusCode: 0,
+		StatusMsg:  thrift.StringPtr("success"),
+		Count:      int32(count),
+	}, nil
 }
 
 // GetFriendList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relation.FriendListRequest) (resp *relation.FriendListResponse, err error) {
-	// TODO: Your code here...
-	return
+	CheckAndSetRedisRealationKey(uint(request.UserId), redis.FollowList)
+	CheckAndSetRedisRealationKey(uint(request.UserId), redis.FollowerList)
+	id, err := redis.GetFriendListById(uint(request.UserId))
+	if err != nil {
+		return &relation.FriendListResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("获取Friend list失败"),
+			UserList:   nil,
+		}, err
+	}
+	friendlist := make([]*user.User, 0)
+	for _, com := range id {
+		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+			ActorId: request.UserId,
+			UserId:  int32(com),
+		})
+		if err != nil {
+			zap.L().Error("查询Friend用户信息失败", zap.Error(err))
+			return &relation.FriendListResponse{
+				StatusCode: 1,
+				StatusMsg:  thrift.StringPtr("查询Friend list用户信息失败"),
+				UserList:   nil,
+			}, err
+		}
+		friendlist = append(friendlist, userResp.User)
+	}
+	return &relation.FriendListResponse{
+		StatusCode: 0,
+		StatusMsg:  thrift.StringPtr("success"),
+		UserList:   friendlist,
+	}, nil
 }
 
 // IsFollowing implements the RelationServiceImpl interface.
@@ -154,7 +264,7 @@ func (s *RelationServiceImpl) IsFollowing(ctx context.Context, request *relation
 
 // 返回true表示不存在这个key，并设置key
 // 返回false表示已存在这个key
-func CheckAndSetRedisRRealationKey(userId uint, key string) bool {
+func CheckAndSetRedisRealationKey(userId uint, key string) bool {
 	if redis.IsExistUserSetField(userId, key) {
 		return false
 	} else {
