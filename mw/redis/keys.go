@@ -30,7 +30,7 @@ const (
 	FollowerList = "follower_list" //粉丝列表
 )
 
-const VideoPage = "video_page_"
+
 
 const TokenKey = "token_"
 
