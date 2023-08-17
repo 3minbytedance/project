@@ -112,7 +112,7 @@ func IncreaseFollowerCountByUserId(userId uint, followId uint) error {
 	return err
 }
 
-// 给videoId对应的粉丝数减一
+// 给userId对应的粉丝列表减去id
 func DecreaseFollowerCountByUserId(userId uint, id uint) error {
 	key := fmt.Sprintf("%d_%s", userId, FollowerList)
 	err := Rdb.SRem(Ctx, key, id).Err()
