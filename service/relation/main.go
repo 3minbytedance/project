@@ -7,11 +7,11 @@ import (
 	relation "douyin/kitex_gen/relation/relationservice"
 	"douyin/logger"
 	"douyin/mw/redis"
-	"fmt"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
+	"go.uber.org/zap"
 	"log"
 	"net"
 )
@@ -33,23 +33,23 @@ func main() {
 
 	// 加载配置
 	if err := config.Init(); err != nil {
-		fmt.Printf("load config failed, err:%v\n", err)
+		zap.L().Error("load config failed", zap.Error(err))
 		return
 	}
 	// 加载日志
 	if err := logger.Init(config.Conf.LogConfig, config.Conf.Mode); err != nil {
-		fmt.Printf("init logger failed, err:%v\n", err)
+		zap.L().Error("Init logger error", zap.Error(err))
 		return
 	}
 
 	if err := mysql.Init(config.Conf); err != nil {
-		fmt.Printf("Init mysql failed, err:%v\n", err)
+		zap.L().Error("Init mysql error", zap.Error(err))
 		return
 	}
 
 	// 初始化Redis
 	if err := redis.Init(config.Conf); err != nil {
-		fmt.Printf("Init redis failed, err:%v\n", err)
+		zap.L().Error("Init redis error", zap.Error(err))
 		return
 	}
 
