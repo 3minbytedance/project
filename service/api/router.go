@@ -13,7 +13,7 @@ import (
 )
 
 // customizeRegister registers customize routers.
-func CustomizedRegister(r *server.Hertz) {
+func customizedRegister(r *server.Hertz) {
 	douyin := r.Group("/douyin")
 	// user service
 	userGroup := douyin.Group("/user")

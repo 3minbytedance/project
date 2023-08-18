@@ -32,6 +32,6 @@ func main() {
 	h := server.Default(hertz_config.Option{F: func(o *hertz_config.Options) {
 		o.Addr = "127.0.0.1:8080"
 	}})
-	CustomizedRegister(h)
+	customizedRegister(h)
 	h.Spin()
 }
