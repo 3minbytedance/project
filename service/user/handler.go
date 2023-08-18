@@ -45,19 +45,14 @@ type UserServiceImpl struct{}
 
 // Register implements the UserServiceImpl interface.
 func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegisterRequest) (resp *user.UserRegisterResponse, err error) {
+
+	// 检查注册信息是否合理
 	resp = new(user.UserRegisterResponse)
-	_, exist, err := mysql.FindUserByName(request.Username)
-	if err != nil {
-		zap.L().Error("Find user by name:", zap.Error(err))
-		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("Server internal error.")
-		return
-	}
-	// 检查用户名是否存在
-	if exist {
-		zap.L().Info("User already exists")
-		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("User already exists.")
+	statusCode, statusMsg := CheckUserRegisterInfo(request.Username, request.Password)
+	resp.StatusCode = statusCode
+	resp.StatusMsg = thrift.StringPtr(statusMsg)
+
+	if statusCode != 0 {
 		return
 	}
 
@@ -81,8 +76,7 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 		return
 	}
 
-	resp.StatusCode = 0
-	resp.StatusMsg = thrift.StringPtr("success")
+	// todo int32？
 	resp.UserId = int32(userId)
 	resp.Token = common.GenerateToken(userId, request.Username)
 
@@ -193,4 +187,28 @@ func (s *UserServiceImpl) GetUserInfoByName(ctx context.Context, request *user.U
 func (s *UserServiceImpl) CheckUserExists(ctx context.Context, request *user.UserExistsRequest) (resp *user.UserExistsResponse, err error) {
 	// TODO: Your code here...
 	return
+}
+
+func CheckUserRegisterInfo(username string, password string) (int32, string) {
+
+	if len(username) == 0 || len(username) > 32 {
+		return 1, "username is illegal."
+	}
+
+	if len(password) <= 6 || len(password) > 32 {
+		return 2, "password is illegal"
+	}
+
+	_, exist, err := mysql.FindUserByName(username)
+	if err != nil {
+		zap.L().Error("Find user by name:", zap.Error(err))
+		return 1, "Server internal error."
+	}
+	// 检查用户名是否存在
+	if exist {
+		zap.L().Info("User already exists")
+		return 1, "User already exists."
+	}
+
+	return 0, "success"
 }

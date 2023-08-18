@@ -15,20 +15,21 @@ type Claims struct {
 // 签名密钥
 var jwtSecretKey = []byte("hi")
 
+// todo 替换log
 func GenerateToken(userId uint, username string) string {
 
 	nowTime := time.Now()
-	expireTime := nowTime.Add(24 * time.Hour).Unix()
+	//expireTime := nowTime.Add(24 * time.Hour).Unix()
 
-	log.Println("expireTime:", expireTime)
+	//log.Println("expireTime:", expireTime)
 
 	claims := Claims{
 		ID:       userId,
 		Username: username,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expireTime,
-			IssuedAt:  nowTime.Unix(),
-			Issuer:    "DouShen",
+			//ExpiresAt: expireTime,
+			IssuedAt: nowTime.Unix(),
+			Issuer:   "DouShen",
 		},
 	}
 	// 使用用于签名的算法和令牌
