@@ -22,7 +22,6 @@ func Message(messageModel *model.Message) *message.Message {
 		return nil
 	}
 	return &message.Message{
-		Id:         int32(messageModel.ID),
 		ToUserId:   int32(messageModel.ToUserId),
 		FromUserId: int32(messageModel.FromUserId),
 		Content:    messageModel.Content,
