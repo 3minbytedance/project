@@ -1,7 +1,8 @@
 package constant
 
 const EtcdAddr = "127.0.0.1:2379"
-
+const ApiServiceName = "api-service"
+const ApiServicePort = ":8080"
 const CommentServiceName = "comment-service"
 const CommentServicePort = ":4001"
 const UserServiceName = "user-service"

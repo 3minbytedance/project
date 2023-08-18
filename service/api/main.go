@@ -4,14 +4,22 @@ package main
 
 import (
 	"douyin/config"
+	"douyin/constant"
 	"douyin/logger"
 	"douyin/mw/redis"
 	"github.com/cloudwego/hertz/pkg/app/server"
-	hertz_config "github.com/cloudwego/hertz/pkg/common/config"
 	"go.uber.org/zap"
 )
 
 func main() {
+	// OpenTelemetry 链路跟踪
+	//p := provider.NewOpenTelemetryProvider(
+	//	provider.WithServiceName(config.CommentServiceName),
+	//	provider.WithExportEndpoint("localhost:4317"),
+	//	provider.WithInsecure(),
+	//)
+	//defer p.Shutdown(context.Background())
+
 	// 加载配置
 	if err := config.Init(); err != nil {
 		zap.L().Error("Load config failed, err:%v\n", zap.Error(err))
@@ -28,10 +36,10 @@ func main() {
 		zap.L().Error("Init redis failed, err:%v\n", zap.Error(err))
 		return
 	}
+	h := server.Default(
+		server.WithHostPorts(constant.ApiServicePort),
+	)
 
-	h := server.Default(hertz_config.Option{F: func(o *hertz_config.Options) {
-		o.Addr = "0.0.0.0:8080"
-	}})
 	customizedRegister(h)
 	h.Spin()
 }
