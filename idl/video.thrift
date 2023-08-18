@@ -37,7 +37,7 @@ struct PublishVideoResponse {
 }
 
 struct PublishVideoListRequest {
-    1: i32 from_user_id,//好像有问题？
+    1: i32 from_user_id,
     2: i32 to_user_id,
 }
 
