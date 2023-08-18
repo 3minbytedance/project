@@ -3,15 +3,12 @@ package redis
 import (
 	"fmt"
 	_ "github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"strconv"
 )
 
 // GetFollowCountById 根据userId查找关注数
 func GetFollowCountById(userId uint) (int, error) {
-	//key := UserKey + fmt.Sprintf("%d", userId)
-	//count, err := Rdb.HGet(Ctx, key, FollowCountField).Result()
-	//commentCount, _ := strconv.Atoi(count)
-	//return commentCount, err
 	key := fmt.Sprintf("%d_%s", userId, FollowList)
 	size, err := Rdb.SCard(Ctx, key).Result()
 	return int(size), err
@@ -55,31 +52,48 @@ func GetFollowerListById(userId uint) ([]uint, error) {
 	return result, err
 }
 
+// 根据userId查找好友list
+func GetFriendListById(userId uint) ([]uint, error) {
+	key1 := fmt.Sprintf("%d_%s", userId, FollowerList)
+	key2 := fmt.Sprintf("%d_%s", userId, FollowList)
+	friend, err := Rdb.SUnion(Ctx, key2, key1).Result()
+	var result []uint
+	for _, i := range friend {
+		k, err := strconv.Atoi(i)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, uint(k))
+	}
+	return result, err
+}
+
 // 设置关注列表
-func SetFollowListByUserId(userid uint, id []uint) error {
+func SetFollowListByUserId(userid uint, ids []uint) error {
 	key := fmt.Sprintf("%d_%s", userid, FollowList)
 	// 转换为[]interface{}
-	b := make([]interface{}, len(id))
-	for i := range id {
-		b[i] = id[i]
+	b := make([]interface{}, len(ids))
+	for i, _ := range ids {
+		b[i] = ids[i]
 	}
+	zap.L().Info("LIST", zap.Any("List", b))
 	err := Rdb.SAdd(Ctx, key, b...).Err()
 	return err
 }
 
 // 设置粉丝列表
-func SetFollowerListByUserId(userid uint, id []uint) error {
+func SetFollowerListByUserId(userid uint, ids []uint) error {
 	key := fmt.Sprintf("%d_%s", userid, FollowerList)
 	// 转换为[]interface{}
-	b := make([]interface{}, len(id))
-	for i := range id {
-		b[i] = id[i]
+	b := make([]interface{}, len(ids))
+	for i, _ := range ids {
+		b[i] = ids[i]
 	}
 	err := Rdb.SAdd(Ctx, key, b...).Err()
 	return err
 }
 
-// 给Id对应的关注数加一
+// 给Id对应的关注set加上 id
 func IncreaseFollowCountByUserId(userId uint, id uint) error {
 	key := fmt.Sprintf("%d_%s", userId, FollowList)
 	err := Rdb.SAdd(Ctx, key, id).Err()
@@ -93,20 +107,21 @@ func DecreaseFollowCountByUserId(userId uint, followId uint) error {
 	return err
 }
 
-// IncreaseFollowerCountByUserId 给userId粉丝列表 + 1
+// IncreaseFollowerCountByUserId 给userId粉丝列表加上 followid
 func IncreaseFollowerCountByUserId(userId uint, followId uint) error {
 	key := fmt.Sprintf("%d_%s", userId, FollowerList)
 	err := Rdb.SAdd(Ctx, key, followId).Err()
 	return err
 }
 
-// 给videoId对应的粉丝数减一
+// 给userId对应的粉丝列表减去id
 func DecreaseFollowerCountByUserId(userId uint, id uint) error {
 	key := fmt.Sprintf("%d_%s", userId, FollowerList)
 	err := Rdb.SRem(Ctx, key, id).Err()
 	return err
 }
 
+// id是不是userid 的好友
 func IsInMyFollowList(userId uint, id uint) bool {
 	key := fmt.Sprintf("%d_%s", userId, FollowerList)
 	found, _ := Rdb.SIsMember(Ctx, key, id).Result()

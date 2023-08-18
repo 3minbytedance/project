@@ -3,15 +3,15 @@ package main
 import (
 	"douyin/config"
 	"douyin/constant"
-	"douyin/dal/mysql"
+	"douyin/dal"
 	message "douyin/kitex_gen/message/messageservice"
 	"douyin/logger"
-	"douyin/mw/redis"
-	"fmt"
+	"douyin/mw"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
+	"go.uber.org/zap"
 	"log"
 	"net"
 )
@@ -33,23 +33,24 @@ func main() {
 
 	// 加载配置
 	if err := config.Init(); err != nil {
-		fmt.Printf("load config failed, err:%v\n", err)
+		zap.L().Error("Load config failed, err:%v\n", zap.Error(err))
 		return
 	}
 	// 加载日志
 	if err := logger.Init(config.Conf.LogConfig, config.Conf.Mode); err != nil {
-		fmt.Printf("init logger failed, err:%v\n", err)
+		zap.L().Error("Init logger failed, err:%v\n", zap.Error(err))
 		return
 	}
 
-	if err := mysql.Init(config.Conf); err != nil {
-		fmt.Printf("Init mysql failed, err:%v\n", err)
+	// 初始化数据库: mysql + mongo
+	if err := dal.Init(config.Conf); err != nil {
+		zap.L().Error("Init database failed, err:%v\n", zap.Error(err))
 		return
 	}
 
-	// 初始化Redis
-	if err := redis.Init(config.Conf); err != nil {
-		fmt.Printf("Init redis failed, err:%v\n", err)
+	// 初始化中间件: redis + kafka
+	if err := mw.Init(config.Conf); err != nil {
+		zap.L().Error("Init middleware failed, err:%v\n", zap.Error(err))
 		return
 	}
 

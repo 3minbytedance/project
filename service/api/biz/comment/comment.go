@@ -48,9 +48,10 @@ func init() {
 }
 
 func Action(ctx context.Context, c *app.RequestContext) {
-	userId, userIdExists := c.Get("userId")
+	userId, err := common.GetCurrentUserID(c)
 	// not logged in
-	if !userIdExists {
+	if err != nil {
+		zap.L().Error("Get user id from ctx", zap.Error(err))
 		c.JSON(http.StatusOK, "Unauthorized operation.")
 		return
 	}
@@ -80,7 +81,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 			c.JSON(http.StatusOK, "Invalid Params.")
 			return
 		}
-		userIdUint := int32(userId.(uint))
+		userIdUint := int32(userId)
 		req := &comment.CommentActionRequest{
 			UserId:      userIdUint,
 			VideoId:     int32(videoId),
@@ -102,7 +103,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 			})
 			return
 		}
-		userIdUint := uint32(userId.(uint))
+		userIdUint := uint32(userId)
 		req := &comment.CommentActionRequest{
 			UserId:     int32(userIdUint),
 			VideoId:    int32(videoId),
@@ -130,21 +131,17 @@ func Action(ctx context.Context, c *app.RequestContext) {
 }
 
 func List(ctx context.Context, c *app.RequestContext) {
-	token := c.Query("token") //TODO 视频流客户端传递这个参数，用处Token续签、未登录的情况下查询关注返回false
+	userId, err := common.GetCurrentUserID(c)
+	// not logged in
+	if err != nil {
+		zap.L().Error("Get user id from ctx", zap.Error(err))
+	}
 	videoIdStr := c.Query("video_id")
 	videoId, err := strconv.ParseInt(videoIdStr, 10, 64)
 	if err != nil {
 		zap.L().Error("Parse videoIdStr err:", zap.Error(err))
 		c.JSON(http.StatusOK, err.Error())
 		return
-	}
-	var userId uint
-	//todo 改为如果token在redis中查到
-	if token != "" {
-		userToken, _ := common.ParseToken(token)
-		userId = userToken.ID
-	} else {
-		userId = 0
 	}
 
 	req := &comment.CommentListRequest{

@@ -9,15 +9,15 @@ import (
 
 func FindUserByName(name string) (user model.User, exist bool, err error) {
 	user = model.User{}
-	if err = DB.Where("username = ?", name).First(&user).Error; err != nil {
+	if err = DB.Where("name = ?", name).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return user, false, err
+			return user, false, nil
 		}
 		// 处理其他查询错误
 		zap.L().Error("Database err", zap.Error(err))
 		return user, false, err
 	}
-	return user, true, err
+	return user, true, nil
 }
 
 func FindUserByUserID(id uint) (user model.User, exist bool, err error) {

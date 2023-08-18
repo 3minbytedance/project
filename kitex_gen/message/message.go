@@ -10,11 +10,11 @@ import (
 )
 
 type Message struct {
-	Id         int32   `thrift:"id,1" frugal:"1,default,i32" json:"id"`
-	ToUserId   int32   `thrift:"to_user_id,2" frugal:"2,default,i32" json:"to_user_id"`
-	FromUserId int32   `thrift:"from_user_id,3" frugal:"3,default,i32" json:"from_user_id"`
-	Content    string  `thrift:"content,4" frugal:"4,default,string" json:"content"`
-	CreateTime *string `thrift:"create_time,5,optional" frugal:"5,optional,string" json:"create_time,omitempty"`
+	Id         int32  `thrift:"id,1" frugal:"1,default,i32" json:"id"`
+	ToUserId   int32  `thrift:"to_user_id,2" frugal:"2,default,i32" json:"to_user_id"`
+	FromUserId int32  `thrift:"from_user_id,3" frugal:"3,default,i32" json:"from_user_id"`
+	Content    string `thrift:"content,4" frugal:"4,default,string" json:"content"`
+	CreateTime *int64 `thrift:"create_time,5,optional" frugal:"5,optional,i64" json:"create_time,omitempty"`
 }
 
 func NewMessage() *Message {
@@ -41,9 +41,9 @@ func (p *Message) GetContent() (v string) {
 	return p.Content
 }
 
-var Message_CreateTime_DEFAULT string
+var Message_CreateTime_DEFAULT int64
 
-func (p *Message) GetCreateTime() (v string) {
+func (p *Message) GetCreateTime() (v int64) {
 	if !p.IsSetCreateTime() {
 		return Message_CreateTime_DEFAULT
 	}
@@ -61,7 +61,7 @@ func (p *Message) SetFromUserId(val int32) {
 func (p *Message) SetContent(val string) {
 	p.Content = val
 }
-func (p *Message) SetCreateTime(val *string) {
+func (p *Message) SetCreateTime(val *int64) {
 	p.CreateTime = val
 }
 
@@ -137,7 +137,7 @@ func (p *Message) Read(iprot thrift.TProtocol) (err error) {
 				}
 			}
 		case 5:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField5(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -213,7 +213,7 @@ func (p *Message) ReadField4(iprot thrift.TProtocol) error {
 }
 
 func (p *Message) ReadField5(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
 		p.CreateTime = &v
@@ -336,10 +336,10 @@ WriteFieldEndError:
 
 func (p *Message) writeField5(oprot thrift.TProtocol) (err error) {
 	if p.IsSetCreateTime() {
-		if err = oprot.WriteFieldBegin("create_time", thrift.STRING, 5); err != nil {
+		if err = oprot.WriteFieldBegin("create_time", thrift.I64, 5); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.CreateTime); err != nil {
+		if err := oprot.WriteI64(*p.CreateTime); err != nil {
 			return err
 		}
 		if err = oprot.WriteFieldEnd(); err != nil {
@@ -412,14 +412,14 @@ func (p *Message) Field4DeepEqual(src string) bool {
 	}
 	return true
 }
-func (p *Message) Field5DeepEqual(src *string) bool {
+func (p *Message) Field5DeepEqual(src *int64) bool {
 
 	if p.CreateTime == src {
 		return true
 	} else if p.CreateTime == nil || src == nil {
 		return false
 	}
-	if strings.Compare(*p.CreateTime, *src) != 0 {
+	if *p.CreateTime != *src {
 		return false
 	}
 	return true
@@ -1031,7 +1031,7 @@ func (p *MessageChatResponse) Field3DeepEqual(src []*Message) bool {
 }
 
 type MessageActionRequest struct {
-	FromUserId string `thrift:"from_user_id,1" frugal:"1,default,string" json:"from_user_id"`
+	FromUserId int32  `thrift:"from_user_id,1" frugal:"1,default,i32" json:"from_user_id"`
 	ToUserId   int32  `thrift:"to_user_id,2" frugal:"2,default,i32" json:"to_user_id"`
 	ActionType int32  `thrift:"action_type,3" frugal:"3,default,i32" json:"action_type"`
 	Content    string `thrift:"content,4" frugal:"4,default,string" json:"content"`
@@ -1045,7 +1045,7 @@ func (p *MessageActionRequest) InitDefault() {
 	*p = MessageActionRequest{}
 }
 
-func (p *MessageActionRequest) GetFromUserId() (v string) {
+func (p *MessageActionRequest) GetFromUserId() (v int32) {
 	return p.FromUserId
 }
 
@@ -1060,7 +1060,7 @@ func (p *MessageActionRequest) GetActionType() (v int32) {
 func (p *MessageActionRequest) GetContent() (v string) {
 	return p.Content
 }
-func (p *MessageActionRequest) SetFromUserId(val string) {
+func (p *MessageActionRequest) SetFromUserId(val int32) {
 	p.FromUserId = val
 }
 func (p *MessageActionRequest) SetToUserId(val int32) {
@@ -1100,7 +1100,7 @@ func (p *MessageActionRequest) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1170,7 +1170,7 @@ ReadStructEndError:
 }
 
 func (p *MessageActionRequest) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.FromUserId = v
@@ -1247,10 +1247,10 @@ WriteStructEndError:
 }
 
 func (p *MessageActionRequest) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("from_user_id", thrift.STRING, 1); err != nil {
+	if err = oprot.WriteFieldBegin("from_user_id", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.FromUserId); err != nil {
+	if err := oprot.WriteI32(p.FromUserId); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -1342,9 +1342,9 @@ func (p *MessageActionRequest) DeepEqual(ano *MessageActionRequest) bool {
 	return true
 }
 
-func (p *MessageActionRequest) Field1DeepEqual(src string) bool {
+func (p *MessageActionRequest) Field1DeepEqual(src int32) bool {
 
-	if strings.Compare(p.FromUserId, src) != 0 {
+	if p.FromUserId != src {
 		return false
 	}
 	return true

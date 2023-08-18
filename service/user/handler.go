@@ -3,16 +3,42 @@ package main
 import (
 	"context"
 	"douyin/common"
+	"douyin/constant"
 	"douyin/dal/model"
 	"douyin/dal/mysql"
+	"douyin/kitex_gen/relation"
+	"douyin/kitex_gen/relation/relationservice"
 	user "douyin/kitex_gen/user"
 	"douyin/mw/redis"
 	"douyin/service/user/pack"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/cloudwego/kitex/client"
+	"github.com/cloudwego/kitex/pkg/rpcinfo"
+	"github.com/kitex-contrib/obs-opentelemetry/tracing"
+	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
+	"log"
 	"math/rand"
 )
+
+var relationClient relationservice.Client
+
+func init() {
+	// Etcd 服务发现
+	r, err := etcd.NewEtcdResolver([]string{constant.EtcdAddr})
+	if err != nil {
+		log.Fatal(err)
+	}
+	relationClient, err = relationservice.NewClient(
+		constant.RelationServiceName,
+		client.WithResolver(r),
+		client.WithSuite(tracing.NewClientSuite()),
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.RelationServiceName}))
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 // UserServiceImpl implements the last service interface defined in the IDL.
 type UserServiceImpl struct{}
@@ -117,9 +143,16 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 // GetUserInfoById implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.UserInfoByIdRequest) (resp *user.UserInfoByIdResponse, err error) {
 	resp = new(user.UserInfoByIdResponse)
-	user, exist, err := mysql.FindUserByUserID(uint(request.UserId))
+	// userId不为0 -> 查询userId的用户信息，顺便查是不是actorId的关注，然后设置isFavorite
+	// userId为0 -> 单纯查询actorId信息
+	queryId := request.GetActorId()
+	if request.GetUserId() != 0 {
+		queryId = request.GetUserId()
+	}
+	user, exist, err := mysql.FindUserByUserID(uint(queryId))
+
 	if err != nil {
-		zap.L().Info("Check user exists err:", zap.Error(err))
+		zap.L().Error("Check user exists err:", zap.Error(err))
 		resp.StatusCode = 1
 		resp.StatusMsg = thrift.StringPtr("Server Internal error")
 		return
@@ -133,7 +166,20 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	resp.StatusCode = 0
 	resp.StatusMsg = thrift.StringPtr("success")
 	resp.User = pack.User(&user)
-	// todo: 封装好友关系等信息
+
+	// 检查是否已关注
+	zap.L().Info("IDS", zap.Any("actorId", request.ActorId), zap.Any("userId", request.UserId))
+	relationResp, err := relationClient.IsFollowing(ctx, &relation.IsFollowingRequest{
+		ActorId: request.GetActorId(),
+		UserId:  request.GetUserId(),
+	})
+	if err != nil {
+		zap.L().Error("Check user exists err:", zap.Error(err))
+		resp.StatusCode = 1
+		resp.StatusMsg = thrift.StringPtr("Server Internal error")
+		return
+	}
+	resp.User.IsFollow = relationResp.GetResult_()
 	return
 }
 

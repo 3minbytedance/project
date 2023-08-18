@@ -19,7 +19,7 @@ func SendMessage(message *model.Message) (err error) {
 	return
 }
 
-func GetMessageList(fromUserId, toUserId uint, preMsgTime int64) ([]model.Message, error) {
+func GetMessageList(fromUserId, toUserId uint, preMsgTime int64) ([]*model.Message, error) {
 	collection := Mongo.Collection("messages")
 	filter := bson.M{
 		"$and": []bson.M{
@@ -37,14 +37,14 @@ func GetMessageList(fromUserId, toUserId uint, preMsgTime int64) ([]model.Messag
 	}
 	defer cursor.Close(Ctx)
 
-	var messages []model.Message
+	var messages []*model.Message
 	for cursor.Next(Ctx) {
 		var message model.Message
 		if err := cursor.Decode(&message); err != nil {
 			log.Println("解码错误:", err)
 			continue
 		}
-		messages = append(messages, message)
+		messages = append(messages, &message)
 	}
 
 	if err := cursor.Err(); err != nil {

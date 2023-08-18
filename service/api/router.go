@@ -5,7 +5,9 @@ package main
 import (
 	"douyin/service/api/biz/comment"
 	"douyin/service/api/biz/message"
+	"douyin/service/api/biz/relation"
 	"douyin/service/api/biz/user"
+	"douyin/service/api/biz/video"
 	"douyin/service/api/mw"
 	"github.com/cloudwego/hertz/pkg/app/server"
 )
@@ -22,7 +24,12 @@ func customizedRegister(r *server.Hertz) {
 	}
 
 	// video service
-
+	douyin.POST("/feed", video.FeedList)
+	videoGroup := douyin.Group("/publish")
+	{
+		videoGroup.POST("/list", video.GetPublishList)
+		videoGroup.POST("/action", video.Publish)
+	}
 	// comment service
 	commentGroup := douyin.Group("/comment")
 	{
@@ -33,7 +40,13 @@ func customizedRegister(r *server.Hertz) {
 	// favorite service
 
 	// relation service
-
+	relationGroup := douyin.Group("/relation")
+	{
+		relationGroup.POST("/action", mw.Auth(), relation.Action)
+		relationGroup.GET("/follow/list", mw.Auth(), relation.FollowList)
+		relationGroup.GET("/follower/list", mw.Auth(), relation.FollowerList)
+		relationGroup.GET("/friend/list", mw.Auth(), relation.FriendList)
+	}
 	// message service
 	messageGroup := douyin.Group("/message")
 	{

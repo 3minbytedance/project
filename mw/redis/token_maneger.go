@@ -1,6 +1,8 @@
 package redis
 
-const expireTime = 60 * 60 * 24 * 7 // 7天
+import "time"
+
+const expireTime = 7 * 24 * time.Hour // 7天
 
 // SetToken 设置token
 func SetToken(token string, userId uint) error {
