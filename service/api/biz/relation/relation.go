@@ -78,10 +78,10 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		ActionType: int32(actionType),
 	}
 	// TODO: judge userId
+	zap.L().Debug("ACTIONTYPE", zap.Int("AT", int(actionType)))
 
 	switch actionType {
-	case 1: // 关注
-	case 2: // 取关
+	case 1, 2: // 关注
 		resp, err := relationClient.RelationAction(ctx, req)
 		if err != nil {
 			c.JSON(http.StatusOK, &relation.RelationActionResponse{
