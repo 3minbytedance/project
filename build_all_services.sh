@@ -7,7 +7,7 @@ SERVICE_DIR=$(pwd)/service
 
 # Remove the output directory
 echo "Removing previous output directory..."
-rm -rf su
+rm -rf output
 
 # Create the output directory and binaries directory
 echo "Creating output directory..."
