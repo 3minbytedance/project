@@ -2,17 +2,23 @@ package video
 
 import (
 	"context"
+	"douyin/common"
 	"douyin/constant"
 	"douyin/kitex_gen/video"
 	"douyin/kitex_gen/video/videoservice"
+	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
+	"go.uber.org/zap"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strconv"
+	"strings"
+	"time"
 )
 
 var videoClient videoservice.Client
@@ -42,43 +48,43 @@ func init() {
 }
 
 func FeedList(ctx context.Context, c *app.RequestContext) {
-	////todo 后面再改
-	//token := c.Query("token") //TODO 视频流客户端传递这个参数，用处Token续签、未登录的情况下查询关注返回false
-	//var userId uint
-	//userToken, err := common.ParseToken(token)
-	//if err != nil {
-	//	//isLogged := false
-	//	userId = 0
-	//} else {
-	//	//isLogged = true
-	//	userId = userToken.ID
-	//}
-	//
-	//latestTime := c.Query("latest_time")
-	//unixTime, err := strconv.Atoi(latestTime)
-	//if latestTime == "" || latestTime == "0" {
-	//	latestTime = strconv.FormatInt(time.Now().Unix(), 10)
-	//} else if err != nil || unixTime < 0 {
-	//	zap.L().Error("Parse videoIdStr err:", zap.Error(err))
-	//	c.JSON(http.StatusOK, err.Error())
-	//	return
-	//}
-	//req := &video.VideoFeedRequest{
-	//	UserId:     int32(userId),
-	//	LatestTime: &latestTime,
-	//}
-	//
-	//resp, err := videoClient.VideoFeed(ctx, req)
-	//
-	//if err != nil {
-	//	zap.L().Error("Get feed list from video client err.", zap.Error(err))
-	//	c.JSON(http.StatusOK, video.VideoFeedResponse{
-	//		StatusCode: 1,
-	//		StatusMsg:  thrift.StringPtr("Server internal error."),
-	//	})
-	//	return
-	//}
-	//c.JSON(http.StatusOK, resp)
+	token := c.Query("token")
+	var userId uint
+	userToken, err := common.ParseToken(token)
+	//todo 先这样简单处理
+	if err != nil {
+		//isLogged := false
+		userId = 0
+	} else {
+		//isLogged = true
+		userId = userToken.ID
+	}
+
+	latestTime := c.Query("latest_time")
+	unixTime, err := strconv.Atoi(latestTime)
+	if latestTime == "" || latestTime == "0" {
+		latestTime = strconv.FormatInt(time.Now().Unix(), 10)
+	} else if err != nil || unixTime < 0 {
+		zap.L().Error("Parse videoIdStr err:", zap.Error(err))
+		c.JSON(http.StatusOK, err.Error())
+		return
+	}
+	req := &video.VideoFeedRequest{
+		UserId:     int32(userId),
+		LatestTime: &latestTime,
+	}
+
+	resp, err := videoClient.VideoFeed(ctx, req)
+
+	if err != nil {
+		zap.L().Error("Get feed list from video client err.", zap.Error(err))
+		c.JSON(http.StatusOK, video.VideoFeedResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("Server internal error."),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 func GetPublishList(ctx context.Context, c *app.RequestContext) {
@@ -89,84 +95,63 @@ func GetPublishList(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	req := &video.PublishVideoListRequest{
+	request := &video.PublishVideoListRequest{
 		FromUserId: 0,
 		ToUserId:   int32(userId),
 	}
-	r, err := videoClient.GetPublishVideoList(ctx, req)
+	result, err := videoClient.GetPublishVideoList(ctx, request)
 
-	c.JSON(http.StatusOK, r)
+	c.JSON(http.StatusOK, result)
 }
 
 func Publish(ctx context.Context, c *app.RequestContext) {
-	//// TODO 待改
-	//token := c.PostForm("token")
-	//title := c.PostForm("title")
-	//file, err := c.FormFile("data")
-	//
-	//if token == "" || title == "" || err != nil || file.Size == 0 {
-	//	c.JSON(http.StatusBadRequest, video.VideoFeedResponse{
-	//		StatusCode: 1,
-	//	})
-	//	return
-	//}
-	//userToken, _ := common.ParseToken(token)
-	////userId := userToken.ID
-	//// 校验文件类型
-	//ext := strings.ToLower(filepath.Ext(file.Filename))
-	//if !isValidFileType(ext) {
-	//	msg := "无效的文件类型"
-	//	zap.L().Error(msg)
-	//	c.JSON(http.StatusBadRequest, video.VideoFeedResponse{
-	//		StatusCode: 400,
-	//		StatusMsg:  &msg})
-	//	return
-	//}
-	//
-	//// 校验文件大小
-	//if file.Size > maxFileSize || file.Size < minFileSize {
-	//	c.JSON(http.StatusBadRequest, video.PublishVideoResponse{
-	//		StatusCode: 1,
-	//	})
-	//	return
-	//}
-	//
-	//// 生成 UUID
-	//fileId := strings.Replace(uuid.New().String(), "-", "", -1)
-	//
-	//// 修改文件名
-	//videoFileName := fileId + ".mp4"
-	//
-	////todo IO流优化待测，先用内置的
-	//err = c.SaveUploadedFile(file, "./public/"+videoFileName)
-	//if err != nil {
-	//	c.JSON(http.StatusBadRequest, video.PublishVideoResponse{
-	//		StatusCode: 1,
-	//	})
-	//	return
-	//}
 
-	//c.JSON(http.StatusOK, models.Response{
-	//	StatusCode: int32(CodeSuccess),
-	//	StatusMsg:  codeMsgMap[CodeSuccess]})
+	token := c.PostForm("token")
+	title := c.PostForm("title")
+	file, err := c.FormFile("data")
 
-	// MQ 异步解耦,解决返回json阻塞 TODO
+	if token == "" || title == "" || err != nil || file.Size == 0 {
+		c.JSON(http.StatusBadRequest, video.PublishVideoResponse{
+			StatusCode: 1,
+		})
+		return
+	}
+	userToken, err := common.ParseToken(token)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, video.PublishVideoResponse{
+			StatusCode: 1,
+		})
+		return
+	}
+	//todo  userId传参
+	_ = userToken.ID
+	// 校验文件类型
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if !isValidFileType(ext) {
+		msg := "无效的文件类型"
+		zap.L().Error(msg)
+		c.JSON(http.StatusBadRequest, video.PublishVideoResponse{
+			StatusCode: 1,
+			StatusMsg:  &msg})
+		return
+	}
 
-	//imgName := videoservice.GetVideoCover(videoFileName)
-	//service.StoreVideoAndImg(videoFileName, imgName, userId, title)
+	// 校验文件大小
+	if file.Size > maxFileSize || file.Size < minFileSize {
+		c.JSON(http.StatusBadRequest, video.PublishVideoResponse{
+			StatusCode: 1,
+		})
+		return
+	}
 
-	//req := &video.PublishVideoRequest{
-	//	UserId:     int32(userId),
-	//	Data: file,
-	//}
-	//
-	//resp, err := videoClient.VideoFeed(ctx, req)
+	//todo
+	//resp, err := videoClient.PublishVideo(ctx, req)
 
 	//if err != nil {
-	//	zap.L().Error("Get feed list from video client err.", zap.Error(err))
-	//	c.JSON(http.StatusOK, video.VideoFeedResponse{
+	//	zap.L().Error("PublishVideo err.", zap.Error(err))
+	//	c.JSON(http.StatusOK, video.PublishVideoResponse{
 	//		StatusCode: 1,
-	//		StatusMsg:  thrift.StringPtr("Server internal error."),
+	//		StatusMsg:  thrift.StringPtr("PublishVideo error."),
 	//	})
 	//	return
 	//}

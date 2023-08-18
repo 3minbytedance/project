@@ -256,7 +256,7 @@ func GetVideoCover(fileName string) string {
 	return imgName
 }
 
-// GetWorkCount implements the VideoServiceImpl interface.
+// GetWorkCount 返回某个用户的作品数
 func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, request *video.GetWorkCountRequest) (resp int32, err error) {
 	userId := uint(request.GetUserId())
 	// 从redis中获取作品数
@@ -281,4 +281,3 @@ func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, request *video.GetW
 	}()
 	return int32(workCount), nil
 }
-
