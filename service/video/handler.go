@@ -10,6 +10,7 @@ import (
 	"douyin/kitex_gen/comment/commentservice"
 	"douyin/kitex_gen/favorite"
 	"douyin/kitex_gen/favorite/favoriteservice"
+	"douyin/kitex_gen/relation"
 	"douyin/kitex_gen/relation/relationservice"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
@@ -82,8 +83,52 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 			VideoList:  nil,
 		}, err
 	}
+	currentId := request.GetUserId()
+	isLogged := false
+	if currentId != 0 {
+		isLogged = true
+	}
 
-	return
+	// 将查询结果转换为VideoResponse类型
+	videoList := make([]*video.Video, 0, len(videos))
+	for _, v := range videos {
+		userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+			UserId: int32(v.AuthorId),
+		})
+		if isLogged {
+			following, _ := relationClient.IsFollowing(ctx, &relation.IsFollowingRequest{
+				ActorId: currentId,
+				UserId:  int32(v.AuthorId),
+			})
+			userResp.GetUser().SetIsFollow(following.GetResult_())
+		}
+		commentCount, _ := commentClient.GetCommentCount(ctx, &comment.CommentCountRequest{
+			VideoId: int32(v.ID),
+		})
+		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, &favorite.VideoFavoriteCountRequest{
+			VideoId: int32(v.ID)})
+
+		videoResponse := video.Video{
+			Id:            int32(v.ID),
+			Author:        userResp.GetUser(),
+			PlayUrl:       biz.OSS + v.VideoUrl,
+			CoverUrl:      biz.OSS + v.CoverUrl,
+			FavoriteCount: favoriteCount.GetCount(),
+			CommentCount:  commentCount.GetCommentCount(),
+			//IsFavorite:    IsUserFavorite(userID, video.ID), // todo
+			Title: v.Title,
+		}
+		videoList = append(videoList, &videoResponse)
+	}
+	nextTime := videos[len(videos)-1].CreatedAt
+
+	return &video.VideoFeedResponse{
+		StatusCode: 0,
+		StatusMsg:  nil,
+		VideoList:  videoList,
+		NextTime:   &nextTime,
+	}, nil
+
 }
 
 // PublishVideo implements the VideoServiceImpl interface.
@@ -93,7 +138,6 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 	// 生成新的文件名
 	videoFileName := fileId + ".mp4"
 
-	//todo IO流优化待测，先用内置的
 	//todo 待改
 	//err := SaveUploadedFile(file, "./public/"+videoFileName)
 	//if err != nil {
@@ -171,7 +215,7 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 			FavoriteCount: favoriteCount.GetCount(),
 			CommentCount:  commentCount.GetCommentCount(),
 			//IsFavorite:    IsUserFavorite(userID, video.ID), // todo
-			Title:         v.Title,
+			Title: v.Title,
 		}
 		videoList = append(videoList, &videoResponse)
 	}
@@ -180,41 +224,6 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 		StatusCode: 0,
 		VideoList:  videoList,
 	}, nil
-}
-
-func StoreVideoAndImg(videoName string, imgName string, authorId uint, title string) {
-	//视频存储到oss
-	go func() {
-		if err := UploadToOSS(biz.FileLocalPath+videoName, videoName); err != nil {
-			log.Fatal(err)
-			return
-		}
-	}()
-
-	// 图片存储到oss
-	go func() {
-		if err := UploadToOSS(biz.FileLocalPath+imgName, imgName); err != nil {
-			log.Fatal(err)
-			return
-		}
-	}()
-
-	go func() {
-		mysql.InsertVideo(videoName, imgName, authorId, title)
-		if !redis.IsExistUserField(authorId, redis.WorkCountField) {
-			cnt := mysql.FindWorkCountsByAuthorId(authorId)
-			err := redis.SetWorkCountByUserId(authorId, cnt)
-			if err != nil {
-				log.Println("redis更新评论数失败", err)
-				return
-			}
-			return
-		}
-		err := redis.IncrementWorkCountByUserId(authorId)
-		if err != nil {
-			log.Println(err)
-		}
-	}()
 }
 
 // UploadToOSS  上传至腾讯OSS
@@ -247,8 +256,9 @@ func GetVideoCover(fileName string) string {
 	return imgName
 }
 
-// GetWorkCount 获得作品数
-func GetWorkCount(userId uint) (int64, error) {
+// GetWorkCount implements the VideoServiceImpl interface.
+func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, request *video.GetWorkCountRequest) (resp int32, err error) {
+	userId := uint(request.GetUserId())
 	// 从redis中获取作品数
 	// 1. 缓存中有数据, 直接返回
 	if redis.IsExistUserField(userId, redis.WorkCountField) {
@@ -256,7 +266,7 @@ func GetWorkCount(userId uint) (int64, error) {
 		if err != nil {
 			log.Println("从redis中获取作品数失败：", err)
 		}
-		return workCount, nil
+		return int32(workCount), nil
 	}
 
 	// 2. 缓存中没有数据，从数据库中获取
@@ -269,5 +279,6 @@ func GetWorkCount(userId uint) (int64, error) {
 			log.Println("将作品数写入redis失败：", err)
 		}
 	}()
-	return workCount, nil
+	return int32(workCount), nil
 }
+

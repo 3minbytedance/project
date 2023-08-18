@@ -22,6 +22,7 @@ func NewServiceInfo() *kitex.ServiceInfo {
 		"VideoFeed":           kitex.NewMethodInfo(videoFeedHandler, newVideoServiceVideoFeedArgs, newVideoServiceVideoFeedResult, false),
 		"PublishVideo":        kitex.NewMethodInfo(publishVideoHandler, newVideoServicePublishVideoArgs, newVideoServicePublishVideoResult, false),
 		"GetPublishVideoList": kitex.NewMethodInfo(getPublishVideoListHandler, newVideoServiceGetPublishVideoListArgs, newVideoServiceGetPublishVideoListResult, false),
+		"GetWorkCount":        kitex.NewMethodInfo(getWorkCountHandler, newVideoServiceGetWorkCountArgs, newVideoServiceGetWorkCountResult, false),
 	}
 	extra := map[string]interface{}{
 		"PackageName": "video",
@@ -91,6 +92,24 @@ func newVideoServiceGetPublishVideoListResult() interface{} {
 	return video.NewVideoServiceGetPublishVideoListResult()
 }
 
+func getWorkCountHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*video.VideoServiceGetWorkCountArgs)
+	realResult := result.(*video.VideoServiceGetWorkCountResult)
+	success, err := handler.(video.VideoService).GetWorkCount(ctx, realArg.Request)
+	if err != nil {
+		return err
+	}
+	realResult.Success = &success
+	return nil
+}
+func newVideoServiceGetWorkCountArgs() interface{} {
+	return video.NewVideoServiceGetWorkCountArgs()
+}
+
+func newVideoServiceGetWorkCountResult() interface{} {
+	return video.NewVideoServiceGetWorkCountResult()
+}
+
 type kClient struct {
 	c client.Client
 }
@@ -126,6 +145,16 @@ func (p *kClient) GetPublishVideoList(ctx context.Context, request *video.Publis
 	_args.Request = request
 	var _result video.VideoServiceGetPublishVideoListResult
 	if err = p.c.Call(ctx, "GetPublishVideoList", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GetWorkCount(ctx context.Context, request *video.GetWorkCountRequest) (r int32, err error) {
+	var _args video.VideoServiceGetWorkCountArgs
+	_args.Request = request
+	var _result video.VideoServiceGetWorkCountResult
+	if err = p.c.Call(ctx, "GetWorkCount", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
