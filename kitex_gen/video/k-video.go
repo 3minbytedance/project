@@ -593,7 +593,8 @@ func (p *VideoFeedRequest) FastReadField2(buf []byte) (int, error) {
 		return offset, err
 	} else {
 		offset += l
-		p.UserId = &v
+
+		p.UserId = v
 
 	}
 	return offset, nil
@@ -641,12 +642,10 @@ func (p *VideoFeedRequest) fastWriteField1(buf []byte, binaryWriter bthrift.Bina
 
 func (p *VideoFeedRequest) fastWriteField2(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	if p.IsSetUserId() {
-		offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I32, 2)
-		offset += bthrift.Binary.WriteI32(buf[offset:], *p.UserId)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I32, 2)
+	offset += bthrift.Binary.WriteI32(buf[offset:], p.UserId)
 
-		offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
-	}
+	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
 }
 
@@ -663,12 +662,10 @@ func (p *VideoFeedRequest) field1Length() int {
 
 func (p *VideoFeedRequest) field2Length() int {
 	l := 0
-	if p.IsSetUserId() {
-		l += bthrift.Binary.FieldBeginLength("user_id", thrift.I32, 2)
-		l += bthrift.Binary.I32Length(*p.UserId)
+	l += bthrift.Binary.FieldBeginLength("user_id", thrift.I32, 2)
+	l += bthrift.Binary.I32Length(p.UserId)
 
-		l += bthrift.Binary.FieldEndLength()
-	}
+	l += bthrift.Binary.FieldEndLength()
 	return l
 }
 
