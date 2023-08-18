@@ -8,6 +8,10 @@ import (
 	"douyin/kitex_gen/message/messageservice"
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/kitex/client"
+	"github.com/cloudwego/kitex/pkg/rpcinfo"
+	"github.com/kitex-contrib/obs-opentelemetry/tracing"
+	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
@@ -17,19 +21,18 @@ import (
 var messageClient messageservice.Client
 
 func init() {
-	//r, err := consul.NewConsulResolver(config.EnvConfig.CONSUL_ADDR)
-	//if err != nil {
-	//	logger.Fatal(err)
-	//}
-	//provider.NewOpenTelemetryProvider(
-	//	provider.WithServiceName(config.CommentServiceName),
-	//	provider.WithExportEndpoint(config.EnvConfig.EXPORT_ENDPOINT),
-	//	provider.WithInsecure(),
-	//)
+	// Etcd 服务发现
+	r, err := etcd.NewEtcdResolver([]string{constant.EtcdAddr})
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	var err error
 	messageClient, err = messageservice.NewClient(
-		constant.CommentServiceName,
+		constant.MessageServiceName,
+		client.WithResolver(r),
+		client.WithSuite(tracing.NewClientSuite()),
+		// Please keep the same as provider.WithServiceName
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.MessageServiceName}),
 	)
 	if err != nil {
 		log.Fatal(err)

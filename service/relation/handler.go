@@ -293,6 +293,8 @@ func CheckAndSetRedisRelationKey(userId uint, key string) bool {
 
 // IsFriend implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) IsFriend(ctx context.Context, request *relation.IsFriendRequest) (resp *relation.IsFriendResponse, err error) {
-	// TODO: Your code here...
-	return
+	// 从数据库查询是否已关注
+	result, err := mysql.IsFriend(uint(request.ActorId), uint(request.UserId))
+
+	return &relation.IsFriendResponse{Result_: result}, err
 }

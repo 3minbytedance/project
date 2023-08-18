@@ -8,7 +8,6 @@ import (
 	message "douyin/kitex_gen/message"
 	"douyin/kitex_gen/relation"
 	"douyin/kitex_gen/relation/relationservice"
-	"douyin/mw/kafka"
 	"douyin/service/message/pack"
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
@@ -29,10 +28,10 @@ func init() {
 		log.Fatal(err)
 	}
 	relationClient, err = relationservice.NewClient(
-		constant.RelationServicePort,
+		constant.RelationServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
-		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.RelationServicePort}))
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.RelationServiceName}))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -117,7 +116,14 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 	}
 
 	// 聊天记录发向kafka
-	go kafka.MessageMQInstance.Produce(messageData)
-	
+	//go kafka.MessageMQInstance.Produce(messageData)
+
+	//往mongo发送聊天记录
+	err = mongo.SendMessage(messageData)
+	if err != nil {
+		log.Println("mongo.SendMessage err:", err)
+		return
+	}
+
 	return
 }
