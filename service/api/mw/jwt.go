@@ -31,7 +31,6 @@ func Auth() app.HandlerFunc {
 			// claims, err := common.ParseToken(token)
 			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则返回0
 			claimsId := redis.GetToken(token)
-			zap.L().Debug("TOKEN USER INFO:", zap.Any("claim", claimsId))
 			if claimsId == 0 {
 				// token有误，阻止后面函数执行
 				c.Abort()
@@ -40,6 +39,7 @@ func Auth() app.HandlerFunc {
 					StatusMsg:  "Token Error",
 				})
 			}
+			zap.L().Debug("CLAIM-ID", zap.Int("ID", int(claimsId)))
 			c.Set(common.ContextUserIDKey, claimsId)
 			c.Next(ctx)
 		}
@@ -66,6 +66,8 @@ func AuthWithoutLogin() app.HandlerFunc {
 			} else {
 				userId = claimsId
 			}
+			zap.L().Debug("to")
+			zap.L().Debug("USER-ID", zap.Int("ID", int(userId)))
 			c.Set(common.ContextUserIDKey, userId)
 			c.Set(common.TokenValid, true)
 			c.Next(ctx)

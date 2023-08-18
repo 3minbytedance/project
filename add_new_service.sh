@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 
 # 检查 go 命令是否存在于 PATH 环境变量中
 if ! command -v go &>/dev/null; then
