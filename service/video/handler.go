@@ -24,7 +24,7 @@ type VideoServiceImpl struct{}
 func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFeedRequest) (resp *video.VideoFeedResponse, err error) {
 	videos := mysql.GetLatestVideos(request.GetLatestTime())
 	if len(videos) == 0 {
-		zap.L().Error("根据视频ID取评论失败", zap.Error(err))
+		zap.L().Error("根据LatestTime取视频失败", zap.Error(err))
 		return &video.VideoFeedResponse{
 			StatusCode: 1,
 			StatusMsg:  thrift.StringPtr("获取视频列表失败"),

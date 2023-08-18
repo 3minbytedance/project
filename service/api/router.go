@@ -7,6 +7,7 @@ import (
 	"douyin/service/api/biz/message"
 	"douyin/service/api/biz/relation"
 	"douyin/service/api/biz/user"
+	"douyin/service/api/biz/video"
 	"douyin/service/api/mw"
 	"github.com/cloudwego/hertz/pkg/app/server"
 )
@@ -23,11 +24,11 @@ func customizedRegister(r *server.Hertz) {
 	}
 
 	// video service
-	douyin.POST("/feed", )
+	douyin.POST("/feed", video.FeedList)
 	videoGroup := douyin.Group("/publish")
 	{
-		videoGroup.POST("/list", )
-		videoGroup.POST("/action", )
+		videoGroup.POST("/list", video.GetPublishList)
+		videoGroup.POST("/action", video.Publish)
 	}
 	// comment service
 	commentGroup := douyin.Group("/comment")

@@ -598,7 +598,7 @@ func (p *Video) Field8DeepEqual(src string) bool {
 
 type VideoFeedRequest struct {
 	LatestTime *string `thrift:"latest_time,1,optional" frugal:"1,optional,string" json:"latest_time,omitempty"`
-	UserId     *string `thrift:"user_id,2,optional" frugal:"2,optional,string" json:"user_id,omitempty"`
+	UserId     *int32  `thrift:"user_id,2,optional" frugal:"2,optional,i32" json:"user_id,omitempty"`
 }
 
 func NewVideoFeedRequest() *VideoFeedRequest {
@@ -618,9 +618,9 @@ func (p *VideoFeedRequest) GetLatestTime() (v string) {
 	return *p.LatestTime
 }
 
-var VideoFeedRequest_UserId_DEFAULT string
+var VideoFeedRequest_UserId_DEFAULT int32
 
-func (p *VideoFeedRequest) GetUserId() (v string) {
+func (p *VideoFeedRequest) GetUserId() (v int32) {
 	if !p.IsSetUserId() {
 		return VideoFeedRequest_UserId_DEFAULT
 	}
@@ -629,7 +629,7 @@ func (p *VideoFeedRequest) GetUserId() (v string) {
 func (p *VideoFeedRequest) SetLatestTime(val *string) {
 	p.LatestTime = val
 }
-func (p *VideoFeedRequest) SetUserId(val *string) {
+func (p *VideoFeedRequest) SetUserId(val *int32) {
 	p.UserId = val
 }
 
@@ -676,7 +676,7 @@ func (p *VideoFeedRequest) Read(iprot thrift.TProtocol) (err error) {
 				}
 			}
 		case 2:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -725,7 +725,7 @@ func (p *VideoFeedRequest) ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *VideoFeedRequest) ReadField2(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.UserId = &v
@@ -787,10 +787,10 @@ WriteFieldEndError:
 
 func (p *VideoFeedRequest) writeField2(oprot thrift.TProtocol) (err error) {
 	if p.IsSetUserId() {
-		if err = oprot.WriteFieldBegin("user_id", thrift.STRING, 2); err != nil {
+		if err = oprot.WriteFieldBegin("user_id", thrift.I32, 2); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.UserId); err != nil {
+		if err := oprot.WriteI32(*p.UserId); err != nil {
 			return err
 		}
 		if err = oprot.WriteFieldEnd(); err != nil {
@@ -838,14 +838,14 @@ func (p *VideoFeedRequest) Field1DeepEqual(src *string) bool {
 	}
 	return true
 }
-func (p *VideoFeedRequest) Field2DeepEqual(src *string) bool {
+func (p *VideoFeedRequest) Field2DeepEqual(src *int32) bool {
 
 	if p.UserId == src {
 		return true
 	} else if p.UserId == nil || src == nil {
 		return false
 	}
-	if strings.Compare(*p.UserId, *src) != 0 {
+	if *p.UserId != *src {
 		return false
 	}
 	return true
@@ -1771,7 +1771,8 @@ func (p *PublishVideoResponse) Field2DeepEqual(src *string) bool {
 }
 
 type PublishVideoListRequest struct {
-	UserId int32 `thrift:"user_id,1" frugal:"1,default,i32" json:"user_id"`
+	FromUserId int32 `thrift:"from_user_id,1" frugal:"1,default,i32" json:"from_user_id"`
+	ToUserId   int32 `thrift:"to_user_id,2" frugal:"2,default,i32" json:"to_user_id"`
 }
 
 func NewPublishVideoListRequest() *PublishVideoListRequest {
@@ -1782,15 +1783,23 @@ func (p *PublishVideoListRequest) InitDefault() {
 	*p = PublishVideoListRequest{}
 }
 
-func (p *PublishVideoListRequest) GetUserId() (v int32) {
-	return p.UserId
+func (p *PublishVideoListRequest) GetFromUserId() (v int32) {
+	return p.FromUserId
 }
-func (p *PublishVideoListRequest) SetUserId(val int32) {
-	p.UserId = val
+
+func (p *PublishVideoListRequest) GetToUserId() (v int32) {
+	return p.ToUserId
+}
+func (p *PublishVideoListRequest) SetFromUserId(val int32) {
+	p.FromUserId = val
+}
+func (p *PublishVideoListRequest) SetToUserId(val int32) {
+	p.ToUserId = val
 }
 
 var fieldIDToName_PublishVideoListRequest = map[int16]string{
-	1: "user_id",
+	1: "from_user_id",
+	2: "to_user_id",
 }
 
 func (p *PublishVideoListRequest) Read(iprot thrift.TProtocol) (err error) {
@@ -1815,6 +1824,16 @@ func (p *PublishVideoListRequest) Read(iprot thrift.TProtocol) (err error) {
 		case 1:
 			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		case 2:
+			if fieldTypeId == thrift.I32 {
+				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else {
@@ -1856,7 +1875,16 @@ func (p *PublishVideoListRequest) ReadField1(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
-		p.UserId = v
+		p.FromUserId = v
+	}
+	return nil
+}
+
+func (p *PublishVideoListRequest) ReadField2(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI32(); err != nil {
+		return err
+	} else {
+		p.ToUserId = v
 	}
 	return nil
 }
@@ -1869,6 +1897,10 @@ func (p *PublishVideoListRequest) Write(oprot thrift.TProtocol) (err error) {
 	if p != nil {
 		if err = p.writeField1(oprot); err != nil {
 			fieldId = 1
+			goto WriteFieldError
+		}
+		if err = p.writeField2(oprot); err != nil {
+			fieldId = 2
 			goto WriteFieldError
 		}
 
@@ -1891,10 +1923,10 @@ WriteStructEndError:
 }
 
 func (p *PublishVideoListRequest) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("user_id", thrift.I32, 1); err != nil {
+	if err = oprot.WriteFieldBegin("from_user_id", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI32(p.UserId); err != nil {
+	if err := oprot.WriteI32(p.FromUserId); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -1905,6 +1937,23 @@ WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
+}
+
+func (p *PublishVideoListRequest) writeField2(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("to_user_id", thrift.I32, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteI32(p.ToUserId); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 2 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
 func (p *PublishVideoListRequest) String() string {
@@ -1920,7 +1969,10 @@ func (p *PublishVideoListRequest) DeepEqual(ano *PublishVideoListRequest) bool {
 	} else if p == nil || ano == nil {
 		return false
 	}
-	if !p.Field1DeepEqual(ano.UserId) {
+	if !p.Field1DeepEqual(ano.FromUserId) {
+		return false
+	}
+	if !p.Field2DeepEqual(ano.ToUserId) {
 		return false
 	}
 	return true
@@ -1928,7 +1980,14 @@ func (p *PublishVideoListRequest) DeepEqual(ano *PublishVideoListRequest) bool {
 
 func (p *PublishVideoListRequest) Field1DeepEqual(src int32) bool {
 
-	if p.UserId != src {
+	if p.FromUserId != src {
+		return false
+	}
+	return true
+}
+func (p *PublishVideoListRequest) Field2DeepEqual(src int32) bool {
+
+	if p.ToUserId != src {
 		return false
 	}
 	return true

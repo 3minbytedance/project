@@ -15,7 +15,7 @@ struct Video {
 
 struct VideoFeedRequest {
     1: optional string latest_time, // 可选参数，限制返回视频的最新投稿时间戳，精确到秒，不填表示当前时间
-    2: optional string user_id, // 可选参数，登录用户设置  ？？好像有问题
+    2: optional i32 user_id, // 可选参数，登录用户设置  //todo fix
 }
 
 struct VideoFeedResponse {
@@ -37,7 +37,8 @@ struct PublishVideoResponse {
 }
 
 struct PublishVideoListRequest {
-    1: i32 user_id, //好像有问题？
+    1: i32 from_user_id,//好像有问题？
+    2: i32 to_user_id,
 }
 
 struct PublishVideoListResponse {
