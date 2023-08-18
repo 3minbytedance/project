@@ -6,7 +6,7 @@ import (
 	"douyin/dal/mysql"
 	favorite "douyin/kitex_gen/favorite/favoriteservice"
 	"douyin/logger"
-	"douyin/mw"
+	"douyin/mw/redis"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -49,7 +49,7 @@ func main() {
 	}
 
 	// 初始化中间件: redis + kafka
-	if err := mw.Init(config.Conf); err != nil {
+	if err := redis.Init(config.Conf); err != nil {
 		zap.L().Error("Init middleware failed, err:%v\n", zap.Error(err))
 		return
 	}

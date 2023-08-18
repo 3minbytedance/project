@@ -24,7 +24,7 @@ func customizedRegister(r *server.Hertz) {
 	}
 
 	// video service
-	douyin.POST("/feed", video.FeedList)
+	douyin.GET("/feed", video.FeedList)
 	videoGroup := douyin.Group("/publish")
 	{
 		videoGroup.POST("/list", video.GetPublishList)
