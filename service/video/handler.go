@@ -154,7 +154,7 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 
 	// MQ 异步解耦,解决返回json阻塞 TODO
 
-	imgName := GetVideoCover(videoPath)
+	imgName := GetVideoCover(videoFileName)
 
 	//视频存储到oss
 	go func() {
