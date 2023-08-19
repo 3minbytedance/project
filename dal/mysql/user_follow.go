@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"douyin/dal/model"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"log"
 )
@@ -74,4 +75,17 @@ func GetFollowerList(userId uint) ([]uint, error) {
 	var result []uint
 	err := DB.Model(&model.UserFollow{}).Select("user_id").Where("follow_id = ?", userId).Scan(&result).Error
 	return result, err
+}
+
+func IsFriend(actorId, userId uint) (result bool, err error) {
+	// 检查用户A是否关注了用户B，以及用户B是否关注了用户A
+	var count int64
+	res := DB.Model(&model.UserFollow{}).
+		Where("user_id = ? AND follow_id = ?", actorId, userId).
+		Or("user_id = ? AND follow_id = ?", userId, actorId).
+		Count(&count)
+	if res.Error != nil {
+		zap.L().Error("Error occurred during query:", zap.Error(res.Error))
+	}
+	return count == 2, res.Error
 }

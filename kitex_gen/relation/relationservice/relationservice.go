@@ -22,9 +22,9 @@ func NewServiceInfo() *kitex.ServiceInfo {
 		"RelationAction":       kitex.NewMethodInfo(relationActionHandler, newRelationServiceRelationActionArgs, newRelationServiceRelationActionResult, false),
 		"GetFollowList":        kitex.NewMethodInfo(getFollowListHandler, newRelationServiceGetFollowListArgs, newRelationServiceGetFollowListResult, false),
 		"GetFollowerList":      kitex.NewMethodInfo(getFollowerListHandler, newRelationServiceGetFollowerListArgs, newRelationServiceGetFollowerListResult, false),
+		"GetFriendList":        kitex.NewMethodInfo(getFriendListHandler, newRelationServiceGetFriendListArgs, newRelationServiceGetFriendListResult, false),
 		"GetFollowListCount":   kitex.NewMethodInfo(getFollowListCountHandler, newRelationServiceGetFollowListCountArgs, newRelationServiceGetFollowListCountResult, false),
 		"GetFollowerListCount": kitex.NewMethodInfo(getFollowerListCountHandler, newRelationServiceGetFollowerListCountArgs, newRelationServiceGetFollowerListCountResult, false),
-		"GetFriendList":        kitex.NewMethodInfo(getFriendListHandler, newRelationServiceGetFriendListArgs, newRelationServiceGetFriendListResult, false),
 		"IsFollowing":          kitex.NewMethodInfo(isFollowingHandler, newRelationServiceIsFollowingArgs, newRelationServiceIsFollowingResult, false),
 		"IsFriend":             kitex.NewMethodInfo(isFriendHandler, newRelationServiceIsFriendArgs, newRelationServiceIsFriendResult, false),
 	}
@@ -96,42 +96,6 @@ func newRelationServiceGetFollowerListResult() interface{} {
 	return relation.NewRelationServiceGetFollowerListResult()
 }
 
-func getFollowListCountHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
-	realArg := arg.(*relation.RelationServiceGetFollowListCountArgs)
-	realResult := result.(*relation.RelationServiceGetFollowListCountResult)
-	success, err := handler.(relation.RelationService).GetFollowListCount(ctx, realArg.Request)
-	if err != nil {
-		return err
-	}
-	realResult.Success = success
-	return nil
-}
-func newRelationServiceGetFollowListCountArgs() interface{} {
-	return relation.NewRelationServiceGetFollowListCountArgs()
-}
-
-func newRelationServiceGetFollowListCountResult() interface{} {
-	return relation.NewRelationServiceGetFollowListCountResult()
-}
-
-func getFollowerListCountHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
-	realArg := arg.(*relation.RelationServiceGetFollowerListCountArgs)
-	realResult := result.(*relation.RelationServiceGetFollowerListCountResult)
-	success, err := handler.(relation.RelationService).GetFollowerListCount(ctx, realArg.Request)
-	if err != nil {
-		return err
-	}
-	realResult.Success = success
-	return nil
-}
-func newRelationServiceGetFollowerListCountArgs() interface{} {
-	return relation.NewRelationServiceGetFollowerListCountArgs()
-}
-
-func newRelationServiceGetFollowerListCountResult() interface{} {
-	return relation.NewRelationServiceGetFollowerListCountResult()
-}
-
 func getFriendListHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
 	realArg := arg.(*relation.RelationServiceGetFriendListArgs)
 	realResult := result.(*relation.RelationServiceGetFriendListResult)
@@ -150,6 +114,42 @@ func newRelationServiceGetFriendListResult() interface{} {
 	return relation.NewRelationServiceGetFriendListResult()
 }
 
+func getFollowListCountHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*relation.RelationServiceGetFollowListCountArgs)
+	realResult := result.(*relation.RelationServiceGetFollowListCountResult)
+	success, err := handler.(relation.RelationService).GetFollowListCount(ctx, realArg.UserId)
+	if err != nil {
+		return err
+	}
+	realResult.Success = &success
+	return nil
+}
+func newRelationServiceGetFollowListCountArgs() interface{} {
+	return relation.NewRelationServiceGetFollowListCountArgs()
+}
+
+func newRelationServiceGetFollowListCountResult() interface{} {
+	return relation.NewRelationServiceGetFollowListCountResult()
+}
+
+func getFollowerListCountHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*relation.RelationServiceGetFollowerListCountArgs)
+	realResult := result.(*relation.RelationServiceGetFollowerListCountResult)
+	success, err := handler.(relation.RelationService).GetFollowerListCount(ctx, realArg.UserId)
+	if err != nil {
+		return err
+	}
+	realResult.Success = &success
+	return nil
+}
+func newRelationServiceGetFollowerListCountArgs() interface{} {
+	return relation.NewRelationServiceGetFollowerListCountArgs()
+}
+
+func newRelationServiceGetFollowerListCountResult() interface{} {
+	return relation.NewRelationServiceGetFollowerListCountResult()
+}
+
 func isFollowingHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
 	realArg := arg.(*relation.RelationServiceIsFollowingArgs)
 	realResult := result.(*relation.RelationServiceIsFollowingResult)
@@ -157,7 +157,7 @@ func isFollowingHandler(ctx context.Context, handler interface{}, arg, result in
 	if err != nil {
 		return err
 	}
-	realResult.Success = success
+	realResult.Success = &success
 	return nil
 }
 func newRelationServiceIsFollowingArgs() interface{} {
@@ -175,7 +175,7 @@ func isFriendHandler(ctx context.Context, handler interface{}, arg, result inter
 	if err != nil {
 		return err
 	}
-	realResult.Success = success
+	realResult.Success = &success
 	return nil
 }
 func newRelationServiceIsFriendArgs() interface{} {
@@ -226,26 +226,6 @@ func (p *kClient) GetFollowerList(ctx context.Context, request *relation.Followe
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) GetFollowListCount(ctx context.Context, request *relation.FollowListCountRequest) (r *relation.FollowListCountResponse, err error) {
-	var _args relation.RelationServiceGetFollowListCountArgs
-	_args.Request = request
-	var _result relation.RelationServiceGetFollowListCountResult
-	if err = p.c.Call(ctx, "GetFollowListCount", &_args, &_result); err != nil {
-		return
-	}
-	return _result.GetSuccess(), nil
-}
-
-func (p *kClient) GetFollowerListCount(ctx context.Context, request *relation.FollowerListCountRequest) (r *relation.FollowerListCountResponse, err error) {
-	var _args relation.RelationServiceGetFollowerListCountArgs
-	_args.Request = request
-	var _result relation.RelationServiceGetFollowerListCountResult
-	if err = p.c.Call(ctx, "GetFollowerListCount", &_args, &_result); err != nil {
-		return
-	}
-	return _result.GetSuccess(), nil
-}
-
 func (p *kClient) GetFriendList(ctx context.Context, request *relation.FriendListRequest) (r *relation.FriendListResponse, err error) {
 	var _args relation.RelationServiceGetFriendListArgs
 	_args.Request = request
@@ -256,7 +236,27 @@ func (p *kClient) GetFriendList(ctx context.Context, request *relation.FriendLis
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) IsFollowing(ctx context.Context, request *relation.IsFollowingRequest) (r *relation.IsFollowingResponse, err error) {
+func (p *kClient) GetFollowListCount(ctx context.Context, userId int32) (r int32, err error) {
+	var _args relation.RelationServiceGetFollowListCountArgs
+	_args.UserId = userId
+	var _result relation.RelationServiceGetFollowListCountResult
+	if err = p.c.Call(ctx, "GetFollowListCount", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GetFollowerListCount(ctx context.Context, userId int32) (r int32, err error) {
+	var _args relation.RelationServiceGetFollowerListCountArgs
+	_args.UserId = userId
+	var _result relation.RelationServiceGetFollowerListCountResult
+	if err = p.c.Call(ctx, "GetFollowerListCount", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) IsFollowing(ctx context.Context, request *relation.IsFollowingRequest) (r bool, err error) {
 	var _args relation.RelationServiceIsFollowingArgs
 	_args.Request = request
 	var _result relation.RelationServiceIsFollowingResult
@@ -266,7 +266,7 @@ func (p *kClient) IsFollowing(ctx context.Context, request *relation.IsFollowing
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) IsFriend(ctx context.Context, request *relation.IsFriendRequest) (r *relation.IsFriendResponse, err error) {
+func (p *kClient) IsFriend(ctx context.Context, request *relation.IsFriendRequest) (r bool, err error) {
 	var _args relation.RelationServiceIsFriendArgs
 	_args.Request = request
 	var _result relation.RelationServiceIsFriendResult

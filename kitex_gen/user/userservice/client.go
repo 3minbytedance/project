@@ -14,8 +14,6 @@ type Client interface {
 	Register(ctx context.Context, request *user.UserRegisterRequest, callOptions ...callopt.Option) (r *user.UserRegisterResponse, err error)
 	Login(ctx context.Context, request *user.UserLoginRequest, callOptions ...callopt.Option) (r *user.UserLoginResponse, err error)
 	GetUserInfoById(ctx context.Context, request *user.UserInfoByIdRequest, callOptions ...callopt.Option) (r *user.UserInfoByIdResponse, err error)
-	GetUserInfoByName(ctx context.Context, request *user.UserInfoByNameRequest, callOptions ...callopt.Option) (r *user.UserInfoByNameResponse, err error)
-	CheckUserExists(ctx context.Context, request *user.UserExistsRequest, callOptions ...callopt.Option) (r *user.UserExistsResponse, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -60,14 +58,4 @@ func (p *kUserServiceClient) Login(ctx context.Context, request *user.UserLoginR
 func (p *kUserServiceClient) GetUserInfoById(ctx context.Context, request *user.UserInfoByIdRequest, callOptions ...callopt.Option) (r *user.UserInfoByIdResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.GetUserInfoById(ctx, request)
-}
-
-func (p *kUserServiceClient) GetUserInfoByName(ctx context.Context, request *user.UserInfoByNameRequest, callOptions ...callopt.Option) (r *user.UserInfoByNameResponse, err error) {
-	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetUserInfoByName(ctx, request)
-}
-
-func (p *kUserServiceClient) CheckUserExists(ctx context.Context, request *user.UserExistsRequest, callOptions ...callopt.Option) (r *user.UserExistsResponse, err error) {
-	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.CheckUserExists(ctx, request)
 }

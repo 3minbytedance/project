@@ -6,6 +6,7 @@ import (
 	"douyin/constant"
 	"douyin/kitex_gen/video"
 	"douyin/kitex_gen/video/videoservice"
+	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/kitex/client"
@@ -13,6 +14,7 @@ import (
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
+	"io"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -123,8 +125,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	//todo  userId传参
-	_ = userToken.ID
+	userId := userToken.ID
 	// 校验文件类型
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if !isValidFileType(ext) {
@@ -144,18 +145,39 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	//todo
-	//resp, err := videoClient.PublishVideo(ctx, req)
+	// 打开上传的文件
+	src, err := file.Open()
+	defer src.Close()
+	if err != nil {
+		zap.L().Error("打开文件失败", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, video.PublishVideoResponse{
+			StatusCode: 1,
+		})
+		return
+	}
+	data, err := io.ReadAll(src)
+	if err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("读取文件内容失败: %s", err.Error()))
+		return
+	}
 
-	//if err != nil {
-	//	zap.L().Error("PublishVideo err.", zap.Error(err))
-	//	c.JSON(http.StatusOK, video.PublishVideoResponse{
-	//		StatusCode: 1,
-	//		StatusMsg:  thrift.StringPtr("PublishVideo error."),
-	//	})
-	//	return
-	//}
-	//c.JSON(http.StatusOK, resp)
+	req := &video.PublishVideoRequest{
+		UserId: int32(userId),
+		Title:  title,
+		Data: data,
+	}
+
+	resp, err := videoClient.PublishVideo(ctx, req)
+
+	if err != nil {
+		zap.L().Error("PublishVideo err.", zap.Error(err))
+		c.JSON(http.StatusOK, video.PublishVideoResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("PublishVideo error."),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 // 校验文件类型是否为视频类型

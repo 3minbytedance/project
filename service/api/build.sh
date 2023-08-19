@@ -1,4 +1,3 @@
-
 #!/bin/bash
 RUN_NAME="api"
 mkdir -p output/bin

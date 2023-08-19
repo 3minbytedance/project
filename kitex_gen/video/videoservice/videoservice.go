@@ -95,7 +95,7 @@ func newVideoServiceGetPublishVideoListResult() interface{} {
 func getWorkCountHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
 	realArg := arg.(*video.VideoServiceGetWorkCountArgs)
 	realResult := result.(*video.VideoServiceGetWorkCountResult)
-	success, err := handler.(video.VideoService).GetWorkCount(ctx, realArg.Request)
+	success, err := handler.(video.VideoService).GetWorkCount(ctx, realArg.UserId)
 	if err != nil {
 		return err
 	}
@@ -150,9 +150,9 @@ func (p *kClient) GetPublishVideoList(ctx context.Context, request *video.Publis
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) GetWorkCount(ctx context.Context, request *video.GetWorkCountRequest) (r int32, err error) {
+func (p *kClient) GetWorkCount(ctx context.Context, userId int32) (r int32, err error) {
 	var _args video.VideoServiceGetWorkCountArgs
-	_args.Request = request
+	_args.UserId = userId
 	var _result video.VideoServiceGetWorkCountResult
 	if err = p.c.Call(ctx, "GetWorkCount", &_args, &_result); err != nil {
 		return

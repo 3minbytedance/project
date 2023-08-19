@@ -15,7 +15,7 @@ struct Video {
 
 struct VideoFeedRequest {
     1: optional string latest_time, // 可选参数，限制返回视频的最新投稿时间戳，精确到秒，不填表示当前时间
-    2: i32 user_id, // 可选参数，登录用户设置  //todo fix
+    2: i32 user_id, // 可选参数，登录用户设置
 }
 
 struct VideoFeedResponse {
@@ -26,7 +26,7 @@ struct VideoFeedResponse {
 }
 
 struct PublishVideoRequest {
-    1: i32 user_id, // 用户id ？？好像有问题
+    1: i32 user_id, // 用户id
     2: binary data, // 视频数据
     3: string title, // 视频标题
 }
@@ -59,5 +59,5 @@ service VideoService {
     VideoFeedResponse VideoFeed(1: VideoFeedRequest Request),
     PublishVideoResponse PublishVideo(1: PublishVideoRequest Request),
     PublishVideoListResponse GetPublishVideoList(1: PublishVideoListRequest Request),
-    i32 GetWorkCount(1:GetWorkCountRequest Request)
+    i32 GetWorkCount(1:i32 user_id)
 }

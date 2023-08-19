@@ -5,10 +5,9 @@ import (
 	"douyin/constant"
 	"douyin/dal/model"
 	dalMySQL "douyin/dal/mysql"
-	comment "douyin/kitex_gen/comment"
 	"douyin/kitex_gen/comment/commentservice"
 	favorite "douyin/kitex_gen/favorite"
-	user "douyin/kitex_gen/user"
+	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	"douyin/kitex_gen/video"
 	mwRedis "douyin/mw/redis"
@@ -19,6 +18,7 @@ import (
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
+	"go.uber.org/zap"
 	"log"
 )
 
@@ -60,8 +60,7 @@ func (s *FavoriteServiceImpl) FavoriteAction(ctx context.Context, request *favor
 	videoId := uint(request.VideoId)
 	actionType := int(request.ActionType)
 
-	err = favoriteActions(userId, uint(videoId), actionType)
-	//count, _ := service.GetFavoritesVideoCount(int64(videoId))
+	err = favoriteActions(userId, videoId, actionType)
 	if err != nil {
 		return &favorite.FavoriteActionResponse{
 			StatusCode: 1,
@@ -74,85 +73,76 @@ func (s *FavoriteServiceImpl) FavoriteAction(ctx context.Context, request *favor
 	}, nil
 }
 
+// GetUserTotalFavoritedCount 获取用户的被喜欢总数
+func (s *FavoriteServiceImpl) GetUserTotalFavoritedCount(ctx context.Context, userId int32) (resp int32, err error) {
+	favoritesByUserId, err := getFavoritesByUserId(uint(userId))
+	if err != nil {
+		return 0, err
+	}
+	return int32(len(favoritesByUserId)), nil
+}
+
 // GetFavoriteList implements the FavoriteServiceImpl interface.
 func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favorite.FavoriteListRequest) (resp *favorite.FavoriteListResponse, err error) {
 	resp = new(favorite.FavoriteListResponse)
-	userId := request.UserId
+	userId := request.GetUserId()
+	actionId := request.GetActionId()
 
 	favoritesByUserId, err := getFavoritesByUserId(uint(userId))
 	if err != nil {
 		return nil, err
 	}
-	videos := make([]video.Video, 0)
+	videos := make([]*video.Video, 0, len(favoritesByUserId))
 	for _, id := range favoritesByUserId {
 		videoByVideoId, _ := dalMySQL.FindVideoByVideoId(id)
-		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{ActorId: request.GetUserId(),
-			UserId: int32(videoByVideoId.AuthorId)})
-		if err != nil {
-			log.Println(err.Error())
-		}
-		commentCountResp, err := commentClient.GetCommentCount(ctx, &comment.CommentCountRequest{
-			VideoId: int32(id),
+		userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+			ActorId: actionId,
+			UserId: userId,
 		})
-		if err != nil {
-			log.Println(err.Error())
-		}
-		favoriteCount, err := getFavoritesVideoCount(id)
-		if err != nil {
-			log.Println(err.Error())
-		}
+		commentCount, _ := commentClient.GetCommentCount(ctx, int32(id))
+		favoriteCount, _ := getFavoritesVideoCount(id)
 		vid := video.Video{
 			Id:            int32(videoByVideoId.ID),
-			Author:        userResp.User,
+			Author:        userResp.GetUser(),
 			PlayUrl:       videoByVideoId.VideoUrl,
 			CoverUrl:      videoByVideoId.CoverUrl,
 			FavoriteCount: int32(favoriteCount),
-			CommentCount:  commentCountResp.CommentCount,
+			CommentCount:  commentCount,
 			IsFavorite:    isUserFavorite(uint(userId), id),
 			Title:         videoByVideoId.Title,
 		}
-		videos = append(videos, vid)
+		videos = append(videos, &vid)
 	}
 	return &favorite.FavoriteListResponse{
 		StatusCode: 0,
 		StatusMsg:  thrift.StringPtr("get favorite video list done"),
+		VideoList: videos,
 	}, err
 }
 
-// GetVideoFavoriteCount implements the FavoriteServiceImpl interface.
-func (s *FavoriteServiceImpl) GetVideoFavoriteCount(ctx context.Context, request *favorite.VideoFavoriteCountRequest) (resp *favorite.VideoFavoriteCountResponse, err error) {
-	videoId := request.VideoId
+// GetVideoFavoriteCount 获取视频点赞数.
+func (s *FavoriteServiceImpl) GetVideoFavoriteCount(ctx context.Context, videoId int32) (resp int32, err error) {
 	count, err := getFavoritesVideoCount(uint(videoId))
 	if err != nil {
-		return &favorite.VideoFavoriteCountResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr(err.Error()),
-			Count:      0,
-		}, err
+		return 0, err
 	}
-	return &favorite.VideoFavoriteCountResponse{
-		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("success"),
-		Count:      int32(count),
-	}, nil
+	return int32(count), nil
 }
 
-// GetUserFavoriteCount implements the FavoriteServiceImpl interface.
-func (s *FavoriteServiceImpl) GetUserFavoriteCount(ctx context.Context, request *favorite.UserFavoriteCountRequest) (resp *favorite.UserFavoriteCountResponse, err error) {
-	userId := uint(request.UserId)
-	favoritesByUserId, err := getFavoritesByUserId(userId)
+// IsUserFavorite 判断是否点赞
+func (s *FavoriteServiceImpl) IsUserFavorite(ctx context.Context, request *favorite.IsUserFavoriteRequest) (resp bool, err error) {
+	userId := request.GetUserId()
+	videoId := request.GetVideoId()
+	return isUserFavorite(uint(userId), uint(videoId)),nil
+}
+
+// GetUserFavoriteCount 获取某个用户的点赞数
+func (s *FavoriteServiceImpl) GetUserFavoriteCount(ctx context.Context, userId int32) (resp int32, err error) {
+	favoritesByUserId, err := getFavoritesByUserId(uint(userId))
 	if err != nil {
-		return &favorite.UserFavoriteCountResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr(err.Error()),
-			Count:      0,
-		}, err
+		return 0, err
 	}
-	return &favorite.UserFavoriteCountResponse{
-		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("success"),
-		Count:      int32(len(favoritesByUserId)),
-	}, nil
+	return int32(len(favoritesByUserId)), nil
 }
 
 // favoriteActions 点赞，取消赞的操作过程
@@ -167,7 +157,7 @@ func favoriteActions(userId uint, videoId uint, actionType int) error {
 		return err
 	}
 	getUserTotalFavoritedCount(userId)
-	video, _ := dalMySQL.FindVideoByVideoId(videoId)
+	videoModel, _ := dalMySQL.FindVideoByVideoId(videoId)
 	// 如果err不为空，那么一定存在数据库中了
 	switch actionType {
 	case 1:
@@ -179,19 +169,22 @@ func favoriteActions(userId uint, videoId uint, actionType int) error {
 		// 更新用户喜欢的视频列表
 		err = mwRedis.AddFavoriteVideoToList(userId, videoId)
 		if err != nil {
-			fmt.Println(err)
+			zap.L().Error("更新用户喜欢的视频列表",zap.Error(err))
+			return err
 		}
 		// 更新用户喜欢的视频数量，这个不用，直接从set中获取
 		// 更新视频被喜欢的数量
 		err = mwRedis.IncrementFavoritedCountByVideoId(videoId)
 		if err != nil {
-			fmt.Println(err)
+			zap.L().Error("更新视频被喜欢的数量",zap.Error(err))
+			return err
 		}
 		// 更新视频作者的被点赞量
-		getUserTotalFavoritedCount(video.AuthorId)
-		err = mwRedis.IncrementTotalFavoritedByUserId(video.AuthorId)
+		getUserTotalFavoritedCount(videoModel.AuthorId)
+		err = mwRedis.IncrementTotalFavoritedByUserId(videoModel.AuthorId)
 		if err != nil {
-			fmt.Println(err)
+			zap.L().Error("更新视频作者的被点赞量",zap.Error(err))
+			return err
 		}
 		dalMySQL.AddUserFavorite(userId, videoId)
 		return err
@@ -203,99 +196,29 @@ func favoriteActions(userId uint, videoId uint, actionType int) error {
 		// 更新视频被喜欢的用户列表
 		err = mwRedis.DeleteFavoriteVideoFromList(userId, videoId)
 		if err != nil {
-			fmt.Println(err)
+			zap.L().Error("更新视频被喜欢的用户列表",zap.Error(err))
+			return err
 		}
 		// 更新视频被喜欢的数量
 		err = mwRedis.DecrementFavoritedCountByVideoId(videoId)
 		if err != nil {
-			fmt.Println(err)
+			zap.L().Error("更新视频被喜欢的数量",zap.Error(err))
+			return err
 		}
-		getUserTotalFavoritedCount(video.AuthorId)
+		getUserTotalFavoritedCount(videoModel.AuthorId)
 		// 更新视频作者的被点赞量
-		err = mwRedis.DecrementTotalFavoritedByUserId(video.AuthorId)
+		err = mwRedis.DecrementTotalFavoritedByUserId(videoModel.AuthorId)
 		if err != nil {
-			fmt.Println(err)
+			zap.L().Error("更新视频作者的被点赞量",zap.Error(err))
+			return err
 		}
 		err = dalMySQL.DeleteUserFavorite(userId, videoId)
 		if err != nil {
-			fmt.Println(err)
+			zap.L().Error("更新视频作者的被点赞量",zap.Error(err))
+			return err
 		}
 	}
 	return nil
-}
-
-// GetFavoritesVideoCount 根据视频id，返回该视频的点赞数
-func getFavoritesVideoCount(videoId uint) (int64, error) {
-	// 判断redis中是否存在对应的video数据
-	exits := mwRedis.IsExistVideoField(videoId, mwRedis.VideoFavoritedCountField)
-	if exits {
-		// redis中存在对应的数据
-		count, err := mwRedis.GetFavoritedCountByVideoId(videoId)
-		if err != nil {
-			fmt.Println(err)
-		}
-		return count, err
-	} else {
-		// redis中不存在，从数据库中读取
-		_, num, err := dalMySQL.GetFavoritesByIdFromMysql(videoId, dalMySQL.IdTypeVideo)
-		if err != nil {
-			log.Println(err)
-		}
-		err = mwRedis.SetVideoFavoritedCountByVideoId(videoId, int64(num)) // 加载视频被点赞数量
-		if err != nil {
-			fmt.Println(err)
-		}
-		return int64(num), err
-	}
-}
-
-// getFavoritesByUserId 获取当前user_id的点赞的视频id列表
-func getFavoritesByUserId(userId uint) ([]uint, error) {
-	// 查看redis是否存在对应的user数据
-	exist := mwRedis.IsExistUserSetField(userId, mwRedis.FavoriteList)
-	if exist {
-		// redis存在
-		favoritesVideoIdList, err := mwRedis.GetFavoriteListByUserId(userId)
-		if err != nil {
-			log.Println(err)
-		}
-		return favoritesVideoIdList, err
-	}
-
-	// redis中没有对应的数据，从MYSQL数据库中获取数据
-	favorites, _, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
-	if err != nil {
-		log.Println(err)
-	}
-	if len(favorites) == 0 {
-		//点赞数为0，设置为0
-		if err = mwRedis.SetFavoriteListByUserId(userId, []uint{0}); err != nil {
-			log.Println(err)
-		}
-		return []uint{}, err
-	}
-	//removeNilValue(userId)
-	idList := getIdListFromFavoriteSlice(favorites, dalMySQL.IdTypeUser)
-	// key 不存在需要同步到redis
-	err = mwRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
-	if err != nil {
-		log.Println(err)
-	}
-	return idList, nil
-}
-
-// getIdListFromFavoriteSlice 从Favorite的slice中获取id的列表
-func getIdListFromFavoriteSlice(favorites []model.Favorite, idType int) []uint {
-	res := make([]uint, 0, len(favorites))
-	for _, fav := range favorites {
-		switch idType {
-		case dalMySQL.IdTypeUser:
-			res = append(res, fav.VideoId)
-		case dalMySQL.IdTypeVideo:
-			res = append(res, fav.UserId)
-		}
-	}
-	return res
 }
 
 // GetUserTotalFavoritedCount 获取用户发布视频的总的被点赞数量
@@ -316,15 +239,90 @@ func getUserTotalFavoritedCount(userId uint) int64 {
 	if !exist {
 		return 0
 	}
-	for _, video := range videosByAuthorId {
-		count, _ := getFavoritesVideoCount(video.ID)
+	for _, videoModel := range videosByAuthorId {
+		count, _ := getFavoritesVideoCount(videoModel.ID)
 		total += count
 	}
 	err := mwRedis.SetTotalFavoritedByUserId(userId, total)
 	if err != nil {
-		log.Println(err)
+		zap.L().Error("SetTotalFavoriteByUserId失败", zap.Error(err))
+		return 0
 	}
 	return total
+}
+
+// GetFavoritesVideoCount 根据视频id，返回该视频的点赞数
+func getFavoritesVideoCount(videoId uint) (int64, error) {
+	// 判断redis中是否存在对应的video数据
+	exits := mwRedis.IsExistVideoField(videoId, mwRedis.VideoFavoritedCountField)
+	if exits {
+		// redis中存在对应的数据
+		count, err := mwRedis.GetFavoritedCountByVideoId(videoId)
+		if err != nil {
+			zap.L().Error("GetFavoritedCountByVideoId失败", zap.Error(err))
+		}
+		return count, err
+	} else {
+		// redis中不存在，从数据库中读取
+		_, num, err := dalMySQL.GetFavoritesByIdFromMysql(videoId, dalMySQL.IdTypeVideo)
+		if err != nil {
+			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
+		}
+		err = mwRedis.SetVideoFavoritedCountByVideoId(videoId, int64(num)) // 加载视频被点赞数量
+		if err != nil {
+			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
+		}
+		return int64(num), err
+	}
+}
+
+// getFavoritesByUserId 获取当前user_id的点赞的视频id列表
+func getFavoritesByUserId(userId uint) ([]uint, error) {
+	// 查看redis是否存在对应的user数据
+	exist := mwRedis.IsExistUserSetField(userId, mwRedis.FavoriteList)
+	if exist {
+		// redis存在
+		favoritesVideoIdList, err := mwRedis.GetFavoriteListByUserId(userId)
+		if err != nil {
+			zap.L().Error("GetFavoriteListByUserId", zap.Error(err))
+		}
+		return favoritesVideoIdList, err
+	}
+
+	// redis中没有对应的数据，从MYSQL数据库中获取数据
+	favorites, _, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
+	if err != nil {
+		zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
+	}
+	if len(favorites) == 0 {
+		//点赞数为0，设置为0
+		if err = mwRedis.SetFavoriteListByUserId(userId, []uint{0}); err != nil {
+			zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
+		}
+		return []uint{}, err
+	}
+	//removeNilValue(userId)
+	idList := getIdListFromFavoriteSlice(favorites, dalMySQL.IdTypeUser)
+	// key 不存在需要同步到redis
+	err = mwRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
+	if err != nil {
+		zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
+	}
+	return idList, nil
+}
+
+// getIdListFromFavoriteSlice 从Favorite的slice中获取id的列表
+func getIdListFromFavoriteSlice(favorites []model.Favorite, idType int) []uint {
+	res := make([]uint, 0, len(favorites))
+	for _, fav := range favorites {
+		switch idType {
+		case dalMySQL.IdTypeUser:
+			res = append(res, fav.VideoId)
+		case dalMySQL.IdTypeVideo:
+			res = append(res, fav.UserId)
+		}
+	}
+	return res
 }
 
 // IsUserFavorite 判断是否点赞
@@ -334,12 +332,13 @@ func isUserFavorite(userId, videoId uint) bool {
 		// redis中没有对应的数据，从MYSQL数据库中获取数据
 		favorites, _, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
 		if err != nil {
-			log.Println(err)
+			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
+			return false
 		}
 		if len(favorites) == 0 {
 			//点赞数为0，设置0
 			if err = mwRedis.SetFavoriteListByUserId(userId, []uint{0}); err != nil {
-				log.Println(err)
+				zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
 			}
 		} else {
 			//removeNilValue(userId)
@@ -347,18 +346,11 @@ func isUserFavorite(userId, videoId uint) bool {
 			// key 不存在需要同步到redis
 			err = mwRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
 			if err != nil {
-				log.Println(err)
+				zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
 			}
 		}
 	}
 	return mwRedis.IsInUserFavoriteList(userId, videoId)
 }
 
-//func removeNilValue(userId uint) {
-//	if mwRedis.IsUserFavoriteNil(userId) {
-//		err := mwRedis.DeleteUserFavoriteNil(userId)
-//		if err != nil {
-//			log.Println(err)
-//		}
-//	}
-//}
+

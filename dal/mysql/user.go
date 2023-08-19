@@ -30,7 +30,7 @@ func FindUserByUserID(id uint) (user model.User, exist bool, err error) {
 		zap.L().Error("Database err", zap.Error(err))
 		return user, false, err
 	}
-	return user, true, err
+	return user, true, nil
 
 }
 

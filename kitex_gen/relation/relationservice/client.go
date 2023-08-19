@@ -14,11 +14,11 @@ type Client interface {
 	RelationAction(ctx context.Context, request *relation.RelationActionRequest, callOptions ...callopt.Option) (r *relation.RelationActionResponse, err error)
 	GetFollowList(ctx context.Context, request *relation.FollowListRequest, callOptions ...callopt.Option) (r *relation.FollowListResponse, err error)
 	GetFollowerList(ctx context.Context, request *relation.FollowerListRequest, callOptions ...callopt.Option) (r *relation.FollowerListResponse, err error)
-	GetFollowListCount(ctx context.Context, request *relation.FollowListCountRequest, callOptions ...callopt.Option) (r *relation.FollowListCountResponse, err error)
-	GetFollowerListCount(ctx context.Context, request *relation.FollowerListCountRequest, callOptions ...callopt.Option) (r *relation.FollowerListCountResponse, err error)
 	GetFriendList(ctx context.Context, request *relation.FriendListRequest, callOptions ...callopt.Option) (r *relation.FriendListResponse, err error)
-	IsFollowing(ctx context.Context, request *relation.IsFollowingRequest, callOptions ...callopt.Option) (r *relation.IsFollowingResponse, err error)
-	IsFriend(ctx context.Context, request *relation.IsFriendRequest, callOptions ...callopt.Option) (r *relation.IsFriendResponse, err error)
+	GetFollowListCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error)
+	GetFollowerListCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error)
+	IsFollowing(ctx context.Context, request *relation.IsFollowingRequest, callOptions ...callopt.Option) (r bool, err error)
+	IsFriend(ctx context.Context, request *relation.IsFriendRequest, callOptions ...callopt.Option) (r bool, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -65,27 +65,27 @@ func (p *kRelationServiceClient) GetFollowerList(ctx context.Context, request *r
 	return p.kClient.GetFollowerList(ctx, request)
 }
 
-func (p *kRelationServiceClient) GetFollowListCount(ctx context.Context, request *relation.FollowListCountRequest, callOptions ...callopt.Option) (r *relation.FollowListCountResponse, err error) {
-	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetFollowListCount(ctx, request)
-}
-
-func (p *kRelationServiceClient) GetFollowerListCount(ctx context.Context, request *relation.FollowerListCountRequest, callOptions ...callopt.Option) (r *relation.FollowerListCountResponse, err error) {
-	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetFollowerListCount(ctx, request)
-}
-
 func (p *kRelationServiceClient) GetFriendList(ctx context.Context, request *relation.FriendListRequest, callOptions ...callopt.Option) (r *relation.FriendListResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.GetFriendList(ctx, request)
 }
 
-func (p *kRelationServiceClient) IsFollowing(ctx context.Context, request *relation.IsFollowingRequest, callOptions ...callopt.Option) (r *relation.IsFollowingResponse, err error) {
+func (p *kRelationServiceClient) GetFollowListCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.GetFollowListCount(ctx, userId)
+}
+
+func (p *kRelationServiceClient) GetFollowerListCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.GetFollowerListCount(ctx, userId)
+}
+
+func (p *kRelationServiceClient) IsFollowing(ctx context.Context, request *relation.IsFollowingRequest, callOptions ...callopt.Option) (r bool, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.IsFollowing(ctx, request)
 }
 
-func (p *kRelationServiceClient) IsFriend(ctx context.Context, request *relation.IsFriendRequest, callOptions ...callopt.Option) (r *relation.IsFriendResponse, err error) {
+func (p *kRelationServiceClient) IsFriend(ctx context.Context, request *relation.IsFriendRequest, callOptions ...callopt.Option) (r bool, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.IsFriend(ctx, request)
 }
