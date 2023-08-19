@@ -93,7 +93,9 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 // Login implements the UserServiceImpl interface.
 func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequest) (resp *user.UserLoginResponse, err error) {
 	resp = new(user.UserLoginResponse)
+
 	exist := common.TestBloom(request.Username)
+	// todo 判断存在但不存在 判断不存在但存在？
 	// 用户名不存在
 	if !exist {
 		zap.L().Info("Check user exists info:", zap.Bool("exist", exist))
@@ -136,6 +138,9 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 
 // GetUserInfoById implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.UserInfoByIdRequest) (resp *user.UserInfoByIdResponse, err error) {
+
+	// todo redis
+
 	resp = new(user.UserInfoByIdResponse)
 	// userId不为0 -> 查询userId的用户信息，顺便查是不是actorId的关注，然后设置isFavorite
 	// userId为0 -> 单纯查询actorId信息
