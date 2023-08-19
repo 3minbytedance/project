@@ -4,6 +4,7 @@ package main
 
 import (
 	"douyin/service/api/biz/comment"
+	"douyin/service/api/biz/favorite"
 	"douyin/service/api/biz/message"
 	"douyin/service/api/biz/relation"
 	"douyin/service/api/biz/user"
@@ -38,6 +39,11 @@ func customizedRegister(r *server.Hertz) {
 	}
 
 	// favorite service
+	favoriteGroup := douyin.Group("/favorite")
+	{
+		favoriteGroup.POST("/action", favorite.Action)
+		favoriteGroup.GET("/list", favorite.List)
+	}
 
 	// relation service
 	relationGroup := douyin.Group("/relation")
