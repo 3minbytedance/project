@@ -125,5 +125,8 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 		return
 	}
 
-	return
+	return &message.MessageActionResponse{
+		StatusCode: 0,
+		StatusMsg:  thrift.StringPtr("Success"),
+	}, nil
 }
