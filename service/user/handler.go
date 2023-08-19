@@ -160,6 +160,9 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 		isLogged = true
 	}
 	userId := request.GetUserId()
+	if userId == 0 {
+		userId = actionId
+	}
 	name, exist := GetName(uint(userId))
 	// 用户名不存在
 	if !exist {
@@ -181,6 +184,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	// 总的被点赞数
 	totalFavoriteCount, _ := favoriteClient.GetUserTotalFavoritedCount(ctx, userId)
 	// 检查是否已关注
+
 	zap.L().Info("IDS", zap.Any("actorId", actionId), zap.Any("userId", userId))
 	isFollow := false
 	//已登录
@@ -208,7 +212,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	return
 }
 
-// GetName 获得作品数
+// GetName 根据userId获取用户名
 func GetName(userId uint) (string, bool) {
 	// 从redis中获取用户名
 	// 1. 缓存中有数据, 直接返回

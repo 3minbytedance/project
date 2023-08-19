@@ -51,9 +51,21 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		zap.Int32("comment_id", request.GetCommentId()),
 		zap.String("comment_text", request.GetCommentText()),
 	)
+	videoId := request.GetVideoId()
+	// 查询user是否存在，并在新增评论后返回该用户信息
+	userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+		ActorId: request.GetUserId(),
+		UserId:  request.GetUserId(),
+	})
+	if userResp.GetUser() == nil || err != nil {
+		resp.StatusCode = 1
+		resp.StatusMsg = thrift.StringPtr(err.Error())
+		return resp, err
+	}
 
 	switch request.GetActionType() {
 	case 1: // 新增评论
+
 		commentData := model.Comment{
 			UserId:  uint(request.GetUserId()),
 			VideoId: uint(request.GetVideoId()),
@@ -66,40 +78,35 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 			return
 		}
 
-		// 设置redis
+		// 增加redis
 		go func() {
+			// todo 延迟双删
 			// 如果video不存在于redis，查询数据库并插入redis评论数
-			isSetKey, _ := checkAndSetRedisCommentKey(uint(request.GetVideoId()))
+			isSetKey, _ := checkAndSetRedisCommentKey(uint(videoId))
 			if isSetKey {
 				return
 			}
+
 			// 如果video存在于redis，更新commentCount
-			err = redis.IncrementCommentCountByVideoId(uint(request.GetVideoId()))
+			err = redis.IncrementCommentCountByVideoId(uint(videoId))
 			if err != nil {
-				log.Printf("更新videoId为%v的评论数失败  %v\n", request.GetVideoId(), err.Error())
+				zap.L().Error("更新videoId的评论数失败", zap.Error(err))
 			}
 		}()
-
-		// 查询user
-		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{ActorId: request.GetUserId()})
-		if err != nil {
-			resp.StatusCode = 1
-			resp.StatusMsg = thrift.StringPtr(err.Error())
-			return resp, err
-		}
 
 		// 封装返回数据
 		//comment := pack.Comment(&commentData, user.User)
 		return &comment.CommentActionResponse{
 			StatusCode: 0,
 			StatusMsg:  thrift.StringPtr("success"),
-			Comment:    pack.Comment(&commentData, userResp.User),
+			Comment:    pack.Comment(&commentData, userResp.GetUser()),
 		}, nil
 
 	case 2:
 		// 设置redis
 		go func() {
-			err = redis.DecrementCommentCountByVideoId(uint(request.GetVideoId()))
+			// todo 延迟双删
+			err = redis.DecrementCommentCountByVideoId(uint(videoId))
 			if err != nil {
 				zap.L().Error("DecrementCommentCountByVideoId error", zap.Error(err))
 				return
@@ -124,7 +131,6 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 			StatusMsg:  thrift.StringPtr("Invalid Param"),
 		}, nil
 	}
-
 }
 
 // GetCommentList implements the CommentServiceImpl interface.
@@ -139,9 +145,10 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 		}, err
 	}
 	commentList := make([]*comment.Comment, 0, len(comments))
+	actionId := request.GetUserId()
 	for _, com := range comments {
 		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: request.GetUserId(),
+			ActorId: actionId,
 			UserId:  int32(com.UserId),
 		})
 		if err != nil {
@@ -152,7 +159,7 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 				CommentList: nil,
 			}, err
 		}
-		commentList = append(commentList, pack.Comment(&com, userResp.User))
+		commentList = append(commentList, pack.Comment(&com, userResp.GetUser()))
 	}
 	return &comment.CommentListResponse{
 		StatusCode:  0,
