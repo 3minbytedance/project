@@ -110,8 +110,8 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 
 // GetFollowList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relation.FollowListRequest) (resp *relation.FollowListResponse, err error) {
-	CheckAndSetRedisRelationKey(uint(request.UserId), redis.FollowList)
-	id, err := redis.GetFollowListById(uint(request.UserId))
+	CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowList)
+	id, err := redis.GetFollowListById(uint(request.GetToUserId()))
 	if err != nil {
 		return &relation.FollowListResponse{
 			StatusCode: 1,
@@ -122,7 +122,7 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	followList := make([]*user.User, 0, len(id))
 	for _, com := range id {
 		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: request.UserId,
+			ActorId: request.GetUserId(),
 			UserId:  int32(com),
 		})
 		if err != nil {
@@ -144,8 +144,8 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 
 // GetFollowerList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *relation.FollowerListRequest) (resp *relation.FollowerListResponse, err error) {
-	CheckAndSetRedisRelationKey(uint(request.UserId), redis.FollowerList)
-	id, err := redis.GetFollowerListById(uint(request.UserId))
+	CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowerList)
+	id, err := redis.GetFollowerListById(uint(request.GetToUserId()))
 	if err != nil {
 		return &relation.FollowerListResponse{
 			StatusCode: 1,
@@ -156,7 +156,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 	followerList := make([]*user.User, 0, len(id))
 	for _, com := range id {
 		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: request.UserId,
+			ActorId: request.GetUserId(),
 			UserId:  int32(com),
 		})
 		if err != nil {
@@ -178,9 +178,9 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 
 // GetFriendList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relation.FriendListRequest) (resp *relation.FriendListResponse, err error) {
-	CheckAndSetRedisRelationKey(uint(request.UserId), redis.FollowList)
-	CheckAndSetRedisRelationKey(uint(request.UserId), redis.FollowerList)
-	id, err := redis.GetFriendListById(uint(request.UserId))
+	CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowList)
+	CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowerList)
+	id, err := redis.GetFriendListById(uint(request.GetToUserId()))
 	if err != nil {
 		return &relation.FriendListResponse{
 			StatusCode: 1,
@@ -263,22 +263,27 @@ func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, userId i
 
 // IsFollowing implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) IsFollowing(ctx context.Context, request *relation.IsFollowingRequest) (resp bool, err error) {
+	actionId := request.GetActorId()
+	toUserId := request.GetUserId()
+	if actionId == toUserId {
+		return true, nil
+	}
 	// redis存在key
-	if redis.IsExistUserSetField(uint(request.ActorId), redis.FollowList) {
-		found := redis.IsInMyFollowList(uint(request.ActorId), uint(request.UserId))
+	if redis.IsExistUserSetField(uint(actionId), redis.FollowList) {
+		found := redis.IsInMyFollowList(uint(actionId), uint(toUserId))
 		return found, nil
 	}
 	// redis不存在，从数据库查询是否已关注
-	found := mysql.IsFollowing(uint(request.ActorId), uint(request.UserId))
+	found := mysql.IsFollowing(uint(actionId), uint(toUserId))
 	// 获取所有关注列表id
-	followListId, err := mysql.GetFollowList(uint(request.ActorId))
+	followListId, err := mysql.GetFollowList(uint(actionId))
 	if err != nil {
 		zap.L().Error("GetFollowList error", zap.Error(err))
 		return false, err
 	}
 	// 往redis赋值
 	go func() {
-		err = redis.SetFollowListByUserId(uint(request.ActorId), followListId)
+		err = redis.SetFollowListByUserId(uint(actionId), followListId)
 		if err != nil {
 			zap.L().Error("SetFollowListByUserId error", zap.Error(err))
 			return
