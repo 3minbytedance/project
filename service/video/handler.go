@@ -24,6 +24,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -61,7 +62,6 @@ func init() {
 		log.Fatal(err)
 	}
 }
-
 
 func UploadToOSS(localPath string, remotePath string) error {
 	reqUrl := biz.OSS
@@ -113,9 +113,9 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 		})
 		commentCount, _ := commentClient.GetCommentCount(ctx, int32(v.ID))
 		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int32(v.ID))
-		isFavorite,_ := favoriteClient.IsUserFavorite(ctx,&favorite.IsUserFavoriteRequest{
-			UserId: currentId,
-			VideoId:int32(v.ID),
+		isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
+			UserId:  currentId,
+			VideoId: int32(v.ID),
 		})
 		videoResponse := video.Video{
 			Id:            int32(v.ID),
@@ -141,20 +141,16 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 
 // PublishVideo implements the VideoServiceImpl interface.
 func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.PublishVideoRequest) (resp *video.PublishVideoResponse, err error) {
-	// 生成 UUID
-
-	fileId := strings.Replace(uuid.New().String(), "-", "", -1)
-	// 生成新的文件名
-	videoFileName := fileId + ".mp4"
-
-	//todo 待改
-	//err := SaveUploadedFile(file, "./public/"+videoFileName)
-	//if err != nil {
-	//	return &video.PublishVideoResponse{
-	//		StatusCode: 1,
-	//		StatusMsg:  nil,
-	//	}, nil
-	//}
+	// 根据UUID生成新的文件名
+	videoFileName := strings.Replace(uuid.New().String(), "-", "", -1) + ".mp4"
+	videoPath := biz.FileLocalPath + videoFileName
+	err = os.WriteFile(videoPath, request.GetData(), 0644)
+	if err != nil {
+		return &video.PublishVideoResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("文件上传失败"),
+		}, err
+	}
 
 	// MQ 异步解耦,解决返回json阻塞 TODO
 
@@ -162,8 +158,8 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 
 	//视频存储到oss
 	go func() {
-		if err := UploadToOSS(biz.FileLocalPath+request.GetTitle(), request.GetTitle()); err != nil {
-			log.Fatal(err)
+		if err := UploadToOSS(videoPath, videoFileName); err != nil {
+			zap.L().Error("上传视频到OSS失败", zap.Error(err))
 			return
 		}
 	}()
@@ -171,7 +167,7 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 	// 图片存储到oss
 	go func() {
 		if err := UploadToOSS(biz.FileLocalPath+imgName, imgName); err != nil {
-			log.Fatal(err)
+			zap.L().Error("上传图片到OSS失败", zap.Error(err))
 			return
 		}
 	}()
@@ -182,17 +178,21 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 			cnt := mysql.FindWorkCountsByAuthorId(uint(request.GetUserId()))
 			err := redis.SetWorkCountByUserId(uint(request.GetUserId()), cnt)
 			if err != nil {
-				log.Println("redis更新评论数失败", err)
+				zap.L().Error("redis更新作品数失败", zap.Error(err))
 				return
 			}
 			return
 		}
 		err := redis.IncrementWorkCountByUserId(uint(request.GetUserId()))
 		if err != nil {
-			log.Println(err)
+			zap.L().Error("redis增加其作品数失败", zap.Error(err))
+			return
 		}
 	}()
-	return
+	return &video.PublishVideoResponse{
+		StatusCode: 0,
+		StatusMsg:thrift.StringPtr("Success"),
+	}, nil
 }
 
 // GetPublishVideoList implements the VideoServiceImpl interface.
@@ -213,7 +213,10 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 		})
 		commentCount, _ := commentClient.GetCommentCount(ctx, int32(v.ID))
 		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int32(v.ID))
-
+		isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
+			UserId:  request.GetToUserId(),
+			VideoId: int32(v.ID),
+		})
 		videoResponse := video.Video{
 			Id:            int32(v.ID),
 			Author:        userResp.GetUser(),
@@ -221,7 +224,7 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 			CoverUrl:      biz.OSS + v.CoverUrl,
 			FavoriteCount: favoriteCount,
 			CommentCount:  commentCount,
-			//IsFavorite:    IsUserFavorite(userID, video.ID), // todo
+			IsFavorite:    isFavorite,
 			Title: v.Title,
 		}
 		videoList = append(videoList, &videoResponse)
@@ -240,19 +243,18 @@ func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, userId int32) (resp
 	if redis.IsExistUserField(uint(userId), redis.WorkCountField) {
 		workCount, err := redis.GetWorkCountByUserId(uint(userId))
 		if err != nil {
-			log.Println("从redis中获取作品数失败：", err)
+			zap.L().Error("从redis中获取作品数失败", zap.Error(err))
 		}
 		return int32(workCount), nil
 	}
 
 	// 2. 缓存中没有数据，从数据库中获取
 	workCount := mysql.FindWorkCountsByAuthorId(uint(userId))
-	log.Println("从数据库中获取作品数成功：", workCount)
 	// 将作品数写入redis
 	go func() {
 		err := redis.SetWorkCountByUserId(uint(userId), workCount)
 		if err != nil {
-			log.Println("将作品数写入redis失败：", err)
+			zap.L().Error("将作品数写入redis失败", zap.Error(err))
 		}
 	}()
 	return int32(workCount), nil
