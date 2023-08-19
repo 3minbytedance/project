@@ -186,6 +186,7 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 		err := redis.IncrementWorkCountByUserId(uint(request.GetUserId()))
 		if err != nil {
 			zap.L().Error("redis增加其作品数失败", zap.Error(err))
+			return
 		}
 	}()
 	return &video.PublishVideoResponse{

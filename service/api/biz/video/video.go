@@ -25,9 +25,9 @@ import (
 
 var videoClient videoservice.Client
 
-// 限制上传文件的最大大小 200MB 最小大小1MB
+// 限制上传文件的最大大小 200MB 最小大小10KB
 const maxFileSize = 200 * 1024 * 1024
-const minFileSize = 1 * 1024 * 1024
+const minFileSize = 10 * 1024
 
 func init() {
 
@@ -113,15 +113,18 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 	file, err := c.FormFile("data")
 
 	if token == "" || title == "" || err != nil || file.Size == 0 {
-		c.JSON(http.StatusBadRequest, video.PublishVideoResponse{
+
+		c.JSON(http.StatusOK, video.PublishVideoResponse{
 			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("参数不合法"),
 		})
 		return
 	}
 	userToken, err := common.ParseToken(token)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, video.PublishVideoResponse{
+		c.JSON(http.StatusOK, video.PublishVideoResponse{
 			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("token参数不合法"),
 		})
 		return
 	}
@@ -131,7 +134,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 	if !isValidFileType(ext) {
 		msg := "无效的文件类型"
 		zap.L().Error(msg)
-		c.JSON(http.StatusBadRequest, video.PublishVideoResponse{
+		c.JSON(http.StatusOK, video.PublishVideoResponse{
 			StatusCode: 1,
 			StatusMsg:  &msg})
 		return
@@ -139,8 +142,10 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 
 	// 校验文件大小
 	if file.Size > maxFileSize || file.Size < minFileSize {
-		c.JSON(http.StatusBadRequest, video.PublishVideoResponse{
+		formatInt := strconv.FormatInt(file.Size, 10)
+		c.JSON(http.StatusOK, video.PublishVideoResponse{
 			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr(formatInt),
 		})
 		return
 	}
@@ -152,6 +157,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 		zap.L().Error("打开文件失败", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, video.PublishVideoResponse{
 			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("打开文件失败"),
 		})
 		return
 	}
@@ -164,7 +170,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 	req := &video.PublishVideoRequest{
 		UserId: int32(userId),
 		Title:  title,
-		Data: data,
+		Data:   data,
 	}
 
 	resp, err := videoClient.PublishVideo(ctx, req)
