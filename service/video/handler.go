@@ -7,9 +7,8 @@ import (
 	"douyin/constant/biz"
 	"douyin/dal/mysql"
 	"douyin/kitex_gen/comment/commentservice"
+	"douyin/kitex_gen/favorite"
 	"douyin/kitex_gen/favorite/favoriteservice"
-	"douyin/kitex_gen/relation"
-	"douyin/kitex_gen/relation/relationservice"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	video "douyin/kitex_gen/video"
@@ -20,7 +19,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
-	cos "github.com/tencentyun/cos-go-sdk-v5"
+	"github.com/tencentyun/cos-go-sdk-v5"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
@@ -31,7 +30,9 @@ import (
 var userClient userservice.Client
 var commentClient commentservice.Client
 var favoriteClient favoriteservice.Client
-var relationClient relationservice.Client
+
+// VideoServiceImpl implements the last service interface defined in the IDL.
+type VideoServiceImpl struct{}
 
 func init() {
 	// Etcd 服务发现
@@ -56,19 +57,39 @@ func init() {
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.FavoriteServiceName}),
 	)
-	relationClient, err = relationservice.NewClient(
-		constant.CommentServiceName,
-		client.WithResolver(r),
-		client.WithSuite(tracing.NewClientSuite()),
-		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.RelationServiceName}),
-	)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-// VideoServiceImpl implements the last service interface defined in the IDL.
-type VideoServiceImpl struct{}
+
+func UploadToOSS(localPath string, remotePath string) error {
+	reqUrl := biz.OSS
+	u, _ := url.Parse(reqUrl)
+	b := &cos.BaseURL{BucketURL: u}
+	c := cos.NewClient(b, &http.Client{
+		Transport: &cos.AuthorizationTransport{
+			SecretID:     biz.SecretId,
+			SecretKey:    biz.SecretKey,
+			SessionToken: biz.SessionToken,
+		},
+	})
+
+	_, _, err := c.Object.Upload(context.Background(), remotePath, localPath, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func GetVideoCover(fileName string) string {
+	// 生成图片 UUID
+	imgId := uuid.New().String()
+	// 修改文件名
+	imgName := strings.Replace(imgId, "-", "", -1) + ".jpg"
+	//调用ffmpeg 获取封面图
+	common.GetVideoFrame(biz.FileLocalPath+fileName, biz.FileLocalPath+imgName)
+	return imgName
+}
 
 // VideoFeed implements the VideoServiceImpl interface.
 func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFeedRequest) (resp *video.VideoFeedResponse, err error) {
@@ -82,27 +103,20 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 		}, err
 	}
 	currentId := request.GetUserId()
-	isLogged := false
-	if currentId != 0 {
-		isLogged = true
-	}
 
 	// 将查询结果转换为VideoResponse类型
 	videoList := make([]*video.Video, 0, len(videos))
 	for _, v := range videos {
 		userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			UserId: int32(v.AuthorId),
+			ActorId: currentId,
+			UserId:  int32(v.AuthorId),
 		})
-		if isLogged {
-			following, _ := relationClient.IsFollowing(ctx, &relation.IsFollowingRequest{
-				ActorId: currentId,
-				UserId:  int32(v.AuthorId),
-			})
-			userResp.GetUser().SetIsFollow(following)
-		}
 		commentCount, _ := commentClient.GetCommentCount(ctx, int32(v.ID))
 		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int32(v.ID))
-
+		isFavorite,_ := favoriteClient.IsUserFavorite(ctx,&favorite.IsUserFavoriteRequest{
+			UserId: currentId,
+			VideoId:int32(v.ID),
+		})
 		videoResponse := video.Video{
 			Id:            int32(v.ID),
 			Author:        userResp.GetUser(),
@@ -110,8 +124,8 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 			CoverUrl:      biz.OSS + v.CoverUrl,
 			FavoriteCount: favoriteCount,
 			CommentCount:  commentCount,
-			//IsFavorite:    IsUserFavorite(userID, video.ID), // todo
-			Title: v.Title,
+			IsFavorite:    isFavorite,
+			Title:         v.Title,
 		}
 		videoList = append(videoList, &videoResponse)
 	}
@@ -123,7 +137,6 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 		VideoList:  videoList,
 		NextTime:   &nextTime,
 	}, nil
-
 }
 
 // PublishVideo implements the VideoServiceImpl interface.
@@ -220,43 +233,12 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 	}, nil
 }
 
-// UploadToOSS  上传至腾讯OSS
-func UploadToOSS(localPath string, remotePath string) error {
-	reqUrl := biz.OSS
-	u, _ := url.Parse(reqUrl)
-	b := &cos.BaseURL{BucketURL: u}
-	c := cos.NewClient(b, &http.Client{
-		Transport: &cos.AuthorizationTransport{
-			SecretID:     biz.SecretId,
-			SecretKey:    biz.SecretKey,
-			SessionToken: biz.SessionToken,
-		},
-	})
-
-	_, _, err := c.Object.Upload(context.Background(), remotePath, localPath, nil)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func GetVideoCover(fileName string) string {
-	// 生成图片 UUID
-	imgId := uuid.New().String()
-	// 修改文件名
-	imgName := strings.Replace(imgId, "-", "", -1) + ".jpg"
-	//调用ffmpeg 获取封面图
-	common.GetVideoFrame(biz.FileLocalPath+fileName, biz.FileLocalPath+imgName)
-	return imgName
-}
-
-// GetWorkCount 返回某个用户的作品数
-func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, request *video.GetWorkCountRequest) (resp int32, err error) {
-	userId := uint(request.GetUserId())
+// GetWorkCount implements the VideoServiceImpl interface.
+func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, userId int32) (resp int32, err error) {
 	// 从redis中获取作品数
 	// 1. 缓存中有数据, 直接返回
-	if redis.IsExistUserField(userId, redis.WorkCountField) {
-		workCount, err := redis.GetWorkCountByUserId(userId)
+	if redis.IsExistUserField(uint(userId), redis.WorkCountField) {
+		workCount, err := redis.GetWorkCountByUserId(uint(userId))
 		if err != nil {
 			log.Println("从redis中获取作品数失败：", err)
 		}
@@ -264,11 +246,11 @@ func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, request *video.GetW
 	}
 
 	// 2. 缓存中没有数据，从数据库中获取
-	workCount := mysql.FindWorkCountsByAuthorId(userId)
+	workCount := mysql.FindWorkCountsByAuthorId(uint(userId))
 	log.Println("从数据库中获取作品数成功：", workCount)
 	// 将作品数写入redis
 	go func() {
-		err := redis.SetWorkCountByUserId(userId, workCount)
+		err := redis.SetWorkCountByUserId(uint(userId), workCount)
 		if err != nil {
 			log.Println("将作品数写入redis失败：", err)
 		}

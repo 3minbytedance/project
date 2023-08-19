@@ -9,7 +9,7 @@ import (
 	"douyin/kitex_gen/favorite/favoriteservice"
 	"douyin/kitex_gen/relation"
 	"douyin/kitex_gen/relation/relationservice"
-	user "douyin/kitex_gen/user"
+	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/video/videoservice"
 	"douyin/mw/redis"
 	"douyin/service/user/pack"
