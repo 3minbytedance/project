@@ -65,7 +65,6 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 
 	switch request.GetActionType() {
 	case 1: // 新增评论
-
 		commentData := model.Comment{
 			UserId:  uint(request.GetUserId()),
 			VideoId: uint(request.GetVideoId()),
@@ -77,7 +76,6 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 			resp.StatusMsg = thrift.StringPtr(err.Error())
 			return
 		}
-
 		// 增加redis
 		go func() {
 			// todo 延迟双删
@@ -93,7 +91,6 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 				zap.L().Error("更新videoId的评论数失败", zap.Error(err))
 			}
 		}()
-
 		// 封装返回数据
 		//comment := pack.Comment(&commentData, user.User)
 		return &comment.CommentActionResponse{
