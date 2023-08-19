@@ -6,9 +6,7 @@ import (
 	"douyin/constant"
 	"douyin/constant/biz"
 	"douyin/dal/mysql"
-	"douyin/kitex_gen/comment"
 	"douyin/kitex_gen/comment/commentservice"
-	"douyin/kitex_gen/favorite"
 	"douyin/kitex_gen/favorite/favoriteservice"
 	"douyin/kitex_gen/relation"
 	"douyin/kitex_gen/relation/relationservice"
@@ -100,21 +98,18 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 				ActorId: currentId,
 				UserId:  int32(v.AuthorId),
 			})
-			userResp.GetUser().SetIsFollow(following.GetResult_())
+			userResp.GetUser().SetIsFollow(following)
 		}
-		commentCount, _ := commentClient.GetCommentCount(ctx, &comment.CommentCountRequest{
-			VideoId: int32(v.ID),
-		})
-		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, &favorite.VideoFavoriteCountRequest{
-			VideoId: int32(v.ID)})
+		commentCount, _ := commentClient.GetCommentCount(ctx, int32(v.ID))
+		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int32(v.ID))
 
 		videoResponse := video.Video{
 			Id:            int32(v.ID),
 			Author:        userResp.GetUser(),
 			PlayUrl:       biz.OSS + v.VideoUrl,
 			CoverUrl:      biz.OSS + v.CoverUrl,
-			FavoriteCount: favoriteCount.GetCount(),
-			CommentCount:  commentCount.GetCommentCount(),
+			FavoriteCount: favoriteCount,
+			CommentCount:  commentCount,
 			//IsFavorite:    IsUserFavorite(userID, video.ID), // todo
 			Title: v.Title,
 		}
@@ -134,6 +129,7 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 // PublishVideo implements the VideoServiceImpl interface.
 func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.PublishVideoRequest) (resp *video.PublishVideoResponse, err error) {
 	// 生成 UUID
+
 	fileId := strings.Replace(uuid.New().String(), "-", "", -1)
 	// 生成新的文件名
 	videoFileName := fileId + ".mp4"
@@ -199,21 +195,19 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 	videoList := make([]*video.Video, 0, len(videos))
 	for _, v := range videos {
 		userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			UserId: request.GetToUserId(),
+			UserId:  request.GetToUserId(),
+			ActorId: request.GetFromUserId(),
 		})
-		commentCount, _ := commentClient.GetCommentCount(ctx, &comment.CommentCountRequest{
-			VideoId: int32(v.ID),
-		})
-		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, &favorite.VideoFavoriteCountRequest{
-			VideoId: int32(v.ID)})
+		commentCount, _ := commentClient.GetCommentCount(ctx, int32(v.ID))
+		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int32(v.ID))
 
 		videoResponse := video.Video{
 			Id:            int32(v.ID),
 			Author:        userResp.GetUser(),
 			PlayUrl:       biz.OSS + v.VideoUrl,
 			CoverUrl:      biz.OSS + v.CoverUrl,
-			FavoriteCount: favoriteCount.GetCount(),
-			CommentCount:  commentCount.GetCommentCount(),
+			FavoriteCount: favoriteCount,
+			CommentCount:  commentCount,
 			//IsFavorite:    IsUserFavorite(userID, video.ID), // todo
 			Title: v.Title,
 		}

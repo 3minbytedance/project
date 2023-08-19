@@ -311,7 +311,8 @@ func (p *User) FastReadField6(buf []byte) (int, error) {
 		return offset, err
 	} else {
 		offset += l
-		p.Avatar = &v
+
+		p.Avatar = v
 
 	}
 	return offset, nil
@@ -324,7 +325,8 @@ func (p *User) FastReadField7(buf []byte) (int, error) {
 		return offset, err
 	} else {
 		offset += l
-		p.BackgroundImage = &v
+
+		p.BackgroundImage = v
 
 	}
 	return offset, nil
@@ -337,7 +339,8 @@ func (p *User) FastReadField8(buf []byte) (int, error) {
 		return offset, err
 	} else {
 		offset += l
-		p.Signature = &v
+
+		p.Signature = v
 
 	}
 	return offset, nil
@@ -350,7 +353,8 @@ func (p *User) FastReadField9(buf []byte) (int, error) {
 		return offset, err
 	} else {
 		offset += l
-		p.TotalFavorited = &v
+
+		p.TotalFavorited = v
 
 	}
 	return offset, nil
@@ -363,7 +367,8 @@ func (p *User) FastReadField10(buf []byte) (int, error) {
 		return offset, err
 	} else {
 		offset += l
-		p.WorkCount = &v
+
+		p.WorkCount = v
 
 	}
 	return offset, nil
@@ -376,7 +381,8 @@ func (p *User) FastReadField11(buf []byte) (int, error) {
 		return offset, err
 	} else {
 		offset += l
-		p.FavoriteCount = &v
+
+		p.FavoriteCount = v
 
 	}
 	return offset, nil
@@ -476,67 +482,55 @@ func (p *User) fastWriteField5(buf []byte, binaryWriter bthrift.BinaryWriter) in
 
 func (p *User) fastWriteField6(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	if p.IsSetAvatar() {
-		offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "avatar", thrift.STRING, 6)
-		offset += bthrift.Binary.WriteStringNocopy(buf[offset:], binaryWriter, *p.Avatar)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "avatar", thrift.STRING, 6)
+	offset += bthrift.Binary.WriteStringNocopy(buf[offset:], binaryWriter, p.Avatar)
 
-		offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
-	}
+	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
 }
 
 func (p *User) fastWriteField7(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	if p.IsSetBackgroundImage() {
-		offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "background_image", thrift.STRING, 7)
-		offset += bthrift.Binary.WriteStringNocopy(buf[offset:], binaryWriter, *p.BackgroundImage)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "background_image", thrift.STRING, 7)
+	offset += bthrift.Binary.WriteStringNocopy(buf[offset:], binaryWriter, p.BackgroundImage)
 
-		offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
-	}
+	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
 }
 
 func (p *User) fastWriteField8(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	if p.IsSetSignature() {
-		offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "signature", thrift.STRING, 8)
-		offset += bthrift.Binary.WriteStringNocopy(buf[offset:], binaryWriter, *p.Signature)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "signature", thrift.STRING, 8)
+	offset += bthrift.Binary.WriteStringNocopy(buf[offset:], binaryWriter, p.Signature)
 
-		offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
-	}
+	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
 }
 
 func (p *User) fastWriteField9(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	if p.IsSetTotalFavorited() {
-		offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "total_favorited", thrift.I32, 9)
-		offset += bthrift.Binary.WriteI32(buf[offset:], *p.TotalFavorited)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "total_favorited", thrift.I32, 9)
+	offset += bthrift.Binary.WriteI32(buf[offset:], p.TotalFavorited)
 
-		offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
-	}
+	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
 }
 
 func (p *User) fastWriteField10(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	if p.IsSetWorkCount() {
-		offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "work_count", thrift.I32, 10)
-		offset += bthrift.Binary.WriteI32(buf[offset:], *p.WorkCount)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "work_count", thrift.I32, 10)
+	offset += bthrift.Binary.WriteI32(buf[offset:], p.WorkCount)
 
-		offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
-	}
+	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
 }
 
 func (p *User) fastWriteField11(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	if p.IsSetFavoriteCount() {
-		offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "favorite_count", thrift.I32, 11)
-		offset += bthrift.Binary.WriteI32(buf[offset:], *p.FavoriteCount)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "favorite_count", thrift.I32, 11)
+	offset += bthrift.Binary.WriteI32(buf[offset:], p.FavoriteCount)
 
-		offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
-	}
+	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
 }
 
@@ -587,67 +581,55 @@ func (p *User) field5Length() int {
 
 func (p *User) field6Length() int {
 	l := 0
-	if p.IsSetAvatar() {
-		l += bthrift.Binary.FieldBeginLength("avatar", thrift.STRING, 6)
-		l += bthrift.Binary.StringLengthNocopy(*p.Avatar)
+	l += bthrift.Binary.FieldBeginLength("avatar", thrift.STRING, 6)
+	l += bthrift.Binary.StringLengthNocopy(p.Avatar)
 
-		l += bthrift.Binary.FieldEndLength()
-	}
+	l += bthrift.Binary.FieldEndLength()
 	return l
 }
 
 func (p *User) field7Length() int {
 	l := 0
-	if p.IsSetBackgroundImage() {
-		l += bthrift.Binary.FieldBeginLength("background_image", thrift.STRING, 7)
-		l += bthrift.Binary.StringLengthNocopy(*p.BackgroundImage)
+	l += bthrift.Binary.FieldBeginLength("background_image", thrift.STRING, 7)
+	l += bthrift.Binary.StringLengthNocopy(p.BackgroundImage)
 
-		l += bthrift.Binary.FieldEndLength()
-	}
+	l += bthrift.Binary.FieldEndLength()
 	return l
 }
 
 func (p *User) field8Length() int {
 	l := 0
-	if p.IsSetSignature() {
-		l += bthrift.Binary.FieldBeginLength("signature", thrift.STRING, 8)
-		l += bthrift.Binary.StringLengthNocopy(*p.Signature)
+	l += bthrift.Binary.FieldBeginLength("signature", thrift.STRING, 8)
+	l += bthrift.Binary.StringLengthNocopy(p.Signature)
 
-		l += bthrift.Binary.FieldEndLength()
-	}
+	l += bthrift.Binary.FieldEndLength()
 	return l
 }
 
 func (p *User) field9Length() int {
 	l := 0
-	if p.IsSetTotalFavorited() {
-		l += bthrift.Binary.FieldBeginLength("total_favorited", thrift.I32, 9)
-		l += bthrift.Binary.I32Length(*p.TotalFavorited)
+	l += bthrift.Binary.FieldBeginLength("total_favorited", thrift.I32, 9)
+	l += bthrift.Binary.I32Length(p.TotalFavorited)
 
-		l += bthrift.Binary.FieldEndLength()
-	}
+	l += bthrift.Binary.FieldEndLength()
 	return l
 }
 
 func (p *User) field10Length() int {
 	l := 0
-	if p.IsSetWorkCount() {
-		l += bthrift.Binary.FieldBeginLength("work_count", thrift.I32, 10)
-		l += bthrift.Binary.I32Length(*p.WorkCount)
+	l += bthrift.Binary.FieldBeginLength("work_count", thrift.I32, 10)
+	l += bthrift.Binary.I32Length(p.WorkCount)
 
-		l += bthrift.Binary.FieldEndLength()
-	}
+	l += bthrift.Binary.FieldEndLength()
 	return l
 }
 
 func (p *User) field11Length() int {
 	l := 0
-	if p.IsSetFavoriteCount() {
-		l += bthrift.Binary.FieldBeginLength("favorite_count", thrift.I32, 11)
-		l += bthrift.Binary.I32Length(*p.FavoriteCount)
+	l += bthrift.Binary.FieldBeginLength("favorite_count", thrift.I32, 11)
+	l += bthrift.Binary.I32Length(p.FavoriteCount)
 
-		l += bthrift.Binary.FieldEndLength()
-	}
+	l += bthrift.Binary.FieldEndLength()
 	return l
 }
 

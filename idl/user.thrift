@@ -6,12 +6,12 @@ struct User {
     3: i32 follow_count, // 关注总数
     4: i32 follower_count, // 粉丝总数
     5: bool is_follow, // true-已关注，false-未关注
-    6: optional string avatar, // 用户头像
-    7: optional string background_image, // 用户个人顶部大图
-    8: optional string signature, // 个人简介
-    9: optional i32 total_favorited, // 获赞数量
-    10: optional i32 work_count, // 作品数量
-    11: optional i32 favorite_count, // 点赞数量
+    6: string avatar, // 用户头像
+    7: string background_image, // 用户个人顶部大图
+    8: string signature, // 个人简介
+    9: i32 total_favorited, // 获赞数量
+    10: i32 work_count, // 作品数量
+    11: i32 favorite_count, // 点赞数量
 }
 
 struct UserRegisterRequest {
@@ -73,6 +73,4 @@ service UserService {
     UserRegisterResponse Register(1: UserRegisterRequest Request),
     UserLoginResponse Login(1: UserLoginRequest Request),
     UserInfoByIdResponse GetUserInfoById(1: UserInfoByIdRequest Request),
-    UserInfoByNameResponse GetUserInfoByName(1: UserInfoByNameRequest Request),
-    UserExistsResponse CheckUserExists(1: UserExistsRequest Request),
 }

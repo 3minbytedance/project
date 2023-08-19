@@ -138,7 +138,7 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 			CommentList: nil,
 		}, err
 	}
-	commentList := make([]*comment.Comment, 0)
+	commentList := make([]*comment.Comment, 0, len(comments))
 	for _, com := range comments {
 		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 			ActorId: request.GetUserId(),
@@ -159,14 +159,6 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 		StatusMsg:   thrift.StringPtr("success"),
 		CommentList: commentList,
 	}, nil
-
-	return
-}
-
-// GetCommentCount implements the CommentServiceImpl interface.
-func (s *CommentServiceImpl) GetCommentCount(ctx context.Context, request *comment.CommentCountRequest) (resp *comment.CommentCountResponse, err error) {
-	// TODO: Your code here...
-	return
 }
 
 // checkAndSetRedisCommentKey
@@ -178,14 +170,29 @@ func checkAndSetRedisCommentKey(videoId uint) (isSet bool, count int64) {
 		// 获取最新commentCount
 		cnt, err := mysql.GetCommentCnt(videoId)
 		if err != nil {
-			log.Println("mysql获取评论数失败", err)
+			zap.L().Error("mysql获取评论数失败", zap.Error(err))
 		}
 		// 设置最新commentCount
 		err = redis.SetCommentCountByVideoId(videoId, cnt)
 		if err != nil {
-			log.Println("redis更新评论数失败", err)
+			zap.L().Error("redis更新评论数失败", zap.Error(err))
 		}
 		return true, cnt
 	}
 	return false, cnt
+}
+
+// GetCommentCount implements the CommentServiceImpl interface.
+func (s *CommentServiceImpl) GetCommentCount(ctx context.Context, videoId int32) (resp int32, err error) {
+	isSetKey, count := checkAndSetRedisCommentKey(uint(videoId))
+	if isSetKey {
+		return int32(count), nil
+	}
+	// 从redis中获取评论数
+	count, err = redis.GetCommentCountByVideoId(uint(videoId))
+	if err != nil {
+		zap.L().Error("redis获取评论数失败", zap.Error(err))
+		return 0, err
+	}
+	return int32(count), nil
 }

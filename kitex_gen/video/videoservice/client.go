@@ -14,7 +14,7 @@ type Client interface {
 	VideoFeed(ctx context.Context, request *video.VideoFeedRequest, callOptions ...callopt.Option) (r *video.VideoFeedResponse, err error)
 	PublishVideo(ctx context.Context, request *video.PublishVideoRequest, callOptions ...callopt.Option) (r *video.PublishVideoResponse, err error)
 	GetPublishVideoList(ctx context.Context, request *video.PublishVideoListRequest, callOptions ...callopt.Option) (r *video.PublishVideoListResponse, err error)
-	GetWorkCount(ctx context.Context, request *video.GetWorkCountRequest, callOptions ...callopt.Option) (r int32, err error)
+	GetWorkCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -61,7 +61,7 @@ func (p *kVideoServiceClient) GetPublishVideoList(ctx context.Context, request *
 	return p.kClient.GetPublishVideoList(ctx, request)
 }
 
-func (p *kVideoServiceClient) GetWorkCount(ctx context.Context, request *video.GetWorkCountRequest, callOptions ...callopt.Option) (r int32, err error) {
+func (p *kVideoServiceClient) GetWorkCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.GetWorkCount(ctx, request)
+	return p.kClient.GetWorkCount(ctx, userId)
 }

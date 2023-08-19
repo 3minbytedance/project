@@ -55,7 +55,7 @@ func (s *MessageServiceImpl) MessageChat(ctx context.Context, request *message.M
 		}, err
 	}
 	// 不是好友关系
-	if !isFriend.GetResult_() {
+	if !isFriend {
 		zap.L().Info("Not a friend, cannot see chat list")
 		return &message.MessageChatResponse{
 			StatusCode: 1,
@@ -99,7 +99,7 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 		}, err
 	}
 	// 不是好友关系
-	if !isFriend.GetResult_() {
+	if !isFriend {
 		zap.L().Info("Not a friend, cannot see chat list")
 		return &message.MessageActionResponse{
 			StatusCode: 1,

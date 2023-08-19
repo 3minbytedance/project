@@ -76,11 +76,11 @@ func newCommentServiceGetCommentListResult() interface{} {
 func getCommentCountHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
 	realArg := arg.(*comment.CommentServiceGetCommentCountArgs)
 	realResult := result.(*comment.CommentServiceGetCommentCountResult)
-	success, err := handler.(comment.CommentService).GetCommentCount(ctx, realArg.Request)
+	success, err := handler.(comment.CommentService).GetCommentCount(ctx, realArg.VideoId)
 	if err != nil {
 		return err
 	}
-	realResult.Success = success
+	realResult.Success = &success
 	return nil
 }
 func newCommentServiceGetCommentCountArgs() interface{} {
@@ -121,9 +121,9 @@ func (p *kClient) GetCommentList(ctx context.Context, request *comment.CommentLi
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) GetCommentCount(ctx context.Context, request *comment.CommentCountRequest) (r *comment.CommentCountResponse, err error) {
+func (p *kClient) GetCommentCount(ctx context.Context, videoId int32) (r int32, err error) {
 	var _args comment.CommentServiceGetCommentCountArgs
-	_args.Request = request
+	_args.VideoId = videoId
 	var _result comment.CommentServiceGetCommentCountResult
 	if err = p.c.Call(ctx, "GetCommentCount", &_args, &_result); err != nil {
 		return

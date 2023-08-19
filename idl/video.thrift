@@ -59,5 +59,5 @@ service VideoService {
     VideoFeedResponse VideoFeed(1: VideoFeedRequest Request),
     PublishVideoResponse PublishVideo(1: PublishVideoRequest Request),
     PublishVideoListResponse GetPublishVideoList(1: PublishVideoListRequest Request),
-    i32 GetWorkCount(1:GetWorkCountRequest Request)
+    i32 GetWorkCount(1:i32 user_id)
 }

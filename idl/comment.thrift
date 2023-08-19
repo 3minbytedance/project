@@ -34,18 +34,8 @@ struct CommentListResponse {
     3: list<Comment> comment_list, // 评论列表
 }
 
-struct CommentCountRequest {
-    1: i32 video_id,
-}
-
-struct CommentCountResponse {
-    1: i32 status_code, // 状态码，0-成功，其他值-失败
-    2: optional string status_msg, // 返回状态描述
-    3: i32 comment_count, //评论数数量
-}
-
 service CommentService {
     CommentActionResponse CommentAction(1: CommentActionRequest Request),
     CommentListResponse GetCommentList(1: CommentListRequest Request),
-    CommentCountResponse GetCommentCount(1: CommentCountRequest Request),
+    i32 GetCommentCount(1: i32 video_id), //根据video_id获取评论数
 }

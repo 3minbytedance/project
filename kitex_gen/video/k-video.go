@@ -2866,7 +2866,7 @@ func (p *VideoServiceGetWorkCountArgs) FastRead(buf []byte) (int, error) {
 		}
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.STRUCT {
+			if fieldTypeId == thrift.I32 {
 				l, err = p.FastReadField1(buf[offset:])
 				offset += l
 				if err != nil {
@@ -2917,13 +2917,14 @@ ReadStructEndError:
 func (p *VideoServiceGetWorkCountArgs) FastReadField1(buf []byte) (int, error) {
 	offset := 0
 
-	tmp := NewGetWorkCountRequest()
-	if l, err := tmp.FastRead(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadI32(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
+
+		p.UserId = v
+
 	}
-	p.Request = tmp
 	return offset, nil
 }
 
@@ -2956,16 +2957,18 @@ func (p *VideoServiceGetWorkCountArgs) BLength() int {
 
 func (p *VideoServiceGetWorkCountArgs) fastWriteField1(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "Request", thrift.STRUCT, 1)
-	offset += p.Request.FastWriteNocopy(buf[offset:], binaryWriter)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I32, 1)
+	offset += bthrift.Binary.WriteI32(buf[offset:], p.UserId)
+
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
 }
 
 func (p *VideoServiceGetWorkCountArgs) field1Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("Request", thrift.STRUCT, 1)
-	l += p.Request.BLength()
+	l += bthrift.Binary.FieldBeginLength("user_id", thrift.I32, 1)
+	l += bthrift.Binary.I32Length(p.UserId)
+
 	l += bthrift.Binary.FieldEndLength()
 	return l
 }
@@ -3128,7 +3131,7 @@ func (p *VideoServiceGetPublishVideoListResult) GetResult() interface{} {
 }
 
 func (p *VideoServiceGetWorkCountArgs) GetFirstArgument() interface{} {
-	return p.Request
+	return p.UserId
 }
 
 func (p *VideoServiceGetWorkCountResult) GetResult() interface{} {

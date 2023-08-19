@@ -14,7 +14,8 @@ struct FavoriteActionResponse {
 }
 
 struct FavoriteListRequest {
-    1: i32 user_id, // 用户id
+    1: i32 action_id, // 当前操作用户的用户id
+    2: i32 user_id,   //列出user_id点赞的视频
 }
 
 struct FavoriteListResponse {
@@ -23,29 +24,17 @@ struct FavoriteListResponse {
     3: list<video.Video> video_list, // 用户点赞视频列表
 }
 
-struct VideoFavoriteCountRequest {
-    1: i32 video_id, // 视频id
+struct IsUserFavoriteRequest{
+    1: i32 user_id,  // 当前操作用户的用户id
+    2: i32 video_id, // 视频id
 }
 
-struct VideoFavoriteCountResponse {
-    1: i32 status_code,
-    2: optional string status_msg,
-    3: i32 count, // 点赞数
-}
-
-struct UserFavoriteCountRequest {
-    1: i32 user_id,
-}
-
-struct UserFavoriteCountResponse {
-    1: i32 status_code,
-    2: optional string status_msg,
-    3: i32 count, // 点赞数
-}
 
 service FavoriteService {
     FavoriteActionResponse FavoriteAction(1: FavoriteActionRequest Request),
     FavoriteListResponse GetFavoriteList(1: FavoriteListRequest Request),
-    VideoFavoriteCountResponse GetVideoFavoriteCount(1: VideoFavoriteCountRequest Request),
-    UserFavoriteCountResponse GetUserFavoriteCount(1: UserFavoriteCountRequest Request),
+    i32 GetVideoFavoriteCount(1: i32 video_id),//获取video_id的点赞总数
+    i32 GetUserFavoriteCount(1:i32 user_id), //获取user_id的点赞数
+    i32 GetUserTotalFavoritedCount(1:i32 user_id), //获取user_id的总获赞数量
+    bool IsUserFavorite(1:IsUserFavoriteRequest Request),
 }

@@ -5,12 +5,9 @@ import (
 	"douyin/constant"
 	"douyin/dal/model"
 	dalMySQL "douyin/dal/mysql"
-	comment "douyin/kitex_gen/comment"
 	"douyin/kitex_gen/comment/commentservice"
 	favorite "douyin/kitex_gen/favorite"
-	user "douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
-	"douyin/kitex_gen/video"
 	mwRedis "douyin/mw/redis"
 	"errors"
 	"fmt"
@@ -60,7 +57,7 @@ func (s *FavoriteServiceImpl) FavoriteAction(ctx context.Context, request *favor
 	videoId := uint(request.VideoId)
 	actionType := int(request.ActionType)
 
-	err = favoriteActions(userId, uint(videoId), actionType)
+	err = favoriteActions(userId, videoId, actionType)
 	//count, _ := service.GetFavoritesVideoCount(int64(videoId))
 	if err != nil {
 		return &favorite.FavoriteActionResponse{
@@ -74,86 +71,86 @@ func (s *FavoriteServiceImpl) FavoriteAction(ctx context.Context, request *favor
 	}, nil
 }
 
-// GetFavoriteList implements the FavoriteServiceImpl interface.
-func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favorite.FavoriteListRequest) (resp *favorite.FavoriteListResponse, err error) {
-	resp = new(favorite.FavoriteListResponse)
-	userId := request.UserId
+//// GetFavoriteList implements the FavoriteServiceImpl interface.
+//func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favorite.FavoriteListRequest) (resp *favorite.FavoriteListResponse, err error) {
+//	resp = new(favorite.FavoriteListResponse)
+//	userId := request.UserId
+//
+//	favoritesByUserId, err := getFavoritesByUserId(uint(userId))
+//	if err != nil {
+//		return nil, err
+//	}
+//	videos := make([]video.Video, 0)
+//	for _, id := range favoritesByUserId {
+//		videoByVideoId, _ := dalMySQL.FindVideoByVideoId(id)
+//		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{ActorId: request.GetUserId(),
+//			UserId: int32(videoByVideoId.AuthorId)})
+//		if err != nil {
+//			log.Println(err.Error())
+//		}
+//		commentCountResp, err := commentClient.GetCommentCount(ctx, &comment.CommentCountRequest{
+//			VideoId: int32(id),
+//		})
+//		if err != nil {
+//			log.Println(err.Error())
+//		}
+//		favoriteCount, err := getFavoritesVideoCount(id)
+//		if err != nil {
+//			log.Println(err.Error())
+//		}
+//		vid := video.Video{
+//			Id:            int32(videoByVideoId.ID),
+//			Author:        userResp.User,
+//			PlayUrl:       videoByVideoId.VideoUrl,
+//			CoverUrl:      videoByVideoId.CoverUrl,
+//			FavoriteCount: int32(favoriteCount),
+//			CommentCount:  commentCountResp.CommentCount,
+//			IsFavorite:    isUserFavorite(uint(userId), id),
+//			Title:         videoByVideoId.Title,
+//		}
+//		videos = append(videos, vid)
+//	}
+//	return &favorite.FavoriteListResponse{
+//		StatusCode: 0,
+//		StatusMsg:  thrift.StringPtr("get favorite video list done"),
+//	}, err
+//}
 
-	favoritesByUserId, err := getFavoritesByUserId(uint(userId))
-	if err != nil {
-		return nil, err
-	}
-	videos := make([]video.Video, 0)
-	for _, id := range favoritesByUserId {
-		videoByVideoId, _ := dalMySQL.FindVideoByVideoId(id)
-		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{ActorId: request.GetUserId(),
-			UserId: int32(videoByVideoId.AuthorId)})
-		if err != nil {
-			log.Println(err.Error())
-		}
-		commentCountResp, err := commentClient.GetCommentCount(ctx, &comment.CommentCountRequest{
-			VideoId: int32(id),
-		})
-		if err != nil {
-			log.Println(err.Error())
-		}
-		favoriteCount, err := getFavoritesVideoCount(id)
-		if err != nil {
-			log.Println(err.Error())
-		}
-		vid := video.Video{
-			Id:            int32(videoByVideoId.ID),
-			Author:        userResp.User,
-			PlayUrl:       videoByVideoId.VideoUrl,
-			CoverUrl:      videoByVideoId.CoverUrl,
-			FavoriteCount: int32(favoriteCount),
-			CommentCount:  commentCountResp.CommentCount,
-			IsFavorite:    isUserFavorite(uint(userId), id),
-			Title:         videoByVideoId.Title,
-		}
-		videos = append(videos, vid)
-	}
-	return &favorite.FavoriteListResponse{
-		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("get favorite video list done"),
-	}, err
-}
-
-// GetVideoFavoriteCount implements the FavoriteServiceImpl interface.
-func (s *FavoriteServiceImpl) GetVideoFavoriteCount(ctx context.Context, request *favorite.VideoFavoriteCountRequest) (resp *favorite.VideoFavoriteCountResponse, err error) {
-	videoId := request.VideoId
-	count, err := getFavoritesVideoCount(uint(videoId))
-	if err != nil {
-		return &favorite.VideoFavoriteCountResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr(err.Error()),
-			Count:      0,
-		}, err
-	}
-	return &favorite.VideoFavoriteCountResponse{
-		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("success"),
-		Count:      int32(count),
-	}, nil
-}
-
-// GetUserFavoriteCount implements the FavoriteServiceImpl interface.
-func (s *FavoriteServiceImpl) GetUserFavoriteCount(ctx context.Context, request *favorite.UserFavoriteCountRequest) (resp *favorite.UserFavoriteCountResponse, err error) {
-	userId := uint(request.UserId)
-	favoritesByUserId, err := getFavoritesByUserId(userId)
-	if err != nil {
-		return &favorite.UserFavoriteCountResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr(err.Error()),
-			Count:      0,
-		}, err
-	}
-	return &favorite.UserFavoriteCountResponse{
-		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("success"),
-		Count:      int32(len(favoritesByUserId)),
-	}, nil
-}
+//// GetVideoFavoriteCount implements the FavoriteServiceImpl interface.
+//func (s *FavoriteServiceImpl) GetVideoFavoriteCount(ctx context.Context, request *favorite.VideoFavoriteCountRequest) (resp *favorite.VideoFavoriteCountResponse, err error) {
+//	videoId := request.VideoId
+//	count, err := getFavoritesVideoCount(uint(videoId))
+//	if err != nil {
+//		return &favorite.VideoFavoriteCountResponse{
+//			StatusCode: 1,
+//			StatusMsg:  thrift.StringPtr(err.Error()),
+//			Count:      0,
+//		}, err
+//	}
+//	return &favorite.VideoFavoriteCountResponse{
+//		StatusCode: 0,
+//		StatusMsg:  thrift.StringPtr("success"),
+//		Count:      int32(count),
+//	}, nil
+//}
+//
+//// GetUserFavoriteCount implements the FavoriteServiceImpl interface.
+//func (s *FavoriteServiceImpl) GetUserFavoriteCount(ctx context.Context, request *favorite.UserFavoriteCountRequest) (resp *favorite.UserFavoriteCountResponse, err error) {
+//	userId := uint(request.UserId)
+//	favoritesByUserId, err := getFavoritesByUserId(userId)
+//	if err != nil {
+//		return &favorite.UserFavoriteCountResponse{
+//			StatusCode: 1,
+//			StatusMsg:  thrift.StringPtr(err.Error()),
+//			Count:      0,
+//		}, err
+//	}
+//	return &favorite.UserFavoriteCountResponse{
+//		StatusCode: 0,
+//		StatusMsg:  thrift.StringPtr("success"),
+//		Count:      int32(len(favoritesByUserId)),
+//	}, nil
+//}
 
 // favoriteActions 点赞，取消赞的操作过程
 func favoriteActions(userId uint, videoId uint, actionType int) error {
@@ -327,38 +324,60 @@ func getUserTotalFavoritedCount(userId uint) int64 {
 	return total
 }
 
-// IsUserFavorite 判断是否点赞
-func isUserFavorite(userId, videoId uint) bool {
-	exist := mwRedis.IsExistUserSetField(userId, mwRedis.FavoriteList)
-	if !exist {
-		// redis中没有对应的数据，从MYSQL数据库中获取数据
-		favorites, _, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
-		if err != nil {
-			log.Println(err)
-		}
-		if len(favorites) == 0 {
-			//点赞数为0，设置0
-			if err = mwRedis.SetFavoriteListByUserId(userId, []uint{0}); err != nil {
-				log.Println(err)
-			}
-		} else {
-			//removeNilValue(userId)
-			idList := getIdListFromFavoriteSlice(favorites, dalMySQL.IdTypeUser)
-			// key 不存在需要同步到redis
-			err = mwRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
-			if err != nil {
-				log.Println(err)
-			}
-		}
-	}
-	return mwRedis.IsInUserFavoriteList(userId, videoId)
-}
-
-//func removeNilValue(userId uint) {
-//	if mwRedis.IsUserFavoriteNil(userId) {
-//		err := mwRedis.DeleteUserFavoriteNil(userId)
+//
+//// IsUserFavorite 判断是否点赞
+//func isUserFavorite(userId, videoId uint) bool {
+//	exist := mwRedis.IsExistUserSetField(userId, mwRedis.FavoriteList)
+//	if !exist {
+//		// redis中没有对应的数据，从MYSQL数据库中获取数据
+//		favorites, _, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
 //		if err != nil {
 //			log.Println(err)
 //		}
+//		if len(favorites) == 0 {
+//			//点赞数为0，设置0
+//			if err = mwRedis.SetFavoriteListByUserId(userId, []uint{0}); err != nil {
+//				log.Println(err)
+//			}
+//		} else {
+//			//removeNilValue(userId)
+//			idList := getIdListFromFavoriteSlice(favorites, dalMySQL.IdTypeUser)
+//			// key 不存在需要同步到redis
+//			err = mwRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
+//			if err != nil {
+//				log.Println(err)
+//			}
+//		}
 //	}
+//	return mwRedis.IsInUserFavoriteList(userId, videoId)
 //}
+
+// GetUserTotalFavoritedCount implements the FavoriteServiceImpl interface.
+func (s *FavoriteServiceImpl) GetUserTotalFavoritedCount(ctx context.Context, userId int32) (resp int32, err error) {
+	// TODO: Your code here...
+	return
+}
+
+// GetFavoriteList implements the FavoriteServiceImpl interface.
+func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favorite.FavoriteListRequest) (resp *favorite.FavoriteListResponse, err error) {
+	// TODO: Your code here...
+	return
+}
+
+// GetVideoFavoriteCount implements the FavoriteServiceImpl interface.
+func (s *FavoriteServiceImpl) GetVideoFavoriteCount(ctx context.Context, videoId int32) (resp int32, err error) {
+	// TODO: Your code here...
+	return
+}
+
+// GetUserFavoriteCount implements the FavoriteServiceImpl interface.
+func (s *FavoriteServiceImpl) GetUserFavoriteCount(ctx context.Context, userId int32) (resp int32, err error) {
+	// TODO: Your code here...
+	return
+}
+
+// IsUserFavorite implements the FavoriteServiceImpl interface.
+func (s *FavoriteServiceImpl) IsUserFavorite(ctx context.Context, request *favorite.IsUserFavoriteRequest) (resp bool, err error) {
+	// TODO: Your code here...
+	return
+}

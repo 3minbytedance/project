@@ -144,7 +144,8 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	//todo
+	//err = c.SaveUploadedFile(file, "./public/"+videoFileName)
+	//
 	//resp, err := videoClient.PublishVideo(ctx, req)
 
 	//if err != nil {
