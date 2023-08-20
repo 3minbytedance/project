@@ -156,8 +156,6 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 // 查询userId 的信息，并判断当前actionId是否和userId关注
 func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.UserInfoByIdRequest) (resp *user.UserInfoByIdResponse, err error) {
 
-	// todo redis
-
 	resp = new(user.UserInfoByIdResponse)
 	actionId := request.GetActorId()
 	isLogged := false
