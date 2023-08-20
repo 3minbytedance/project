@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"douyin/common"
 	"douyin/constant"
 	"douyin/constant/biz"
 	"douyin/dal/mysql"
@@ -20,6 +19,7 @@ import (
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"github.com/tencentyun/cos-go-sdk-v5"
+	"github.com/tencentyun/cos-go-sdk-v5/debug"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
@@ -63,33 +63,8 @@ func init() {
 	}
 }
 
-func UploadToOSS(localPath string, remotePath string) error {
-	reqUrl := biz.OSS
-	u, _ := url.Parse(reqUrl)
-	b := &cos.BaseURL{BucketURL: u}
-	c := cos.NewClient(b, &http.Client{
-		Transport: &cos.AuthorizationTransport{
-			SecretID:     biz.SecretId,
-			SecretKey:    biz.SecretKey,
-			SessionToken: biz.SessionToken,
-		},
-	})
 
-	_, _, err := c.Object.Upload(context.Background(), remotePath, localPath, nil)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-func GetVideoCover(fileName string) string {
-	// 生成图片 UUID
-	imgId := uuid.New().String()
-	// 修改文件名
-	imgName := strings.Replace(imgId, "-", "", -1) + ".jpg"
-	//调用ffmpeg 获取封面图
-	common.GetVideoFrame(biz.FileLocalPath+fileName, biz.FileLocalPath+imgName)
-	return imgName
-}
+
 
 // VideoFeed implements the VideoServiceImpl interface.
 func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFeedRequest) (resp *video.VideoFeedResponse, err error) {
@@ -154,23 +129,26 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 
 	// MQ 异步解耦,解决返回json阻塞 TODO
 
-	imgName := GetVideoCover(videoFileName)
+
 
 	//视频存储到oss
-	go func() {
-		if err := UploadToOSS(videoPath, videoFileName); err != nil {
-			zap.L().Error("上传视频到OSS失败", zap.Error(err))
-			return
-		}
-	}()
+	if err = UploadToOSS(videoPath, videoFileName); err != nil {
+		zap.L().Error("上传视频到OSS失败", zap.Error(err))
+		return &video.PublishVideoResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("上传失败"),
+		}, err
+	}
 
-	// 图片存储到oss
-	go func() {
-		if err := UploadToOSS(biz.FileLocalPath+imgName, imgName); err != nil {
-			zap.L().Error("上传图片到OSS失败", zap.Error(err))
-			return
-		}
-	}()
+	//利用oss功能获取封面图
+	imgName,err := GetVideoCover(videoFileName)
+	if err != nil{
+		zap.L().Error("图片截帧失败", zap.Error(err))
+		return &video.PublishVideoResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("上传失败"),
+		}, err
+	}
 
 	go func() {
 		mysql.InsertVideo(videoFileName, imgName, uint(request.GetUserId()), request.GetTitle())
@@ -191,8 +169,76 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 	}()
 	return &video.PublishVideoResponse{
 		StatusCode: 0,
-		StatusMsg:thrift.StringPtr("Success"),
+		StatusMsg:  thrift.StringPtr("Success"),
 	}, nil
+}
+
+
+func UploadToOSS(localPath string, remotePath string) error {
+	c := getClient()
+
+	_, _, err := c.Object.Upload(context.Background(), remotePath, localPath, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getClient() *cos.Client {
+	u, _ := url.Parse(biz.OSS)
+	cu, _ := url.Parse(biz.CuOSS)
+	b := &cos.BaseURL{BucketURL: u, CIURL: cu}
+	c := cos.NewClient(b, &http.Client{
+		Transport: &cos.AuthorizationTransport{
+			SecretID:     biz.SecretId,
+			SecretKey:    biz.SecretKey,
+			SessionToken: biz.SessionToken,
+			Transport: &debug.DebugRequestTransport{
+				RequestHeader: true,
+				// Notice when put a large file and set need the request body, might happend out of memory error.
+				RequestBody:    true,
+				ResponseHeader: false,
+				ResponseBody:   false,
+			},
+		},
+	})
+	return c
+}
+
+func GetVideoCover(videoName string) (string,error) {
+	// 生成图片 UUID
+	imgId := uuid.New().String()
+	// 修改文件名
+	imgName := strings.Replace(imgId, "-", "", -1) + ".jpg"
+	//调用oss 获取封面图
+	err := postSnapShot(videoName, imgName)
+	if err != nil{
+		return "",err
+	}
+	return imgName,nil
+}
+
+func postSnapShot(videoName string,imgName string) error {
+	c := getClient()
+	PostSnapshotOpt := &cos.PostSnapshotOptions{
+		Input: &cos.JobInput{
+			Object: videoName,
+		},
+		Time:   "1",
+		Width:  720,
+		Height: 1280,
+		Format: "jpg",
+		Output: &cos.JobOutput{
+			Region: "ap-nanjing",
+			Bucket: "tiktok-1319971229",
+			Object: imgName,
+		},
+	}
+	_, _, err := c.CI.PostSnapshot(context.Background(), PostSnapshotOpt)
+	if err != nil{
+		return err
+	}
+	return nil
 }
 
 // GetPublishVideoList implements the VideoServiceImpl interface.
@@ -225,7 +271,7 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 			FavoriteCount: favoriteCount,
 			CommentCount:  commentCount,
 			IsFavorite:    isFavorite,
-			Title: v.Title,
+			Title:         v.Title,
 		}
 		videoList = append(videoList, &videoResponse)
 	}

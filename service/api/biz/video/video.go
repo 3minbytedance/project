@@ -112,8 +112,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 	title := c.PostForm("title")
 	file, err := c.FormFile("data")
 
-	if token == "" || title == "" || err != nil || file.Size == 0 {
-
+	if err != nil || token == "" || title == "" || file.Size == 0 {
 		c.JSON(http.StatusOK, video.PublishVideoResponse{
 			StatusCode: 1,
 			StatusMsg:  thrift.StringPtr("参数不合法"),
@@ -142,10 +141,9 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 
 	// 校验文件大小
 	if file.Size > maxFileSize || file.Size < minFileSize {
-		formatInt := strconv.FormatInt(file.Size, 10)
 		c.JSON(http.StatusOK, video.PublishVideoResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr(formatInt),
+			StatusMsg:  thrift.StringPtr("文件过大或过小"),
 		})
 		return
 	}
