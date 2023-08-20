@@ -12,7 +12,8 @@ const (
 	startTime            = "00:00:01" // 截取第1秒的帧
 )
 
-func GetVideoFrame(videoPath string, outputPath string) {
+//GetVideoFrames ffmpeg 实现，现弃用，改为使用oss的功能
+func GetVideoFrames(videoPath string, outputPath string) {
 	if videoPath == "" || outputPath == "" {
 		log.Println("路径未指定")
 		return
