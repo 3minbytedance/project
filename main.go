@@ -8,6 +8,7 @@ import (
 	"project/dao/mongo"
 	"project/dao/mysql"
 	"project/dao/redis"
+	"project/middleware/kafka"
 	"project/router"
 	"project/service"
 )
@@ -41,8 +42,8 @@ func main() {
 	}
 
 	//先关掉 TODO
-	//// 5. 初始化Kafka
-	//kafka.InitMessageKafka()
+	// 5. 初始化Kafka
+	kafka.InitMessageKafka()
 
 	//准备数据
 	controller.PrepareData()

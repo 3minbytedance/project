@@ -18,7 +18,7 @@ var (
 
 func InitMessageKafka() {
 	// 初始化 Kafka Manager
-	brokers := []string{"localhost:9092"}
+	brokers := []string{"114.115.222.161:9092"}
 	kafkaManager := NewKafkaManager(brokers)
 
 	// 创建 Message 业务的生产者和消费者实例
