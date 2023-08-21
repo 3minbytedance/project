@@ -81,7 +81,6 @@ func (s *MessageServiceImpl) MessageChat(ctx context.Context, request *message.M
 		StatusMsg:   thrift.StringPtr("success"),
 		MessageList: packedMsgList,
 	}, nil
-
 }
 
 // MessageAction implements the MessageServiceImpl interface.

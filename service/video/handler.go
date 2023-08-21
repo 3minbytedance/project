@@ -11,6 +11,7 @@ import (
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	video "douyin/kitex_gen/video"
+	"douyin/kitex_gen/video/videoservice"
 	"douyin/mw/redis"
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
@@ -31,6 +32,7 @@ import (
 var userClient userservice.Client
 var commentClient commentservice.Client
 var favoriteClient favoriteservice.Client
+var videoClient videoservice.Client
 
 // VideoServiceImpl implements the last service interface defined in the IDL.
 type VideoServiceImpl struct{}
@@ -41,6 +43,12 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	videoClient, err = videoservice.NewClient(
+		constant.VideoServiceName,
+		client.WithResolver(r),
+		client.WithSuite(tracing.NewClientSuite()),
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.VideoServiceName}),
+	)
 	userClient, err = userservice.NewClient(
 		constant.UserServiceName,
 		client.WithResolver(r),
@@ -53,7 +61,7 @@ func init() {
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.CommentServiceName}),
 	)
 	favoriteClient, err = favoriteservice.NewClient(
-		constant.CommentServiceName,
+		constant.FavoriteServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.FavoriteServiceName}),
@@ -62,9 +70,6 @@ func init() {
 		log.Fatal(err)
 	}
 }
-
-
-
 
 // VideoFeed implements the VideoServiceImpl interface.
 func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFeedRequest) (resp *video.VideoFeedResponse, err error) {
@@ -129,8 +134,6 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 
 	// MQ 异步解耦,解决返回json阻塞 TODO
 
-
-
 	//视频存储到oss
 	if err = UploadToOSS(videoPath, videoFileName); err != nil {
 		zap.L().Error("上传视频到OSS失败", zap.Error(err))
@@ -141,8 +144,8 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 	}
 
 	//利用oss功能获取封面图
-	imgName,err := GetVideoCover(videoFileName)
-	if err != nil{
+	imgName, err := GetVideoCover(videoFileName)
+	if err != nil {
 		zap.L().Error("图片截帧失败", zap.Error(err))
 		return &video.PublishVideoResponse{
 			StatusCode: 1,
@@ -171,74 +174,6 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 		StatusCode: 0,
 		StatusMsg:  thrift.StringPtr("Success"),
 	}, nil
-}
-
-
-func UploadToOSS(localPath string, remotePath string) error {
-	c := getClient()
-
-	_, _, err := c.Object.Upload(context.Background(), remotePath, localPath, nil)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func getClient() *cos.Client {
-	u, _ := url.Parse(biz.OSS)
-	cu, _ := url.Parse(biz.CuOSS)
-	b := &cos.BaseURL{BucketURL: u, CIURL: cu}
-	c := cos.NewClient(b, &http.Client{
-		Transport: &cos.AuthorizationTransport{
-			SecretID:     biz.SecretId,
-			SecretKey:    biz.SecretKey,
-			SessionToken: biz.SessionToken,
-			Transport: &debug.DebugRequestTransport{
-				RequestHeader: true,
-				// Notice when put a large file and set need the request body, might happend out of memory error.
-				RequestBody:    true,
-				ResponseHeader: false,
-				ResponseBody:   false,
-			},
-		},
-	})
-	return c
-}
-
-func GetVideoCover(videoName string) (string,error) {
-	// 生成图片 UUID
-	imgId := uuid.New().String()
-	// 修改文件名
-	imgName := strings.Replace(imgId, "-", "", -1) + ".jpg"
-	//调用oss 获取封面图
-	err := postSnapShot(videoName, imgName)
-	if err != nil{
-		return "",err
-	}
-	return imgName,nil
-}
-
-func postSnapShot(videoName string,imgName string) error {
-	c := getClient()
-	PostSnapshotOpt := &cos.PostSnapshotOptions{
-		Input: &cos.JobInput{
-			Object: videoName,
-		},
-		Time:   "1",
-		Width:  720,
-		Height: 1280,
-		Format: "jpg",
-		Output: &cos.JobOutput{
-			Region: "ap-nanjing",
-			Bucket: "tiktok-1319971229",
-			Object: imgName,
-		},
-	}
-	_, _, err := c.CI.PostSnapshot(context.Background(), PostSnapshotOpt)
-	if err != nil{
-		return err
-	}
-	return nil
 }
 
 // GetPublishVideoList implements the VideoServiceImpl interface.
@@ -304,4 +239,71 @@ func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, userId int32) (resp
 		}
 	}()
 	return int32(workCount), nil
+}
+
+func UploadToOSS(localPath string, remotePath string) error {
+	c := getClient()
+
+	_, _, err := c.Object.Upload(context.Background(), remotePath, localPath, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getClient() *cos.Client {
+	u, _ := url.Parse(biz.OSS)
+	cu, _ := url.Parse(biz.CuOSS)
+	b := &cos.BaseURL{BucketURL: u, CIURL: cu}
+	c := cos.NewClient(b, &http.Client{
+		Transport: &cos.AuthorizationTransport{
+			SecretID:     biz.SecretId,
+			SecretKey:    biz.SecretKey,
+			SessionToken: biz.SessionToken,
+			Transport: &debug.DebugRequestTransport{
+				RequestHeader: true,
+				// Notice when put a large file and set need the request body, might happend out of memory error.
+				RequestBody:    true,
+				ResponseHeader: false,
+				ResponseBody:   false,
+			},
+		},
+	})
+	return c
+}
+
+func GetVideoCover(videoName string) (string, error) {
+	// 生成图片 UUID
+	imgId := uuid.New().String()
+	// 修改文件名
+	imgName := strings.Replace(imgId, "-", "", -1) + ".jpg"
+	//调用oss 获取封面图
+	err := postSnapShot(videoName, imgName)
+	if err != nil {
+		return "", err
+	}
+	return imgName, nil
+}
+
+func postSnapShot(videoName string, imgName string) error {
+	c := getClient()
+	PostSnapshotOpt := &cos.PostSnapshotOptions{
+		Input: &cos.JobInput{
+			Object: videoName,
+		},
+		Time:   "1",
+		Width:  720,
+		Height: 1280,
+		Format: "jpg",
+		Output: &cos.JobOutput{
+			Region: "ap-nanjing",
+			Bucket: "tiktok-1319971229",
+			Object: imgName,
+		},
+	}
+	_, _, err := c.CI.PostSnapshot(context.Background(), PostSnapshotOpt)
+	if err != nil {
+		return err
+	}
+	return nil
 }
