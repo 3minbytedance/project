@@ -93,7 +93,7 @@ func Login(ctx context.Context, c *app.RequestContext) {
 func Info(ctx context.Context, c *app.RequestContext) {
 	actorId, _ := c.Get(common.ContextUserIDKey)
 
-	userId := c.Query("userId")
+	userId := c.Query("user_id")
 	userIdInt64, err := strconv.ParseUint(userId, 10, 64)
 	if err != nil {
 		zap.L().Error("Parse userId error", zap.Error(err))

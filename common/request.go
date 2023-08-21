@@ -5,7 +5,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 )
 
-const ContextUserIDKey = "userId"
+const ContextUserIDKey = "user_id"
 const TokenValid = "tokenValid"
 
 var ErrorUserNotLogin = errors.New("用户未登录")
