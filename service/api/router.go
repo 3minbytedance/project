@@ -10,18 +10,24 @@ import (
 	"douyin/service/api/biz/user"
 	"douyin/service/api/biz/video"
 	"douyin/service/api/mw"
+
 	"github.com/cloudwego/hertz/pkg/app/server"
 )
 
 // customizeRegister registers customize routers.
 func customizedRegister(r *server.Hertz) {
 	douyin := r.Group("/douyin")
+
+	// 限流中间件，测试时不要开启
+	//douyin.Use(mw.RateLimiter())
+	//douyin.GET("/test", mw.RateLimiter(), user.Test)
+
 	// user service
 	userGroup := douyin.Group("/user")
 	{
-		userGroup.POST("/register", user.Register)
-		userGroup.POST("/login", user.Login)
-		userGroup.GET("", mw.AuthWithoutLogin(), user.Info)
+		userGroup.POST("/register/", user.Register)
+		userGroup.POST("/login/", user.Login)
+		userGroup.GET("/", mw.AuthWithoutLogin(), user.Info)
 	}
 
 	// video service
