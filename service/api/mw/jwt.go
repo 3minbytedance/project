@@ -26,12 +26,10 @@ func Auth() app.HandlerFunc {
 				StatusCode: -1,
 				StatusMsg:  "Unauthorized",
 			})
-
 		} else {
-			// claims, err := common.ParseToken(token)
-			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则返回0
-			claimsId := redis.GetToken(token)
-			if claimsId == 0 {
+			// 解析token
+			claims, err := common.ParseToken(token)
+			if err != nil {
 				// token有误，阻止后面函数执行
 				c.Abort()
 				c.JSON(http.StatusUnauthorized, Response{
@@ -39,8 +37,21 @@ func Auth() app.HandlerFunc {
 					StatusMsg:  "Token Error",
 				})
 			}
-			zap.L().Debug("CLAIM-ID", zap.Int("ID", int(claimsId)))
-			c.Set(common.ContextUserIDKey, claimsId)
+			// 查看token是否在redis中, 若在，给token续期, 若不在，则阻止后面函数执行
+			exist := redis.TokenIsExisted(claims.ID)
+			if !exist {
+				// token有误，阻止后面函数执行
+				c.Abort()
+				c.JSON(http.StatusUnauthorized, Response{
+					StatusCode: -1,
+					StatusMsg:  "Token Error",
+				})
+			}
+			// 给token续期
+			redis.SetToken(claims.ID, token)
+
+			zap.L().Debug("CLAIM-ID", zap.Int("ID", int(claims.ID)))
+			c.Set(common.ContextUserIDKey, claims.ID)
 			c.Next(ctx)
 		}
 	}
@@ -56,15 +67,25 @@ func AuthWithoutLogin() app.HandlerFunc {
 			c.Set(common.TokenValid, false)
 			userId = 0
 		} else {
-			// claims, err := common.ParseToken(token)
-			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则返回0
-			claimsId := redis.GetToken(token)
-			if claimsId == 0 {
+			claims, err := common.ParseToken(token)
+			if err != nil {
+				// token有误，阻止后面函数执行
+				c.Abort()
+				c.JSON(http.StatusUnauthorized, Response{
+					StatusCode: -1,
+					StatusMsg:  "Token Error",
+				})
+			}
+			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则将userID设为0
+			exist := redis.TokenIsExisted(userId)
+			if !exist {
 				// token有误，设置userId为0,tokenValid为false
 				userId = 0
 				c.Set(common.TokenValid, false)
 			} else {
-				userId = claimsId
+				userId = claims.ID
+				// 给token续期
+				redis.SetToken(claims.ID, token)
 			}
 			zap.L().Debug("to")
 			zap.L().Debug("USER-ID", zap.Int("ID", int(userId)))
@@ -88,10 +109,8 @@ func AuthBody() app.HandlerFunc {
 				StatusMsg:  "Unauthorized",
 			})
 		} else {
-			// claims, err := common.ParseToken(token)
-			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则返回0
-			claimsId := redis.GetToken(token)
-			if claimsId == 0 {
+			claims, err := common.ParseToken(token)
+			if err != nil {
 				// token有误，阻止后面函数执行
 				c.Abort()
 				c.JSON(http.StatusUnauthorized, Response{
@@ -99,7 +118,19 @@ func AuthBody() app.HandlerFunc {
 					StatusMsg:  "Token Error",
 				})
 			}
-			c.Set(common.ContextUserIDKey, claimsId)
+			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则返回0
+			exist := redis.TokenIsExisted(claims.ID)
+			if !exist {
+				// token有误，阻止后面函数执行
+				c.Abort()
+				c.JSON(http.StatusUnauthorized, Response{
+					StatusCode: -1,
+					StatusMsg:  "Token Error",
+				})
+			}
+			// 给token续期
+			redis.SetToken(claims.ID, token)
+			c.Set(common.ContextUserIDKey, claims.ID)
 			c.Next(ctx)
 		}
 	}
