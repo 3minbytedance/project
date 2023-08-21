@@ -40,6 +40,7 @@ func Auth() app.HandlerFunc {
 			// 查看token是否在redis中, 若在，给token续期, 若不在，则阻止后面函数执行
 			exist := redis.TokenIsExisted(claims.ID)
 			if !exist {
+				zap.L().Debug("Token is not existed, user id ", zap.Int("ID", int(claims.ID)))
 				// token有误，阻止后面函数执行
 				c.Abort()
 				c.JSON(http.StatusUnauthorized, Response{
@@ -77,8 +78,9 @@ func AuthWithoutLogin() app.HandlerFunc {
 				})
 			}
 			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则将userID设为0
-			exist := redis.TokenIsExisted(userId)
+			exist := redis.TokenIsExisted(claims.ID)
 			if !exist {
+				zap.L().Debug("Token is not existed, user id ", zap.Int("ID", int(claims.ID)))
 				// token有误，设置userId为0,tokenValid为false
 				userId = 0
 				c.Set(common.TokenValid, false)
