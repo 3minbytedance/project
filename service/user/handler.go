@@ -96,13 +96,8 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	resp.UserId = int32(userId)
 	resp.Token = common.GenerateToken(userId, request.Username)
 
-	err = redis.SetToken(resp.Token, userId)
-	if err != nil {
-		zap.L().Error("Set token err:", zap.Error(err))
-		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("Server internal error.")
-		return
-	}
+	// 将token存入redis
+	redis.SetToken(userId, resp.Token)
 	return
 }
 
@@ -141,14 +136,8 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	resp.StatusMsg = thrift.StringPtr("success")
 	resp.Token = token
 	resp.UserId = int32(userModel.ID)
-
-	err = redis.SetToken(token, userModel.ID)
-	if err != nil {
-		zap.L().Error("Set token err:", zap.Error(err))
-		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("Server internal error.")
-		return
-	}
+	// 将token存入redis
+	redis.SetToken(userModel.ID, token)
 	return
 }
 

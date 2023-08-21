@@ -1,37 +1,27 @@
 package redis
 
-import "time"
+import (
+	"go.uber.org/zap"
+	"strconv"
+	"time"
+)
 
 const expireTime = 7 * 24 * time.Hour // 7天
 
 // SetToken 设置token
-func SetToken(token string, userId uint) error {
+func SetToken(userId uint, token string) {
 	// token字段作为key, userId作为value
-	key := TokenKey + token
-	err := Rdb.Set(Ctx, key, userId, expireTime).Err()
+	key := TokenKey + strconv.Itoa(int(userId))
+	err := Rdb.Set(Ctx, key, token, expireTime).Err()
 	if err != nil {
-		return err
+		zap.L().Error("SetToken failed", zap.Error(err))
 	}
-	return nil
 }
 
-// GetToken 获取token
-func GetToken(token string) uint {
-	key := TokenKey + token
+// TokenIsExisted 判断用户对应的token是否存在
+func TokenIsExisted(userId uint) bool {
+	key := TokenKey + strconv.Itoa(int(userId))
 	// 判断key是否存在
 	exists, err := Rdb.Exists(Ctx, key).Result()
-	if exists == 0 {
-		return 0
-	}
-	// 获取key对应的value
-	userId, err := Rdb.Get(Ctx, key).Uint64()
-	if err != nil {
-		return 0
-	}
-	// 重置过期时间
-	err = Rdb.Expire(Ctx, key, expireTime).Err()
-	if err != nil {
-		return 0
-	}
-	return uint(userId)
+	return err == nil && exists == 1
 }
