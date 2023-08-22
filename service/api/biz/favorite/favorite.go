@@ -49,15 +49,7 @@ func init() {
 
 // Action 点赞取消赞的操作
 func Action(ctx context.Context, c *app.RequestContext) {
-	token := c.Query("token")
-	userToken, err := common.ParseToken(token)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, favorite.FavoriteActionResponse{
-			StatusCode: 1,
-		})
-		return
-	}
-	userId := userToken.ID
+	fromUserId, err := common.GetCurrentUserID(c)
 
 	videoIdStr := c.Query("video_id")
 	videoId, err := strconv.Atoi(videoIdStr)
@@ -76,7 +68,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	req := &favorite.FavoriteActionRequest{
-		UserId:     int64(userId),
+		UserId:     int64(fromUserId),
 		VideoId:    int64(videoId),
 		ActionType: int32(actionType),
 	}
@@ -96,15 +88,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 
 // List all users have same favorite video list
 func List(ctx context.Context, c *app.RequestContext) {
-	token := c.Query("token")
-	var userId uint
-	userToken, err := common.ParseToken(token)
-	//todo 先这样简单处理 未登录情况下
-	if err != nil {
-		userId = 0
-	} else {
-		userId = userToken.ID
-	}
+	fromUserId, err := common.GetCurrentUserID(c)
 	toUserIdStr := c.Query("user_id")
 	toUserId, err := strconv.Atoi(toUserIdStr)
 	if err != nil {
@@ -114,7 +98,7 @@ func List(ctx context.Context, c *app.RequestContext) {
 	}
 
 	req := &favorite.FavoriteListRequest{
-		ActionId: int64(userId),
+		ActionId: int64(fromUserId),
 		UserId:   int64(toUserId),
 	}
 
