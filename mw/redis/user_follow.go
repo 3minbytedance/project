@@ -94,6 +94,8 @@ func SetFollowerListByUserId(userid uint, ids []uint) error {
 	key := fmt.Sprintf("%d_%s", userid, FollowerList)
 	// 转换为[]interface{}
 	b := make([]interface{}, 0, len(ids))
+	fmt.Println(b)
+	fmt.Println("setfollow")
 	for i, _ := range ids {
 		b[i] = ids[i]
 	}

@@ -7,7 +7,6 @@ import (
 	relation "douyin/kitex_gen/relation"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
-	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
@@ -63,8 +62,8 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		redis.DelKey(uint(userId), redis.FollowList)
 		redis.DelKey(uint(toUserId), redis.FollowerList)
 
-		// err = mysql.AddFollow(uint(userId), uint(toUserId))
-		err = kafka.FollowMQInstance.ProduceAddFollowMsg(uint(userId), uint(toUserId))
+		err = mysql.AddFollow(uint(userId), uint(toUserId))
+		//err = kafka.FollowMQInstance.ProduceAddFollowMsg(uint(userId), uint(toUserId))
 		if err != nil {
 			resp.StatusCode = 1
 			resp.StatusMsg = thrift.StringPtr(err.Error())
@@ -85,8 +84,8 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		redis.DelKey(uint(request.UserId), redis.FollowList)
 		redis.DelKey(uint(request.ToUserId), redis.FollowerList)
 
-		// err = mysql.DeleteFollowById(uint(request.UserId), uint(request.ToUserId))
-		err = kafka.FollowMQInstance.ProduceDelFollowMsg(uint(userId), uint(toUserId))
+		err = mysql.DeleteFollowById(uint(request.UserId), uint(request.ToUserId))
+		//err = kafka.FollowMQInstance.ProduceDelFollowMsg(uint(userId), uint(toUserId))
 		if err != nil {
 			resp.StatusCode = 1
 			resp.StatusMsg = thrift.StringPtr(err.Error())
@@ -289,13 +288,14 @@ func (s *RelationServiceImpl) IsFollowing(ctx context.Context, request *relation
 		return false, err
 	}
 	// 往redis赋值
-	go func() {
-		err = redis.SetFollowListByUserId(uint(actionId), followListId)
-		if err != nil {
-			zap.L().Error("SetFollowListByUserId error", zap.Error(err))
-			return
-		}
-	}()
+	if len(followListId) == 0 {
+		return false, err
+	}
+	err = redis.SetFollowListByUserId(uint(actionId), followListId)
+	if err != nil {
+		zap.L().Error("SetFollowListByUserId error", zap.Error(err))
+		return
+	}
 	return found, err
 }
 
