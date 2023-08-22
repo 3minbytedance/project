@@ -104,7 +104,7 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	resp = new(user.UserLoginResponse)
 
 	exist := common.TestBloom(request.Username)
-	// todo 判断存在但不存在 判断不存在但存在？
+
 	// 用户名不存在
 	if !exist {
 		zap.L().Info("Check user exists info:", zap.Bool("exist", exist))
