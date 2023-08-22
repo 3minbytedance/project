@@ -30,38 +30,38 @@ func customizedRegister(r *server.Hertz) {
 	}
 
 	// video service
-	douyin.GET("/feed",mw.AuthWithoutLogin(), video.FeedList)
+	douyin.GET("/feed", mw.AuthWithoutLogin(), video.FeedList)
 	videoGroup := douyin.Group("/publish")
 	{
-		videoGroup.GET("/list", video.GetPublishList)
-		videoGroup.POST("/action", video.Publish)
+		videoGroup.GET("/list/", video.GetPublishList)
+		videoGroup.POST("/action/", video.Publish)
 	}
 	// comment service
 	commentGroup := douyin.Group("/comment")
 	{
-		commentGroup.POST("/action", mw.Auth(), comment.Action)
-		commentGroup.GET("/list", mw.AuthWithoutLogin(), comment.List)
+		commentGroup.POST("/action/", mw.Auth(), comment.Action)
+		commentGroup.GET("/list/", mw.AuthWithoutLogin(), comment.List)
 	}
 
 	// favorite service
 	favoriteGroup := douyin.Group("/favorite")
 	{
-		favoriteGroup.POST("/action", favorite.Action)
-		favoriteGroup.GET("/list", favorite.List)
+		favoriteGroup.POST("/action/", favorite.Action)
+		favoriteGroup.GET("/list/", favorite.List)
 	}
 
 	// relation service
 	relationGroup := douyin.Group("/relation")
 	{
-		relationGroup.POST("/action", mw.Auth(), relation.Action)
-		relationGroup.GET("/follow/list", mw.Auth(), relation.FollowList)
-		relationGroup.GET("/follower/list", mw.Auth(), relation.FollowerList)
-		relationGroup.GET("/friend/list", mw.Auth(), relation.FriendList)
+		relationGroup.POST("/action/", mw.Auth(), relation.Action)
+		relationGroup.GET("/follow/list/", mw.Auth(), relation.FollowList)
+		relationGroup.GET("/follower/list/", mw.Auth(), relation.FollowerList)
+		relationGroup.GET("/friend/list/", mw.Auth(), relation.FriendList)
 	}
 	// message service
 	messageGroup := douyin.Group("/message")
 	{
-		messageGroup.POST("/action", mw.Auth(), message.Action)
-		messageGroup.GET("/chat", mw.Auth(), message.Chat)
+		messageGroup.POST("/action/", mw.Auth(), message.Action)
+		messageGroup.GET("/chat/", mw.Auth(), message.Chat)
 	}
 }
