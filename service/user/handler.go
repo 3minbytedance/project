@@ -21,7 +21,6 @@ import (
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
-	"math/rand"
 )
 
 var relationClient relationservice.Client
@@ -78,9 +77,9 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	common.AddToBloom(request.Username)
 
 	// 将信息存储到数据库中
-	salt := fmt.Sprintf("%06d", rand.Int())
-	userData.Salt = salt
-	userData.Password = common.MakePassword(request.Password, salt)
+	//salt := fmt.Sprintf("%06d", rand.Int())
+	//userData.Salt = salt
+	userData.Password, _ = common.MakePassword(request.Password)
 
 	// 数据入库
 	userId, err := mysql.CreateUser(&userData)
@@ -123,7 +122,7 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 		return
 	}
 	// 检查密码
-	match := common.CheckPassword(request.Password, userModel.Salt, userModel.Password)
+	match := common.CheckPassword(request.Password, userModel.Password)
 	if !match {
 		zap.L().Info("User password wrong.")
 		resp.StatusCode = 1
