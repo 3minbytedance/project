@@ -2,7 +2,7 @@ package common
 
 import (
 	"github.com/dgrijalva/jwt-go"
-	"log"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -13,14 +13,13 @@ type Claims struct {
 }
 
 // 签名密钥
-var jwtSecretKey = []byte("hi")
+var jwtSecretKey = []byte("DouShenNo1")
 
 // todo 替换log
 func GenerateToken(userId uint, username string) string {
 
 	nowTime := time.Now()
 	//expireTime := nowTime.Add(24 * time.Hour).Unix()
-
 	//log.Println("expireTime:", expireTime)
 
 	claims := Claims{
@@ -36,10 +35,10 @@ func GenerateToken(userId uint, username string) string {
 	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// 创建JWT字符串
 	if token, err := tokenClaims.SignedString(jwtSecretKey); err != nil {
-		log.Println("generate token fail!")
+		zap.L().Error("generate token fail!", zap.Error(err))
 		return "fail"
 	} else {
-		log.Println("generate token success!")
+		zap.L().Info("generate token success!")
 		return token
 	}
 }
