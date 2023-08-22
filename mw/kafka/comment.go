@@ -33,21 +33,23 @@ func InitCommentKafka() {
 }
 
 // ProduceAddCommentMsg 发布添加评论的消息, 向mysql中添加评论时, 调用此方法
-func (m *CommentMQ) ProduceAddCommentMsg(message *model.Comment) {
+func (m *CommentMQ) ProduceAddCommentMsg(message *model.Comment) error {
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
 		fmt.Println("kafka发送添加评论的消息失败：", err)
-		return
+		return err
 	}
+	return nil
 }
 
 // ProduceDelCommentMsg 发布删除评论的消息, mysql删除评论时, 调用此方法
-func (m *CommentMQ) ProduceDelCommentMsg(commentId uint) {
+func (m *CommentMQ) ProduceDelCommentMsg(commentId uint) error {
 	err := kafkaManager.ProduceMessage(m.Producer, commentId)
 	if err != nil {
 		fmt.Println("kafka发送删除评论的消息失败：", err)
-		return
+		return err
 	}
+	return nil
 }
 
 // Consume 消费添加或者删除评论的消息

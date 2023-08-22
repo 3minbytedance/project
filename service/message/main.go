@@ -6,6 +6,7 @@ import (
 	"douyin/dal"
 	message "douyin/kitex_gen/message/messageservice"
 	"douyin/logger"
+	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
@@ -53,6 +54,12 @@ func main() {
 		zap.L().Error("Init middleware failed, err:%v\n", zap.Error(err))
 		return
 	}
+	if err := kafka.Init(config.Conf); err != nil {
+		zap.L().Error("Init kafka failed, err:%v\n", zap.Error(err))
+		return
+	}
+	// 初始化消息模块的kafka
+	kafka.InitMessageKafka()
 
 	addr, err := net.ResolveTCPAddr("tcp", constant.MessageServicePort)
 	if err != nil {

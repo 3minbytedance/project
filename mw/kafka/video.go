@@ -2,15 +2,20 @@ package kafka
 
 import (
 	"context"
+	"douyin/dal/mysql"
+	"douyin/mw/redis"
+	"douyin/utils"
 	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
 	"log"
 )
 
 type VideoMessage struct {
-	VideoName string
-	AuthorId  uint
-	Title     string
+	VideoPath     string
+	VideoFileName string
+	UserID        uint
+	Title         string
 }
 
 type VideoMQ struct {
@@ -61,10 +66,37 @@ func (m *VideoMQ) Consume() {
 		}
 		fmt.Printf("[VideoMQ]解析消息成功：%v\n", videoMsg)
 
-		// FIXME: 下面的代码存在问题, 假如此时宕机了, 消息已经被消费了, 但是视频没有上传成功, 那么就会丢失视频
 		go func() {
-			//imgName := service.GetVideoCover(videoMsg.VideoName)
-			//service.StoreVideoAndImg(videoMsg.VideoName, imgName, videoMsg.AuthorId, videoMsg.Title)
+			zap.L().Info("开始处理视频消息", zap.Any("videoMsg", videoMsg))
+			//视频存储到oss
+			if err = utils.UploadToOSS(videoMsg.VideoPath, videoMsg.VideoFileName); err != nil {
+				zap.L().Error("上传视频到OSS失败", zap.Error(err))
+			}
+
+			//利用oss功能获取封面图
+			imgName, err := utils.GetVideoCover(videoMsg.VideoFileName)
+			if err != nil {
+				zap.L().Error("图片截帧失败", zap.Error(err))
+			}
+
+			// 视频信息存储到MySQL
+			mysql.InsertVideo(videoMsg.VideoFileName, imgName, videoMsg.UserID, videoMsg.Title)
+
+			// 更新redis中的用户作品数
+			if !redis.IsExistUserField(videoMsg.UserID, redis.WorkCountField) {
+				cnt := mysql.FindWorkCountsByAuthorId(videoMsg.UserID)
+				err := redis.SetWorkCountByUserId(videoMsg.UserID, cnt)
+				if err != nil {
+					zap.L().Error("redis更新作品数失败", zap.Error(err))
+					return
+				}
+			}
+			err = redis.IncrementWorkCountByUserId(videoMsg.UserID)
+			if err != nil {
+				zap.L().Error("redis增加其作品数失败", zap.Error(err))
+				return
+			}
+			zap.L().Info("视频消息处理成功", zap.Any("videoMsg", videoMsg))
 		}()
 	}
 }

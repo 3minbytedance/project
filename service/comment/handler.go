@@ -9,6 +9,7 @@ import (
 	"douyin/kitex_gen/comment"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
+	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"douyin/service/comment/pack"
 	"github.com/apache/thrift/lib/go/thrift"
@@ -70,7 +71,8 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 			VideoId: uint(request.GetVideoId()),
 			Content: common.ReplaceWord(request.GetCommentText()),
 		}
-		_, err = mysql.AddComment(&commentData)
+		// _, err = mysql.AddComment(&commentData)
+		err := kafka.CommentMQInstance.ProduceAddCommentMsg(&commentData)
 		if err != nil {
 			resp.StatusCode = 1
 			resp.StatusMsg = thrift.StringPtr(err.Error())
@@ -110,7 +112,8 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 			}
 		}()
 
-		err = mysql.DeleteCommentById(uint(request.GetCommentId()))
+		// err = mysql.DeleteCommentById(uint(request.GetCommentId()))
+		err = kafka.CommentMQInstance.ProduceDelCommentMsg(uint(request.GetCommentId()))
 		if err != nil {
 			zap.L().Error("DeleteCommentById error", zap.Error(err))
 			return &comment.CommentActionResponse{

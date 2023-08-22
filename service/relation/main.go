@@ -6,6 +6,7 @@ import (
 	"douyin/dal/mysql"
 	relation "douyin/kitex_gen/relation/relationservice"
 	"douyin/logger"
+	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
@@ -53,6 +54,12 @@ func main() {
 		zap.L().Error("Init middleware failed, err:%v\n", zap.Error(err))
 		return
 	}
+	if err := kafka.Init(config.Conf); err != nil {
+		zap.L().Error("Init kafka failed, err:%v\n", zap.Error(err))
+		return
+	}
+	// 初始化关注模块的kafka
+	kafka.InitFollowKafka()
 
 	addr, err := net.ResolveTCPAddr("tcp", constant.RelationServicePort)
 	if err != nil {

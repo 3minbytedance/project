@@ -34,9 +34,9 @@ func Init(appConfig *config.AppConfig) (err error) {
 	brokers := []string{brokerUrl}
 	kafkaManager = NewKafkaManager(brokers)
 
-	InitMessageKafka()
-	InitCommentKafka()
-	InitVideoKafka()
+	//InitMessageKafka()
+	//InitCommentKafka()
+	//InitVideoKafka()
 
 	return nil
 }

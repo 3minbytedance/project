@@ -7,6 +7,7 @@ import (
 	"douyin/dal/mysql"
 	comment "douyin/kitex_gen/comment/commentservice"
 	"douyin/logger"
+	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
@@ -51,9 +52,15 @@ func main() {
 
 	// 初始化中间件: redis + kafka
 	if err := redis.Init(config.Conf); err != nil {
-		zap.L().Error("Init middleware failed, err:%v\n", zap.Error(err))
+		zap.L().Error("Init redis failed, err:%v\n", zap.Error(err))
 		return
 	}
+	if err := kafka.Init(config.Conf); err != nil {
+		zap.L().Error("Init kafka failed, err:%v\n", zap.Error(err))
+		return
+	}
+	// 初始化comment模块的kafka
+	kafka.InitCommentKafka()
 
 	// 初始化敏感词过滤器
 	if err := common.InitSensitiveFilter(); err != nil {

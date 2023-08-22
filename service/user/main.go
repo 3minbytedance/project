@@ -7,6 +7,7 @@ import (
 	"douyin/dal/mysql"
 	user "douyin/kitex_gen/user/userservice"
 	"douyin/logger"
+	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
@@ -54,6 +55,12 @@ func main() {
 		zap.L().Error("Init middleware failed, err:%v\n", zap.Error(err))
 		return
 	}
+	if err := kafka.Init(config.Conf); err != nil {
+		zap.L().Error("Init kafka failed, err:%v\n", zap.Error(err))
+		return
+	}
+	// 初始化用户模块的kafka
+	kafka.InitUserKafka()
 
 	// 初始化Bloom Filter
 	common.InitBloomFilter()

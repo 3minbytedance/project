@@ -19,7 +19,7 @@ func customizedRegister(r *server.Hertz) {
 	// user service
 	userGroup := douyin.Group("/user")
 	{
-		userGroup.POST("/register", user.Register)
+		userGroup.POST("/register/", user.Register)
 		userGroup.POST("/login", user.Login)
 		userGroup.GET("", mw.AuthWithoutLogin(), user.Info)
 	}

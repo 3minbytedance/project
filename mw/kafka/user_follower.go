@@ -37,7 +37,7 @@ func InitFollowKafka() {
 }
 
 // ProduceAddFollowMsg 发布添加关注的消息, 向mysql中添加关注时, 调用此方法
-func (m *FollowMQ) ProduceAddFollowMsg(userId, followId uint) {
+func (m *FollowMQ) ProduceAddFollowMsg(userId, followId uint) error {
 	message := &FollowMessage{
 		Type:     0,
 		UserId:   userId,
@@ -46,12 +46,13 @@ func (m *FollowMQ) ProduceAddFollowMsg(userId, followId uint) {
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
 		fmt.Println("kafka发送添加关注的消息失败：", err)
-		return
+		return err
 	}
+	return nil
 }
 
 // ProduceDelFollowMsg 发布删除关注的消息, mysql删除关注时, 调用此方法
-func (m *FollowMQ) ProduceDelFollowMsg(userId, followId uint) {
+func (m *FollowMQ) ProduceDelFollowMsg(userId, followId uint) error {
 	message := &FollowMessage{
 		Type:     1,
 		UserId:   userId,
@@ -60,8 +61,9 @@ func (m *FollowMQ) ProduceDelFollowMsg(userId, followId uint) {
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
 		fmt.Println("kafka发送删除关注的消息失败：", err)
-		return
+		return err
 	}
+	return nil
 }
 
 // Consume 消费者消费消息

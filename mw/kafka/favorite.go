@@ -38,7 +38,7 @@ func InitFavoriteKafka() {
 }
 
 // ProduceAddFavoriteMsg 发布添加点赞的消息, 向mysql中添加点赞时, 调用此方法
-func (m *FavoriteMQ) ProduceAddFavoriteMsg(userId, videoId uint) {
+func (m *FavoriteMQ) ProduceAddFavoriteMsg(userId, videoId uint) error {
 	message := &FavoriteMessage{
 		Type:    0,
 		UserId:  userId,
@@ -47,12 +47,13 @@ func (m *FavoriteMQ) ProduceAddFavoriteMsg(userId, videoId uint) {
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
 		fmt.Println("kafka发送添加点赞的消息失败：", err)
-		return
+		return err
 	}
+	return nil
 }
 
 // ProduceDelFavoriteMsg 发布删除点赞的消息, mysql删除点赞时, 调用此方法
-func (m *FavoriteMQ) ProduceDelFavoriteMsg(userId, videoId uint) {
+func (m *FavoriteMQ) ProduceDelFavoriteMsg(userId, videoId uint) error {
 	message := &FavoriteMessage{
 		Type:    1,
 		UserId:  userId,
@@ -61,8 +62,9 @@ func (m *FavoriteMQ) ProduceDelFavoriteMsg(userId, videoId uint) {
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
 		fmt.Println("kafka发送删除点赞的消息失败：", err)
-		return
+		return err
 	}
+	return nil
 }
 
 // Consume 消费添加或者删除点赞的消息

@@ -10,6 +10,7 @@ import (
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	"douyin/kitex_gen/video"
+	"douyin/mw/kafka"
 	mwRedis "douyin/mw/redis"
 	"errors"
 	"fmt"
@@ -84,6 +85,7 @@ func (s *FavoriteServiceImpl) GetUserTotalFavoritedCount(ctx context.Context, us
 
 // GetFavoriteList implements the FavoriteServiceImpl interface.
 func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favorite.FavoriteListRequest) (resp *favorite.FavoriteListResponse, err error) {
+	zap.L().Debug("GetFavoriteList", zap.Any("request", request))
 	resp = new(favorite.FavoriteListResponse)
 	userId := request.GetUserId()
 	actionId := request.GetActionId()
@@ -97,7 +99,7 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 		videoByVideoId, _ := dalMySQL.FindVideoByVideoId(id)
 		userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 			ActorId: actionId,
-			UserId: userId,
+			UserId:  userId,
 		})
 		commentCount, _ := commentClient.GetCommentCount(ctx, int32(id))
 		favoriteCount, _ := getFavoritesVideoCount(id)
@@ -116,7 +118,7 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 	return &favorite.FavoriteListResponse{
 		StatusCode: 0,
 		StatusMsg:  thrift.StringPtr("get favorite video list done"),
-		VideoList: videos,
+		VideoList:  videos,
 	}, err
 }
 
@@ -133,7 +135,7 @@ func (s *FavoriteServiceImpl) GetVideoFavoriteCount(ctx context.Context, videoId
 func (s *FavoriteServiceImpl) IsUserFavorite(ctx context.Context, request *favorite.IsUserFavoriteRequest) (resp bool, err error) {
 	userId := request.GetUserId()
 	videoId := request.GetVideoId()
-	return isUserFavorite(uint(userId), uint(videoId)),nil
+	return isUserFavorite(uint(userId), uint(videoId)), nil
 }
 
 // GetUserFavoriteCount 获取某个用户的点赞数
@@ -169,24 +171,28 @@ func favoriteActions(userId uint, videoId uint, actionType int) error {
 		// 更新用户喜欢的视频列表
 		err = mwRedis.AddFavoriteVideoToList(userId, videoId)
 		if err != nil {
-			zap.L().Error("更新用户喜欢的视频列表",zap.Error(err))
+			zap.L().Error("更新用户喜欢的视频列表", zap.Error(err))
 			return err
 		}
 		// 更新用户喜欢的视频数量，这个不用，直接从set中获取
 		// 更新视频被喜欢的数量
 		err = mwRedis.IncrementFavoritedCountByVideoId(videoId)
 		if err != nil {
-			zap.L().Error("更新视频被喜欢的数量",zap.Error(err))
+			zap.L().Error("更新视频被喜欢的数量", zap.Error(err))
 			return err
 		}
 		// 更新视频作者的被点赞量
 		getUserTotalFavoritedCount(videoModel.AuthorId)
 		err = mwRedis.IncrementTotalFavoritedByUserId(videoModel.AuthorId)
 		if err != nil {
-			zap.L().Error("更新视频作者的被点赞量",zap.Error(err))
+			zap.L().Error("更新视频作者的被点赞量", zap.Error(err))
 			return err
 		}
-		dalMySQL.AddUserFavorite(userId, videoId)
+		// dalMySQL.AddUserFavorite(userId, videoId)
+		err := kafka.FavoriteMQInstance.ProduceAddFavoriteMsg(userId, videoId)
+		if err != nil {
+			zap.L().Error("更新视频作者的被点赞量", zap.Error(err))
+		}
 		return err
 	case 2:
 		// 取消赞
@@ -196,25 +202,26 @@ func favoriteActions(userId uint, videoId uint, actionType int) error {
 		// 更新视频被喜欢的用户列表
 		err = mwRedis.DeleteFavoriteVideoFromList(userId, videoId)
 		if err != nil {
-			zap.L().Error("更新视频被喜欢的用户列表",zap.Error(err))
+			zap.L().Error("更新视频被喜欢的用户列表", zap.Error(err))
 			return err
 		}
 		// 更新视频被喜欢的数量
 		err = mwRedis.DecrementFavoritedCountByVideoId(videoId)
 		if err != nil {
-			zap.L().Error("更新视频被喜欢的数量",zap.Error(err))
+			zap.L().Error("更新视频被喜欢的数量", zap.Error(err))
 			return err
 		}
 		getUserTotalFavoritedCount(videoModel.AuthorId)
 		// 更新视频作者的被点赞量
 		err = mwRedis.DecrementTotalFavoritedByUserId(videoModel.AuthorId)
 		if err != nil {
-			zap.L().Error("更新视频作者的被点赞量",zap.Error(err))
+			zap.L().Error("更新视频作者的被点赞量", zap.Error(err))
 			return err
 		}
-		err = dalMySQL.DeleteUserFavorite(userId, videoId)
+		// err = dalMySQL.DeleteUserFavorite(userId, videoId)
+		err = kafka.FavoriteMQInstance.ProduceDelFavoriteMsg(userId, videoId)
 		if err != nil {
-			zap.L().Error("更新视频作者的被点赞量",zap.Error(err))
+			zap.L().Error("更新视频作者的被点赞量", zap.Error(err))
 			return err
 		}
 	}
@@ -352,5 +359,3 @@ func isUserFavorite(userId, videoId uint) bool {
 	}
 	return mwRedis.IsInUserFavoriteList(userId, videoId)
 }
-
-
