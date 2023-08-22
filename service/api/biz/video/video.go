@@ -7,7 +7,6 @@ import (
 	"douyin/constant/biz"
 	"douyin/kitex_gen/video"
 	"douyin/kitex_gen/video/videoservice"
-	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/kitex/client"
@@ -54,12 +53,15 @@ func FeedList(ctx context.Context, c *app.RequestContext) {
 	actorId, _ := c.Get(common.ContextUserIDKey)
 
 	latestTime := c.Query("latest_time")
-	unixTime, err := strconv.Atoi(latestTime)
-	if latestTime == "" || latestTime < biz.MinTime {
+	_, err := strconv.Atoi(latestTime)
+	if latestTime == "" || latestTime == biz.MinTime {
 		latestTime = strconv.FormatInt(time.Now().Unix(), 10)
-	} else if err != nil || unixTime < 0 {
-		zap.L().Error("Parse videoIdStr err:", zap.Error(err))
-		c.JSON(http.StatusOK, err.Error())
+	} else if err != nil || latestTime < biz.MinTime {
+		zap.L().Info("Parse videoIdStr err:", zap.Error(err))
+		c.JSON(http.StatusOK, video.VideoFeedResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("不合法的请求"),
+		})
 		return
 	}
 	req := &video.VideoFeedRequest{
@@ -152,7 +154,10 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 	}
 	data, err := io.ReadAll(src)
 	if err != nil {
-		c.String(http.StatusInternalServerError, fmt.Sprintf("读取文件内容失败: %s", err.Error()))
+		c.JSON(http.StatusInternalServerError, video.PublishVideoResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("读取内容失败"),
+		})
 		return
 	}
 

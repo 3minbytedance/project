@@ -9,7 +9,6 @@ import (
 	comment "douyin/kitex_gen/comment"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
-	"douyin/kitex_gen/video/videoservice"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"douyin/service/comment/pack"
@@ -23,7 +22,6 @@ import (
 )
 
 var userClient userservice.Client
-var videoClient videoservice.Client
 
 func init() {
 	// Etcd 服务发现
@@ -31,12 +29,6 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	videoClient, err = videoservice.NewClient(
-		constant.VideoServiceName,
-		client.WithResolver(r),
-		client.WithSuite(tracing.NewClientSuite()),
-		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.VideoServiceName}),
-	)
 	userClient, err = userservice.NewClient(
 		constant.UserServiceName,
 		client.WithResolver(r),

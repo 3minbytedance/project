@@ -57,15 +57,11 @@ func (m *VideoMQ) Consume() {
 		if err != nil {
 			log.Fatal("[VideoMQ]从消息队列中读取消息失败:", err)
 		}
-		fmt.Printf("[VideoMQ]收到消息：%s\n", string(msg.Value))
-
 		videoMsg := new(VideoMessage)
 		err = json.Unmarshal(msg.Value, videoMsg)
 		if err != nil {
 			fmt.Println("[VideoMQ]解析消息失败:", err)
 		}
-		fmt.Printf("[VideoMQ]解析消息成功：%v\n", videoMsg)
-
 		go func() {
 			zap.L().Info("开始处理视频消息", zap.Any("videoMsg", videoMsg))
 			//视频存储到oss
