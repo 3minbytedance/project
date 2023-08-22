@@ -19,42 +19,34 @@ type Response struct {
 func Auth() app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
 		token := c.Query("token")
-		// 没携带token
-		if len(token) == 0 {
-			// 没有token, 阻止后面函数执行
+		// 解析token
+		claims, err := common.ParseToken(token)
+		if err != nil {
+			// token有误（含len(token)=0的情况），阻止后面函数执行
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
 				StatusCode: -1,
-				StatusMsg:  "Unauthorized",
+				StatusMsg:  "Token Error",
 			})
-		} else {
-			// 解析token
-			claims, err := common.ParseToken(token)
-			if err != nil {
-				// token有误，阻止后面函数执行
-				c.Abort()
-				c.JSON(http.StatusUnauthorized, Response{
-					StatusCode: -1,
-					StatusMsg:  "Token Error",
-				})
-			}
-			// 查看token是否在redis中, 若在，给token续期, 若不在，则阻止后面函数执行
-			exist := redis.TokenIsExisted(claims.ID)
-			if !exist {
-				// token有误，阻止后面函数执行
-				c.Abort()
-				c.JSON(http.StatusUnauthorized, Response{
-					StatusCode: -1,
-					StatusMsg:  "Token Error",
-				})
-			}
-			// 给token续期
-			redis.SetToken(claims.ID, token)
-
-			zap.L().Debug("CLAIM-ID", zap.Int("ID", int(claims.ID)))
-			c.Set(common.ContextUserIDKey, claims.ID)
-			c.Next(ctx)
+			return
 		}
+		// 查看token是否在redis中, 若在，给token续期, 若不在，则阻止后面函数执行
+		exist := redis.TokenIsExisted(claims.ID)
+		if !exist {
+			// token有误，阻止后面函数执行
+			c.Abort()
+			c.JSON(http.StatusUnauthorized, Response{
+				StatusCode: -1,
+				StatusMsg:  "Token Error",
+			})
+			return
+		}
+		// 给token续期
+		redis.SetToken(claims.ID, token)
+
+		zap.L().Debug("CLAIM-ID", zap.Int("ID", int(claims.ID)))
+		c.Set(common.ContextUserIDKey, claims.ID)
+		c.Next(ctx)
 	}
 }
 
@@ -64,20 +56,12 @@ func AuthWithoutLogin() app.HandlerFunc {
 		token := c.Query("token")
 		var userId uint
 		var tokenValid bool
-		if len(token) == 0 {
-			// 没有token, 设置userId为0，tokenValid为false
+		claims, err := common.ParseToken(token)
+		if err != nil {
+			// token有误或token为空，未登录
 			tokenValid = false
 			userId = 0
 		} else {
-			claims, err := common.ParseToken(token)
-			if err != nil {
-				// token有误，阻止后面函数执行
-				c.Abort()
-				c.JSON(http.StatusUnauthorized, Response{
-					StatusCode: -1,
-					StatusMsg:  "Token Error",
-				})
-			}
 			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则将userID设为0
 			exist := redis.TokenIsExisted(userId)
 			if !exist {
@@ -90,9 +74,10 @@ func AuthWithoutLogin() app.HandlerFunc {
 				redis.SetToken(claims.ID, token)
 				tokenValid = true
 			}
-			zap.L().Debug("to")
-			zap.L().Debug("USER-ID", zap.Int("ID", int(userId)))
 		}
+
+		zap.L().Debug("to")
+		zap.L().Debug("USER-ID", zap.Int("ID", int(userId)))
 		c.Set(common.TokenValid, tokenValid)
 		c.Set(common.ContextUserIDKey, userId)
 		c.Next(ctx)

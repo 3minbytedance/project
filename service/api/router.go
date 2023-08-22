@@ -31,7 +31,7 @@ func customizedRegister(r *server.Hertz) {
 	}
 
 	// video service
-	douyin.GET("/feed", video.FeedList)
+	douyin.GET("/feed",mw.AuthWithoutLogin(), video.FeedList)
 	videoGroup := douyin.Group("/publish")
 	{
 		videoGroup.GET("/list", video.GetPublishList)
