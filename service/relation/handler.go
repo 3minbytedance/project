@@ -113,7 +113,14 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 
 // GetFollowList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relation.FollowListRequest) (resp *relation.FollowListResponse, err error) {
-	CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowList)
+	res := CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowList)
+	if res == 2 {
+		return &relation.FollowListResponse{
+			StatusCode: 0,
+			StatusMsg:  thrift.StringPtr("success, 没有关注用户"),
+			UserList:   nil,
+		}, nil
+	}
 	id, err := redis.GetFollowListById(uint(request.GetToUserId()))
 	if err != nil {
 		return &relation.FollowListResponse{
@@ -147,7 +154,14 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 
 // GetFollowerList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *relation.FollowerListRequest) (resp *relation.FollowerListResponse, err error) {
-	CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowerList)
+	res := CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowerList)
+	if res == 2 {
+		return &relation.FollowerListResponse{
+			StatusCode: 0,
+			StatusMsg:  thrift.StringPtr("success, 没有粉丝用户"),
+			UserList:   nil,
+		}, nil
+	}
 	id, err := redis.GetFollowerListById(uint(request.GetToUserId()))
 	if err != nil {
 		return &relation.FollowerListResponse{
@@ -181,8 +195,22 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 
 // GetFriendList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relation.FriendListRequest) (resp *relation.FriendListResponse, err error) {
-	CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowList)
-	CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowerList)
+	res := CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowList)
+	if res == 2 {
+		return &relation.FriendListResponse{
+			StatusCode: 0,
+			StatusMsg:  thrift.StringPtr("success, 没有关注用户，所以没有friend"),
+			UserList:   nil,
+		}, nil
+	}
+	res = CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowerList)
+	if res == 2 {
+		return &relation.FriendListResponse{
+			StatusCode: 0,
+			StatusMsg:  thrift.StringPtr("success, 没有粉丝用户，所以没有friend"),
+			UserList:   nil,
+		}, nil
+	}
 	id, err := redis.GetFriendListById(uint(request.GetToUserId()))
 	if err != nil {
 		return &relation.FriendListResponse{
@@ -216,7 +244,10 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 
 // GetFollowListCount implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, userId int32) (resp int32, err error) {
-	CheckAndSetRedisRelationKey(uint(userId), redis.FollowList)
+	res := CheckAndSetRedisRelationKey(uint(userId), redis.FollowList)
+	if res == 2 {
+		return 0, nil
+	}
 	count, err := redis.GetFollowCountById(uint(userId))
 	if err != nil {
 		return 0, err
@@ -226,7 +257,10 @@ func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, userId int
 
 // GetFollowerListCount implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, userId int32) (resp int32, err error) {
-	CheckAndSetRedisRelationKey(uint(userId), redis.FollowerList)
+	res := CheckAndSetRedisRelationKey(uint(userId), redis.FollowerList)
+	if res == 2 {
+		return 0, nil
+	}
 	count, err := redis.GetFollowerCountById(uint(userId))
 	if err != nil {
 		return 0, err
@@ -273,17 +307,20 @@ func (s *RelationServiceImpl) IsFriend(ctx context.Context, request *relation.Is
 	return result, err
 }
 
-// CheckAndSetRedisRelationKey 返回true表示不存在这个key，并设置key
-// 返回false表示已存在这个key
-func CheckAndSetRedisRelationKey(userId uint, key string) bool {
+// CheckAndSetRedisRelationKey 返回0表示这个key存在，返回1表示，这个key不存在，已更新。返回2表示，这个key不存在，这个用户没有所对应的值
+func CheckAndSetRedisRelationKey(userId uint, key string) int {
 	if redis.IsExistUserSetField(userId, key) {
-		return false
+		return 0
 	}
 	//key不存在
 	if key == redis.FollowList {
 		id, err := mysql.GetFollowList(userId)
 		if err != nil {
 			zap.L().Error("mysql获取FollowList失败", zap.Error(err))
+		}
+		if len(id) == 0 {
+			zap.L().Info("mysql获取FollowList为空，不更新redis")
+			return 2
 		}
 		err = redis.SetFollowListByUserId(userId, id)
 		if err != nil {
@@ -294,10 +331,14 @@ func CheckAndSetRedisRelationKey(userId uint, key string) bool {
 		if err != nil {
 			zap.L().Error("mysql获取FollowerList失败", zap.Error(err))
 		}
+		if len(id) == 0 {
+			zap.L().Info("mysql获取FollowerList为空，不更新redis")
+			return 2
+		}
 		err = redis.SetFollowerListByUserId(userId, id)
 		if err != nil {
 			zap.L().Error("redis更新FollowerList失败", zap.Error(err))
 		}
 	}
-	return true
+	return 1
 }
