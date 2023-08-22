@@ -5,8 +5,6 @@ import (
 	"strconv"
 )
 
-const ()
-
 func GetWorkCountByUserId(userId uint) (int64, error) {
 	key := UserKey + fmt.Sprintf("%d", userId)
 	count, err := Rdb.HGet(Ctx, key, WorkCountField).Result()
