@@ -4,6 +4,7 @@ import (
 	"context"
 	"douyin/common"
 	"douyin/constant"
+	"douyin/constant/biz"
 	"douyin/kitex_gen/video"
 	"douyin/kitex_gen/video/videoservice"
 	"fmt"
@@ -54,7 +55,7 @@ func FeedList(ctx context.Context, c *app.RequestContext) {
 
 	latestTime := c.Query("latest_time")
 	unixTime, err := strconv.Atoi(latestTime)
-	if latestTime == "" || latestTime == "0" {
+	if latestTime == "" || latestTime < biz.MinTime {
 		latestTime = strconv.FormatInt(time.Now().Unix(), 10)
 	} else if err != nil || unixTime < 0 {
 		zap.L().Error("Parse videoIdStr err:", zap.Error(err))

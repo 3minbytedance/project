@@ -11,7 +11,6 @@ import (
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	video "douyin/kitex_gen/video"
-	"douyin/kitex_gen/video/videoservice"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"github.com/apache/thrift/lib/go/thrift"
@@ -29,7 +28,6 @@ import (
 var userClient userservice.Client
 var commentClient commentservice.Client
 var favoriteClient favoriteservice.Client
-var videoClient videoservice.Client
 
 // VideoServiceImpl implements the last service interface defined in the IDL.
 type VideoServiceImpl struct{}
@@ -40,12 +38,6 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	videoClient, err = videoservice.NewClient(
-		constant.VideoServiceName,
-		client.WithResolver(r),
-		client.WithSuite(tracing.NewClientSuite()),
-		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.VideoServiceName}),
-	)
 	userClient, err = userservice.NewClient(
 		constant.UserServiceName,
 		client.WithResolver(r),
@@ -71,7 +63,8 @@ func init() {
 // VideoFeed implements the VideoServiceImpl interface.
 func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFeedRequest) (resp *video.VideoFeedResponse, err error) {
 	zap.L().Info("VideoFeed", zap.Any("request", request))
-	videos := mysql.GetLatestVideos(request.GetLatestTime())
+	latestTime := request.GetLatestTime()
+	videos := mysql.GetLatestVideos(latestTime)
 	if len(videos) == 0 {
 		zap.L().Error("根据LatestTime取视频失败", zap.Error(err))
 		return &video.VideoFeedResponse{
@@ -130,14 +123,16 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 		}, err
 	}
 
-	// 通过MQ异步处理视频的上传操作, 包括上传到OSS, 保存到MySQL, 更新redis
-	zap.L().Info("上传视频发送到消息队列", zap.String("videoPath", videoPath))
-	kafka.VideoMQInstance.Produce(&kafka.VideoMessage{
-		VideoPath:     videoPath,
-		VideoFileName: videoFileName,
-		UserID:        uint(request.GetUserId()),
-		Title:         request.GetTitle(),
-	})
+	go func() {
+		// 通过MQ异步处理视频的上传操作, 包括上传到OSS, 保存到MySQL, 更新redis
+		zap.L().Info("上传视频发送到消息队列", zap.String("videoPath", videoPath))
+		kafka.VideoMQInstance.Produce(&kafka.VideoMessage{
+			VideoPath:     videoPath,
+			VideoFileName: videoFileName,
+			UserID:        uint(request.GetUserId()),
+			Title:         request.GetTitle(),
+		})
+	}()
 
 	return &video.PublishVideoResponse{
 		StatusCode: 0,
