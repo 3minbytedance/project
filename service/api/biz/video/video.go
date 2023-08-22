@@ -50,8 +50,8 @@ func init() {
 }
 
 func FeedList(ctx context.Context, c *app.RequestContext) {
-	actorId, _ := c.Get(common.ContextUserIDKey)
-	zap.L().Info("FeedList", zap.Uint("actorID", actorId.(uint)))
+	actorId, _ := common.GetCurrentUserID(c)
+	zap.L().Info("FeedList", zap.Uint("actorID", actorId))
 	latestTime := c.Query("latest_time")
 	_, err := strconv.Atoi(latestTime)
 	if latestTime == "" || latestTime == biz.MinTime {
@@ -65,7 +65,7 @@ func FeedList(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	req := &video.VideoFeedRequest{
-		UserId:     int64(actorId.(uint)),
+		UserId:     int64(actorId),
 		LatestTime: &latestTime,
 	}
 
@@ -84,7 +84,7 @@ func FeedList(ctx context.Context, c *app.RequestContext) {
 
 func GetPublishList(ctx context.Context, c *app.RequestContext) {
 	zap.L().Info("GetPublishList")
-	actionId, _ := c.Get(common.ContextUserIDKey)
+	actionId, _ := common.GetCurrentUserID(c)
 	userId, err := strconv.ParseInt(c.Query("user_id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusOK, video.PublishVideoListResponse{
@@ -93,7 +93,7 @@ func GetPublishList(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	request := &video.PublishVideoListRequest{
-		FromUserId: int64(actionId.(uint)),
+		FromUserId: int64(actionId),
 		ToUserId:   userId,
 	}
 	result, err := videoClient.GetPublishVideoList(ctx, request)
@@ -103,26 +103,17 @@ func GetPublishList(ctx context.Context, c *app.RequestContext) {
 
 func Publish(ctx context.Context, c *app.RequestContext) {
 	zap.L().Info("Publish video")
-	token := c.PostForm("token")
+	actionId, _ := common.GetCurrentUserID(c)
 	title := c.PostForm("title")
 	file, err := c.FormFile("data")
 
-	if err != nil || token == "" || title == "" || file.Size == 0 {
+	if err != nil || title == "" || file.Size == 0 {
 		c.JSON(http.StatusOK, video.PublishVideoResponse{
 			StatusCode: 1,
 			StatusMsg:  thrift.StringPtr("参数不合法"),
 		})
 		return
 	}
-	userToken, err := common.ParseToken(token)
-	if err != nil {
-		c.JSON(http.StatusOK, video.PublishVideoResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("token参数不合法"),
-		})
-		return
-	}
-	userId := userToken.ID
 	// 校验文件类型
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if !isValidFileType(ext) {
@@ -164,7 +155,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 	}
 
 	req := &video.PublishVideoRequest{
-		UserId: int64(userId),
+		UserId: int64(actionId),
 		Title:  title,
 		Data:   data,
 	}
