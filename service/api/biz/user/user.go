@@ -92,16 +92,21 @@ func Login(ctx context.Context, c *app.RequestContext) {
 
 func Info(ctx context.Context, c *app.RequestContext) {
 	actorId, _ := c.Get(common.ContextUserIDKey)
-
+	zap.L().Info("Info", zap.Uint("actorID", actorId.(uint)))
 	userId := c.Query("user_id")
-	userIdInt64, err := strconv.ParseUint(userId, 10, 64)
-	if err != nil {
+	userIdInt64, err := strconv.ParseInt(userId, 10, 64)
+	if err != nil || userIdInt64 < 0 {
 		zap.L().Error("Parse userId error", zap.Error(err))
+		c.JSON(http.StatusOK, &user.UserInfoByIdResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("user参数错"),
+		})
+		return
 	}
 
 	resp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-		ActorId: int32(actorId.(uint)),
-		UserId:  int32(userIdInt64),
+		ActorId: int64(actorId.(uint)),
+		UserId:  userIdInt64,
 	})
 
 	if err != nil {

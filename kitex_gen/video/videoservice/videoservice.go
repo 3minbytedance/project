@@ -150,7 +150,7 @@ func (p *kClient) GetPublishVideoList(ctx context.Context, request *video.Publis
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) GetWorkCount(ctx context.Context, userId int32) (r int32, err error) {
+func (p *kClient) GetWorkCount(ctx context.Context, userId int64) (r int32, err error) {
 	var _args video.VideoServiceGetWorkCountArgs
 	_args.UserId = userId
 	var _result video.VideoServiceGetWorkCountResult

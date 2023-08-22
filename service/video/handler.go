@@ -80,16 +80,16 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 	for _, v := range videos {
 		userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 			ActorId: currentId,
-			UserId:  int32(v.AuthorId),
+			UserId:  int64(v.AuthorId),
 		})
-		commentCount, _ := commentClient.GetCommentCount(ctx, int32(v.ID))
-		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int32(v.ID))
+		commentCount, _ := commentClient.GetCommentCount(ctx, int64(v.ID))
+		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int64(v.ID))
 		isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
 			UserId:  currentId,
-			VideoId: int32(v.ID),
+			VideoId: int64(v.ID),
 		})
 		videoResponse := video.Video{
-			Id:            int32(v.ID),
+			Id:            int64(v.ID),
 			Author:        userResp.GetUser(),
 			PlayUrl:       biz.OSS + v.VideoUrl,
 			CoverUrl:      biz.OSS + v.CoverUrl,
@@ -157,14 +157,14 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 			UserId:  request.GetToUserId(),
 			ActorId: request.GetFromUserId(),
 		})
-		commentCount, _ := commentClient.GetCommentCount(ctx, int32(v.ID))
-		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int32(v.ID))
+		commentCount, _ := commentClient.GetCommentCount(ctx, int64(v.ID))
+		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int64(v.ID))
 		isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
 			UserId:  request.GetToUserId(),
-			VideoId: int32(v.ID),
+			VideoId: int64(v.ID),
 		})
 		videoResponse := video.Video{
-			Id:            int32(v.ID),
+			Id:            int64(v.ID),
 			Author:        userResp.GetUser(),
 			PlayUrl:       biz.OSS + v.VideoUrl,
 			CoverUrl:      biz.OSS + v.CoverUrl,
@@ -183,7 +183,7 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 }
 
 // GetWorkCount implements the VideoServiceImpl interface.
-func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, userId int32) (resp int32, err error) {
+func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, userId int64) (resp int32, err error) {
 	// 从redis中获取作品数
 	// 1. 缓存中有数据, 直接返回
 	if redis.IsExistUserField(uint(userId), redis.WorkCountField) {

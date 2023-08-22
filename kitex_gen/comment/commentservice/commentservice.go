@@ -121,7 +121,7 @@ func (p *kClient) GetCommentList(ctx context.Context, request *comment.CommentLi
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) GetCommentCount(ctx context.Context, videoId int32) (r int32, err error) {
+func (p *kClient) GetCommentCount(ctx context.Context, videoId int64) (r int32, err error) {
 	var _args comment.CommentServiceGetCommentCountArgs
 	_args.VideoId = videoId
 	var _result comment.CommentServiceGetCommentCountResult

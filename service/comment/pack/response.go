@@ -12,7 +12,7 @@ func Comment(commentModel *model.Comment, userModel *user.User) *comment.Comment
 		return nil
 	}
 	return &comment.Comment{
-		Id:         int32(commentModel.ID),
+		Id:         int64(commentModel.ID),
 		User:       userModel,
 		Content:    commentModel.Content,
 		CreateDate: TranslateTime(commentModel.CreatedAt.Unix()),

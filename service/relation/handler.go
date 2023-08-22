@@ -44,9 +44,9 @@ type RelationServiceImpl struct{}
 func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relation.RelationActionRequest) (resp *relation.RelationActionResponse, err error) {
 	resp = new(relation.RelationActionResponse)
 	zap.L().Info("RelationClient action start",
-		zap.Int32("user_id", request.UserId),
+		zap.Int64("user_id", request.UserId),
 		zap.Int32("action_type", request.ActionType),
-		zap.Int32("ToUserId", request.ToUserId),
+		zap.Int64("ToUserId", request.ToUserId),
 	)
 	userId := request.GetUserId()
 	toUserId := request.GetToUserId()
@@ -133,7 +133,7 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	for _, com := range id {
 		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 			ActorId: request.GetUserId(),
-			UserId:  int32(com),
+			UserId:  int64(com),
 		})
 		if err != nil {
 			zap.L().Error("查询Follow用户信息失败", zap.Error(err))
@@ -174,7 +174,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 	for _, com := range id {
 		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 			ActorId: request.GetUserId(),
-			UserId:  int32(com),
+			UserId:  int64(com),
 		})
 		if err != nil {
 			zap.L().Error("查询Follower用户信息失败", zap.Error(err))
@@ -223,7 +223,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 	for _, com := range id {
 		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 			ActorId: request.GetUserId(),
-			UserId:  int32(com),
+			UserId:  int64(com),
 		})
 		if err != nil {
 			zap.L().Error("查询Friend用户信息失败", zap.Error(err))
@@ -243,7 +243,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 }
 
 // GetFollowListCount implements the RelationServiceImpl interface.
-func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, userId int32) (resp int32, err error) {
+func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, userId int64) (resp int32, err error) {
 	res := CheckAndSetRedisRelationKey(uint(userId), redis.FollowList)
 	if res == 2 {
 		return 0, nil
@@ -256,7 +256,7 @@ func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, userId int
 }
 
 // GetFollowerListCount implements the RelationServiceImpl interface.
-func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, userId int32) (resp int32, err error) {
+func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, userId int64) (resp int32, err error) {
 	res := CheckAndSetRedisRelationKey(uint(userId), redis.FollowerList)
 	if res == 2 {
 		return 0, nil

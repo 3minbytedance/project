@@ -17,9 +17,5 @@ func GetCurrentUserID(rc *app.RequestContext) (userID uint, err error) {
 		return
 	}
 	userID, ok = uid.(uint)
-	if !ok {
-		err = ErrorUserNotLogin
-		return
-	}
 	return
 }

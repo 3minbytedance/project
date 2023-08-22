@@ -15,8 +15,8 @@ type Client interface {
 	GetFollowList(ctx context.Context, request *relation.FollowListRequest, callOptions ...callopt.Option) (r *relation.FollowListResponse, err error)
 	GetFollowerList(ctx context.Context, request *relation.FollowerListRequest, callOptions ...callopt.Option) (r *relation.FollowerListResponse, err error)
 	GetFriendList(ctx context.Context, request *relation.FriendListRequest, callOptions ...callopt.Option) (r *relation.FriendListResponse, err error)
-	GetFollowListCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error)
-	GetFollowerListCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error)
+	GetFollowListCount(ctx context.Context, userId int64, callOptions ...callopt.Option) (r int32, err error)
+	GetFollowerListCount(ctx context.Context, userId int64, callOptions ...callopt.Option) (r int32, err error)
 	IsFollowing(ctx context.Context, request *relation.IsFollowingRequest, callOptions ...callopt.Option) (r bool, err error)
 	IsFriend(ctx context.Context, request *relation.IsFriendRequest, callOptions ...callopt.Option) (r bool, err error)
 }
@@ -70,12 +70,12 @@ func (p *kRelationServiceClient) GetFriendList(ctx context.Context, request *rel
 	return p.kClient.GetFriendList(ctx, request)
 }
 
-func (p *kRelationServiceClient) GetFollowListCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error) {
+func (p *kRelationServiceClient) GetFollowListCount(ctx context.Context, userId int64, callOptions ...callopt.Option) (r int32, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.GetFollowListCount(ctx, userId)
 }
 
-func (p *kRelationServiceClient) GetFollowerListCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error) {
+func (p *kRelationServiceClient) GetFollowerListCount(ctx context.Context, userId int64, callOptions ...callopt.Option) (r int32, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.GetFollowerListCount(ctx, userId)
 }

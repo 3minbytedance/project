@@ -46,8 +46,8 @@ type CommentServiceImpl struct{}
 func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment.CommentActionRequest) (resp *comment.CommentActionResponse, err error) {
 	resp = new(comment.CommentActionResponse)
 	zap.L().Info("CommentClient action start",
-		zap.Int32("user_id", request.GetUserId()),
-		zap.Int32("video_id", request.GetVideoId()),
+		zap.Int64("user_id", request.GetUserId()),
+		zap.Int64("video_id", request.GetVideoId()),
 		zap.Int32("action_type", request.GetActionType()),
 		zap.Int32("comment_id", request.GetCommentId()),
 		zap.String("comment_text", request.GetCommentText()),
@@ -80,7 +80,7 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		}
 		// 增加redis
 		go func() {
-			// todo 延迟双删
+			// todo
 			// 如果video不存在于redis，查询数据库并插入redis评论数
 			isSetKey, _ := checkAndSetRedisCommentKey(uint(videoId))
 			if isSetKey {
@@ -104,7 +104,7 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 	case 2:
 		// 设置redis
 		go func() {
-			// todo 延迟双删
+			// todo
 			err = redis.DecrementCommentCountByVideoId(uint(videoId))
 			if err != nil {
 				zap.L().Error("DecrementCommentCountByVideoId error", zap.Error(err))
@@ -149,7 +149,7 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 	for _, com := range comments {
 		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 			ActorId: actionId,
-			UserId:  int32(com.UserId),
+			UserId:  int64(com.UserId),
 		})
 		if err != nil {
 			zap.L().Error("查询评论用户信息失败", zap.Error(err))
@@ -169,7 +169,7 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 }
 
 // GetCommentCount implements the CommentServiceImpl interface.
-func (s *CommentServiceImpl) GetCommentCount(ctx context.Context, videoId int32) (resp int32, err error) {
+func (s *CommentServiceImpl) GetCommentCount(ctx context.Context, videoId int64) (resp int32, err error) {
 	isSetKey, count := checkAndSetRedisCommentKey(uint(videoId))
 	if isSetKey {
 		return int32(count), nil

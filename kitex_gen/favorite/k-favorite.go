@@ -48,7 +48,7 @@ func (p *FavoriteActionRequest) FastRead(buf []byte) (int, error) {
 		}
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I32 {
+			if fieldTypeId == thrift.I64 {
 				l, err = p.FastReadField1(buf[offset:])
 				offset += l
 				if err != nil {
@@ -62,7 +62,7 @@ func (p *FavoriteActionRequest) FastRead(buf []byte) (int, error) {
 				}
 			}
 		case 2:
-			if fieldTypeId == thrift.I32 {
+			if fieldTypeId == thrift.I64 {
 				l, err = p.FastReadField2(buf[offset:])
 				offset += l
 				if err != nil {
@@ -127,7 +127,7 @@ ReadStructEndError:
 func (p *FavoriteActionRequest) FastReadField1(buf []byte) (int, error) {
 	offset := 0
 
-	if v, l, err := bthrift.Binary.ReadI32(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadI64(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
@@ -141,7 +141,7 @@ func (p *FavoriteActionRequest) FastReadField1(buf []byte) (int, error) {
 func (p *FavoriteActionRequest) FastReadField2(buf []byte) (int, error) {
 	offset := 0
 
-	if v, l, err := bthrift.Binary.ReadI32(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadI64(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
@@ -199,8 +199,8 @@ func (p *FavoriteActionRequest) BLength() int {
 
 func (p *FavoriteActionRequest) fastWriteField1(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I32, 1)
-	offset += bthrift.Binary.WriteI32(buf[offset:], p.UserId)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I64, 1)
+	offset += bthrift.Binary.WriteI64(buf[offset:], p.UserId)
 
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
@@ -208,8 +208,8 @@ func (p *FavoriteActionRequest) fastWriteField1(buf []byte, binaryWriter bthrift
 
 func (p *FavoriteActionRequest) fastWriteField2(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "video_id", thrift.I32, 2)
-	offset += bthrift.Binary.WriteI32(buf[offset:], p.VideoId)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "video_id", thrift.I64, 2)
+	offset += bthrift.Binary.WriteI64(buf[offset:], p.VideoId)
 
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
@@ -226,8 +226,8 @@ func (p *FavoriteActionRequest) fastWriteField3(buf []byte, binaryWriter bthrift
 
 func (p *FavoriteActionRequest) field1Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("user_id", thrift.I32, 1)
-	l += bthrift.Binary.I32Length(p.UserId)
+	l += bthrift.Binary.FieldBeginLength("user_id", thrift.I64, 1)
+	l += bthrift.Binary.I64Length(p.UserId)
 
 	l += bthrift.Binary.FieldEndLength()
 	return l
@@ -235,8 +235,8 @@ func (p *FavoriteActionRequest) field1Length() int {
 
 func (p *FavoriteActionRequest) field2Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("video_id", thrift.I32, 2)
-	l += bthrift.Binary.I32Length(p.VideoId)
+	l += bthrift.Binary.FieldBeginLength("video_id", thrift.I64, 2)
+	l += bthrift.Binary.I64Length(p.VideoId)
 
 	l += bthrift.Binary.FieldEndLength()
 	return l
@@ -455,7 +455,7 @@ func (p *FavoriteListRequest) FastRead(buf []byte) (int, error) {
 		}
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I32 {
+			if fieldTypeId == thrift.I64 {
 				l, err = p.FastReadField1(buf[offset:])
 				offset += l
 				if err != nil {
@@ -469,7 +469,7 @@ func (p *FavoriteListRequest) FastRead(buf []byte) (int, error) {
 				}
 			}
 		case 2:
-			if fieldTypeId == thrift.I32 {
+			if fieldTypeId == thrift.I64 {
 				l, err = p.FastReadField2(buf[offset:])
 				offset += l
 				if err != nil {
@@ -520,7 +520,7 @@ ReadStructEndError:
 func (p *FavoriteListRequest) FastReadField1(buf []byte) (int, error) {
 	offset := 0
 
-	if v, l, err := bthrift.Binary.ReadI32(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadI64(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
@@ -534,7 +534,7 @@ func (p *FavoriteListRequest) FastReadField1(buf []byte) (int, error) {
 func (p *FavoriteListRequest) FastReadField2(buf []byte) (int, error) {
 	offset := 0
 
-	if v, l, err := bthrift.Binary.ReadI32(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadI64(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
@@ -576,8 +576,8 @@ func (p *FavoriteListRequest) BLength() int {
 
 func (p *FavoriteListRequest) fastWriteField1(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "action_id", thrift.I32, 1)
-	offset += bthrift.Binary.WriteI32(buf[offset:], p.ActionId)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "action_id", thrift.I64, 1)
+	offset += bthrift.Binary.WriteI64(buf[offset:], p.ActionId)
 
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
@@ -585,8 +585,8 @@ func (p *FavoriteListRequest) fastWriteField1(buf []byte, binaryWriter bthrift.B
 
 func (p *FavoriteListRequest) fastWriteField2(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I32, 2)
-	offset += bthrift.Binary.WriteI32(buf[offset:], p.UserId)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I64, 2)
+	offset += bthrift.Binary.WriteI64(buf[offset:], p.UserId)
 
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
@@ -594,8 +594,8 @@ func (p *FavoriteListRequest) fastWriteField2(buf []byte, binaryWriter bthrift.B
 
 func (p *FavoriteListRequest) field1Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("action_id", thrift.I32, 1)
-	l += bthrift.Binary.I32Length(p.ActionId)
+	l += bthrift.Binary.FieldBeginLength("action_id", thrift.I64, 1)
+	l += bthrift.Binary.I64Length(p.ActionId)
 
 	l += bthrift.Binary.FieldEndLength()
 	return l
@@ -603,8 +603,8 @@ func (p *FavoriteListRequest) field1Length() int {
 
 func (p *FavoriteListRequest) field2Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("user_id", thrift.I32, 2)
-	l += bthrift.Binary.I32Length(p.UserId)
+	l += bthrift.Binary.FieldBeginLength("user_id", thrift.I64, 2)
+	l += bthrift.Binary.I64Length(p.UserId)
 
 	l += bthrift.Binary.FieldEndLength()
 	return l
@@ -885,7 +885,7 @@ func (p *IsUserFavoriteRequest) FastRead(buf []byte) (int, error) {
 		}
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I32 {
+			if fieldTypeId == thrift.I64 {
 				l, err = p.FastReadField1(buf[offset:])
 				offset += l
 				if err != nil {
@@ -899,7 +899,7 @@ func (p *IsUserFavoriteRequest) FastRead(buf []byte) (int, error) {
 				}
 			}
 		case 2:
-			if fieldTypeId == thrift.I32 {
+			if fieldTypeId == thrift.I64 {
 				l, err = p.FastReadField2(buf[offset:])
 				offset += l
 				if err != nil {
@@ -950,7 +950,7 @@ ReadStructEndError:
 func (p *IsUserFavoriteRequest) FastReadField1(buf []byte) (int, error) {
 	offset := 0
 
-	if v, l, err := bthrift.Binary.ReadI32(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadI64(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
@@ -964,7 +964,7 @@ func (p *IsUserFavoriteRequest) FastReadField1(buf []byte) (int, error) {
 func (p *IsUserFavoriteRequest) FastReadField2(buf []byte) (int, error) {
 	offset := 0
 
-	if v, l, err := bthrift.Binary.ReadI32(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadI64(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
@@ -1006,8 +1006,8 @@ func (p *IsUserFavoriteRequest) BLength() int {
 
 func (p *IsUserFavoriteRequest) fastWriteField1(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I32, 1)
-	offset += bthrift.Binary.WriteI32(buf[offset:], p.UserId)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I64, 1)
+	offset += bthrift.Binary.WriteI64(buf[offset:], p.UserId)
 
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
@@ -1015,8 +1015,8 @@ func (p *IsUserFavoriteRequest) fastWriteField1(buf []byte, binaryWriter bthrift
 
 func (p *IsUserFavoriteRequest) fastWriteField2(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "video_id", thrift.I32, 2)
-	offset += bthrift.Binary.WriteI32(buf[offset:], p.VideoId)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "video_id", thrift.I64, 2)
+	offset += bthrift.Binary.WriteI64(buf[offset:], p.VideoId)
 
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
@@ -1024,8 +1024,8 @@ func (p *IsUserFavoriteRequest) fastWriteField2(buf []byte, binaryWriter bthrift
 
 func (p *IsUserFavoriteRequest) field1Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("user_id", thrift.I32, 1)
-	l += bthrift.Binary.I32Length(p.UserId)
+	l += bthrift.Binary.FieldBeginLength("user_id", thrift.I64, 1)
+	l += bthrift.Binary.I64Length(p.UserId)
 
 	l += bthrift.Binary.FieldEndLength()
 	return l
@@ -1033,8 +1033,8 @@ func (p *IsUserFavoriteRequest) field1Length() int {
 
 func (p *IsUserFavoriteRequest) field2Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("video_id", thrift.I32, 2)
-	l += bthrift.Binary.I32Length(p.VideoId)
+	l += bthrift.Binary.FieldBeginLength("video_id", thrift.I64, 2)
+	l += bthrift.Binary.I64Length(p.VideoId)
 
 	l += bthrift.Binary.FieldEndLength()
 	return l
@@ -1579,7 +1579,7 @@ func (p *FavoriteServiceGetVideoFavoriteCountArgs) FastRead(buf []byte) (int, er
 		}
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I32 {
+			if fieldTypeId == thrift.I64 {
 				l, err = p.FastReadField1(buf[offset:])
 				offset += l
 				if err != nil {
@@ -1630,7 +1630,7 @@ ReadStructEndError:
 func (p *FavoriteServiceGetVideoFavoriteCountArgs) FastReadField1(buf []byte) (int, error) {
 	offset := 0
 
-	if v, l, err := bthrift.Binary.ReadI32(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadI64(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
@@ -1670,8 +1670,8 @@ func (p *FavoriteServiceGetVideoFavoriteCountArgs) BLength() int {
 
 func (p *FavoriteServiceGetVideoFavoriteCountArgs) fastWriteField1(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "video_id", thrift.I32, 1)
-	offset += bthrift.Binary.WriteI32(buf[offset:], p.VideoId)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "video_id", thrift.I64, 1)
+	offset += bthrift.Binary.WriteI64(buf[offset:], p.VideoId)
 
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
@@ -1679,8 +1679,8 @@ func (p *FavoriteServiceGetVideoFavoriteCountArgs) fastWriteField1(buf []byte, b
 
 func (p *FavoriteServiceGetVideoFavoriteCountArgs) field1Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("video_id", thrift.I32, 1)
-	l += bthrift.Binary.I32Length(p.VideoId)
+	l += bthrift.Binary.FieldBeginLength("video_id", thrift.I64, 1)
+	l += bthrift.Binary.I64Length(p.VideoId)
 
 	l += bthrift.Binary.FieldEndLength()
 	return l
@@ -1842,7 +1842,7 @@ func (p *FavoriteServiceGetUserFavoriteCountArgs) FastRead(buf []byte) (int, err
 		}
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I32 {
+			if fieldTypeId == thrift.I64 {
 				l, err = p.FastReadField1(buf[offset:])
 				offset += l
 				if err != nil {
@@ -1893,7 +1893,7 @@ ReadStructEndError:
 func (p *FavoriteServiceGetUserFavoriteCountArgs) FastReadField1(buf []byte) (int, error) {
 	offset := 0
 
-	if v, l, err := bthrift.Binary.ReadI32(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadI64(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
@@ -1933,8 +1933,8 @@ func (p *FavoriteServiceGetUserFavoriteCountArgs) BLength() int {
 
 func (p *FavoriteServiceGetUserFavoriteCountArgs) fastWriteField1(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I32, 1)
-	offset += bthrift.Binary.WriteI32(buf[offset:], p.UserId)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I64, 1)
+	offset += bthrift.Binary.WriteI64(buf[offset:], p.UserId)
 
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
@@ -1942,8 +1942,8 @@ func (p *FavoriteServiceGetUserFavoriteCountArgs) fastWriteField1(buf []byte, bi
 
 func (p *FavoriteServiceGetUserFavoriteCountArgs) field1Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("user_id", thrift.I32, 1)
-	l += bthrift.Binary.I32Length(p.UserId)
+	l += bthrift.Binary.FieldBeginLength("user_id", thrift.I64, 1)
+	l += bthrift.Binary.I64Length(p.UserId)
 
 	l += bthrift.Binary.FieldEndLength()
 	return l
@@ -2105,7 +2105,7 @@ func (p *FavoriteServiceGetUserTotalFavoritedCountArgs) FastRead(buf []byte) (in
 		}
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I32 {
+			if fieldTypeId == thrift.I64 {
 				l, err = p.FastReadField1(buf[offset:])
 				offset += l
 				if err != nil {
@@ -2156,7 +2156,7 @@ ReadStructEndError:
 func (p *FavoriteServiceGetUserTotalFavoritedCountArgs) FastReadField1(buf []byte) (int, error) {
 	offset := 0
 
-	if v, l, err := bthrift.Binary.ReadI32(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadI64(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
@@ -2196,8 +2196,8 @@ func (p *FavoriteServiceGetUserTotalFavoritedCountArgs) BLength() int {
 
 func (p *FavoriteServiceGetUserTotalFavoritedCountArgs) fastWriteField1(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I32, 1)
-	offset += bthrift.Binary.WriteI32(buf[offset:], p.UserId)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "user_id", thrift.I64, 1)
+	offset += bthrift.Binary.WriteI64(buf[offset:], p.UserId)
 
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
@@ -2205,8 +2205,8 @@ func (p *FavoriteServiceGetUserTotalFavoritedCountArgs) fastWriteField1(buf []by
 
 func (p *FavoriteServiceGetUserTotalFavoritedCountArgs) field1Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("user_id", thrift.I32, 1)
-	l += bthrift.Binary.I32Length(p.UserId)
+	l += bthrift.Binary.FieldBeginLength("user_id", thrift.I64, 1)
+	l += bthrift.Binary.I64Length(p.UserId)
 
 	l += bthrift.Binary.FieldEndLength()
 	return l

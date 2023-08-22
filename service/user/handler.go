@@ -92,7 +92,7 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	}
 
 	// todo int32？
-	resp.UserId = int32(userId)
+	resp.UserId = int64(userId)
 	resp.Token = common.GenerateToken(userId, request.Username)
 
 	// 将token存入redis
@@ -134,7 +134,7 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	resp.StatusCode = 0
 	resp.StatusMsg = thrift.StringPtr("success")
 	resp.Token = token
-	resp.UserId = int32(userModel.ID)
+	resp.UserId = int64(userModel.ID)
 	// 将token存入redis
 	redis.SetToken(userModel.ID, token)
 	return

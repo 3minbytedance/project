@@ -3,7 +3,7 @@ namespace go video
 include "user.thrift"
 
 struct Video {
-    1: i32 id, // 视频唯一标识
+    1: i64 id, // 视频唯一标识
     2: user.User author, // 视频作者信息
     3: string play_url, // 视频播放地址
     4: string cover_url, // 视频封面地址
@@ -15,7 +15,7 @@ struct Video {
 
 struct VideoFeedRequest {
     1: optional string latest_time, // 可选参数，限制返回视频的最新投稿时间戳，精确到秒，不填表示当前时间
-    2: i32 user_id, // 可选参数，登录用户设置
+    2: i64 user_id, // 可选参数，登录用户设置
 }
 
 struct VideoFeedResponse {
@@ -26,7 +26,7 @@ struct VideoFeedResponse {
 }
 
 struct PublishVideoRequest {
-    1: i32 user_id, // 用户id
+    1: i64 user_id, // 用户id
     2: binary data, // 视频数据
     3: string title, // 视频标题
 }
@@ -37,8 +37,8 @@ struct PublishVideoResponse {
 }
 
 struct PublishVideoListRequest {
-    1: i32 from_user_id,
-    2: i32 to_user_id,
+    1: i64 from_user_id,
+    2: i64 to_user_id,
 }
 
 struct PublishVideoListResponse {
@@ -48,7 +48,7 @@ struct PublishVideoListResponse {
 }
 
 struct GetWorkCountRequest{
-    1: i32 user_id,
+    1: i64 user_id,
 }
 
 struct GetWorkCountResponse{
@@ -59,5 +59,5 @@ service VideoService {
     VideoFeedResponse VideoFeed(1: VideoFeedRequest Request),
     PublishVideoResponse PublishVideo(1: PublishVideoRequest Request),
     PublishVideoListResponse GetPublishVideoList(1: PublishVideoListRequest Request),
-    i32 GetWorkCount(1:i32 user_id)
+    i32 GetWorkCount(1:i64 user_id)
 }

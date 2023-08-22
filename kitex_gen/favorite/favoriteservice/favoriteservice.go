@@ -178,7 +178,7 @@ func (p *kClient) GetFavoriteList(ctx context.Context, request *favorite.Favorit
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) GetVideoFavoriteCount(ctx context.Context, videoId int32) (r int32, err error) {
+func (p *kClient) GetVideoFavoriteCount(ctx context.Context, videoId int64) (r int32, err error) {
 	var _args favorite.FavoriteServiceGetVideoFavoriteCountArgs
 	_args.VideoId = videoId
 	var _result favorite.FavoriteServiceGetVideoFavoriteCountResult
@@ -188,7 +188,7 @@ func (p *kClient) GetVideoFavoriteCount(ctx context.Context, videoId int32) (r i
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) GetUserFavoriteCount(ctx context.Context, userId int32) (r int32, err error) {
+func (p *kClient) GetUserFavoriteCount(ctx context.Context, userId int64) (r int32, err error) {
 	var _args favorite.FavoriteServiceGetUserFavoriteCountArgs
 	_args.UserId = userId
 	var _result favorite.FavoriteServiceGetUserFavoriteCountResult
@@ -198,7 +198,7 @@ func (p *kClient) GetUserFavoriteCount(ctx context.Context, userId int32) (r int
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) GetUserTotalFavoritedCount(ctx context.Context, userId int32) (r int32, err error) {
+func (p *kClient) GetUserTotalFavoritedCount(ctx context.Context, userId int64) (r int32, err error) {
 	var _args favorite.FavoriteServiceGetUserTotalFavoritedCountArgs
 	_args.UserId = userId
 	var _result favorite.FavoriteServiceGetUserTotalFavoritedCountResult

@@ -4,7 +4,7 @@ import (
 	user "douyin/kitex_gen/user"
 )
 
-func User(userId int32) *user.User {
+func User(userId int64) *user.User {
 	return &user.User{
 		Id:              userId,
 		Name:            "",

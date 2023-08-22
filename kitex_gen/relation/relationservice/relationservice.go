@@ -236,7 +236,7 @@ func (p *kClient) GetFriendList(ctx context.Context, request *relation.FriendLis
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) GetFollowListCount(ctx context.Context, userId int32) (r int32, err error) {
+func (p *kClient) GetFollowListCount(ctx context.Context, userId int64) (r int32, err error) {
 	var _args relation.RelationServiceGetFollowListCountArgs
 	_args.UserId = userId
 	var _result relation.RelationServiceGetFollowListCountResult
@@ -246,7 +246,7 @@ func (p *kClient) GetFollowListCount(ctx context.Context, userId int32) (r int32
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) GetFollowerListCount(ctx context.Context, userId int32) (r int32, err error) {
+func (p *kClient) GetFollowerListCount(ctx context.Context, userId int64) (r int32, err error) {
 	var _args relation.RelationServiceGetFollowerListCountArgs
 	_args.UserId = userId
 	var _result relation.RelationServiceGetFollowerListCountResult

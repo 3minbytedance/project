@@ -33,8 +33,8 @@ func customizedRegister(r *server.Hertz) {
 	douyin.GET("/feed/", mw.AuthWithoutLogin(), video.FeedList)
 	videoGroup := douyin.Group("/publish")
 	{
-		videoGroup.GET("/list/", video.GetPublishList)
-		videoGroup.POST("/action/", video.Publish)
+		videoGroup.GET("/list/", mw.AuthWithoutLogin(), video.GetPublishList)
+		videoGroup.POST("/action/", mw.Auth(), video.Publish)
 	}
 	// comment service
 	commentGroup := douyin.Group("/comment")
@@ -46,8 +46,8 @@ func customizedRegister(r *server.Hertz) {
 	// favorite service
 	favoriteGroup := douyin.Group("/favorite")
 	{
-		favoriteGroup.POST("/action/", favorite.Action)
-		favoriteGroup.GET("/list/", favorite.List)
+		favoriteGroup.POST("/action/", mw.Auth(), favorite.Action)
+		favoriteGroup.GET("/list/", mw.AuthWithoutLogin(), favorite.List)
 	}
 
 	// relation service

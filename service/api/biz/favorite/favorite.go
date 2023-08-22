@@ -76,8 +76,8 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	req := &favorite.FavoriteActionRequest{
-		UserId:     int32(userId),
-		VideoId:    int32(videoId),
+		UserId:     int64(userId),
+		VideoId:    int64(videoId),
 		ActionType: int32(actionType),
 	}
 
@@ -114,8 +114,8 @@ func List(ctx context.Context, c *app.RequestContext) {
 	}
 
 	req := &favorite.FavoriteListRequest{
-		ActionId: int32(userId),
-		UserId:   int32(toUserId),
+		ActionId: int64(userId),
+		UserId:   int64(toUserId),
 	}
 
 	resp, err := favoriteClient.GetFavoriteList(ctx, req)

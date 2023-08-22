@@ -41,7 +41,7 @@ func init() {
 
 func Action(ctx context.Context, c *app.RequestContext) {
 	toUserIdStr := c.Query("to_user_id")
-	toUserId, err := strconv.ParseUint(toUserIdStr, 10, 64)
+	toUserId, err := strconv.ParseInt(toUserIdStr, 10, 64)
 	content := c.Query("content")
 	fromUserId, err := common.GetCurrentUserID(c)
 	if err != nil {
@@ -50,8 +50,8 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	resp, err := messageClient.MessageAction(ctx, &message.MessageActionRequest{
-		FromUserId: int32(fromUserId),
-		ToUserId:   int32(toUserId),
+		FromUserId: int64(fromUserId),
+		ToUserId:   toUserId,
 		ActionType: 1,
 		Content:    content,
 	})
@@ -84,8 +84,8 @@ func Chat(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp, err := messageClient.MessageChat(ctx, &message.MessageChatRequest{
-		FromUserId: int32(fromUserId),
-		ToUserId:   int32(toUserId),
+		FromUserId: int64(fromUserId),
+		ToUserId:   toUserId,
 		PreMsgTime: preMsgTime,
 	})
 	if err != nil {

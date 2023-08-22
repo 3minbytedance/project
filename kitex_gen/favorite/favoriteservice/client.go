@@ -13,9 +13,9 @@ import (
 type Client interface {
 	FavoriteAction(ctx context.Context, request *favorite.FavoriteActionRequest, callOptions ...callopt.Option) (r *favorite.FavoriteActionResponse, err error)
 	GetFavoriteList(ctx context.Context, request *favorite.FavoriteListRequest, callOptions ...callopt.Option) (r *favorite.FavoriteListResponse, err error)
-	GetVideoFavoriteCount(ctx context.Context, videoId int32, callOptions ...callopt.Option) (r int32, err error)
-	GetUserFavoriteCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error)
-	GetUserTotalFavoritedCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error)
+	GetVideoFavoriteCount(ctx context.Context, videoId int64, callOptions ...callopt.Option) (r int32, err error)
+	GetUserFavoriteCount(ctx context.Context, userId int64, callOptions ...callopt.Option) (r int32, err error)
+	GetUserTotalFavoritedCount(ctx context.Context, userId int64, callOptions ...callopt.Option) (r int32, err error)
 	IsUserFavorite(ctx context.Context, request *favorite.IsUserFavoriteRequest, callOptions ...callopt.Option) (r bool, err error)
 }
 
@@ -58,17 +58,17 @@ func (p *kFavoriteServiceClient) GetFavoriteList(ctx context.Context, request *f
 	return p.kClient.GetFavoriteList(ctx, request)
 }
 
-func (p *kFavoriteServiceClient) GetVideoFavoriteCount(ctx context.Context, videoId int32, callOptions ...callopt.Option) (r int32, err error) {
+func (p *kFavoriteServiceClient) GetVideoFavoriteCount(ctx context.Context, videoId int64, callOptions ...callopt.Option) (r int32, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.GetVideoFavoriteCount(ctx, videoId)
 }
 
-func (p *kFavoriteServiceClient) GetUserFavoriteCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error) {
+func (p *kFavoriteServiceClient) GetUserFavoriteCount(ctx context.Context, userId int64, callOptions ...callopt.Option) (r int32, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.GetUserFavoriteCount(ctx, userId)
 }
 
-func (p *kFavoriteServiceClient) GetUserTotalFavoritedCount(ctx context.Context, userId int32, callOptions ...callopt.Option) (r int32, err error) {
+func (p *kFavoriteServiceClient) GetUserTotalFavoritedCount(ctx context.Context, userId int64, callOptions ...callopt.Option) (r int32, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.GetUserTotalFavoritedCount(ctx, userId)
 }

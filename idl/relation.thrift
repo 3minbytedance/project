@@ -3,8 +3,8 @@ namespace go relation
 include "user.thrift"
 
 struct RelationActionRequest {
-    1: i32 user_id, // 当前登录用户
-    2: i32 to_user_id, // 对方用户id
+    1: i64 user_id, // 当前登录用户
+    2: i64 to_user_id, // 对方用户id
     3: i32 action_type, // 1-关注 2-取消关注
 }
 
@@ -14,8 +14,8 @@ struct RelationActionResponse {
 }
 
 struct FollowListRequest {
-    1: i32 user_id, // 当前登录用户
-    2: i32 to_user_id, // 对方用户id
+    1: i64 user_id, // 当前登录用户
+    2: i64 to_user_id, // 对方用户id
 }
 
 struct FollowListResponse {
@@ -26,8 +26,8 @@ struct FollowListResponse {
 
 
 struct FollowerListRequest {
-    1: i32 user_id, // 当前登录用户
-    2: i32 to_user_id, // 对方用户id
+    1: i64 user_id, // 当前登录用户
+    2: i64 to_user_id, // 对方用户id
 }
 
 //粉丝列表
@@ -42,13 +42,13 @@ struct FollowListCountResponse {
 }
 
 struct FollowerListCountRequest {
-    1: i32 user_id, // 用户id
+    1: i64 user_id, // 用户id
 }
 
 
 struct FriendListRequest {
-    1: i32 user_id,     //当前登录用户id
-    2: i32 to_user_id,  //对方用户id
+    1: i64 user_id,     //当前登录用户id
+    2: i64 to_user_id,  //对方用户id
 }
 
 struct FriendListResponse {
@@ -58,13 +58,13 @@ struct FriendListResponse {
 }
 
 struct IsFollowingRequest {
-    1: i32 actor_id, //当前操作id
-    2: i32 user_id,  //对方用户id
+    1: i64 actor_id, //当前操作id
+    2: i64 user_id,  //对方用户id
 }
 
 struct IsFriendRequest {
-    1: i32 actor_id, //当前操作id
-    2: i32 user_id,  //对方用户id
+    1: i64 actor_id, //当前操作id
+    2: i64 user_id,  //对方用户id
 }
 
 service RelationService {
@@ -72,8 +72,8 @@ service RelationService {
     FollowListResponse GetFollowList(1: FollowListRequest Request),//关注列表
     FollowerListResponse GetFollowerList(1: FollowerListRequest Request),//粉丝列表
     FriendListResponse GetFriendList(1: FriendListRequest Request),//好友列表
-    i32 GetFollowListCount(1: i32 user_id),//查询某个用户的关注数
-    i32 GetFollowerListCount(1: i32 user_id),//查询某个用户的粉丝数
+    i32 GetFollowListCount(1: i64 user_id),//查询某个用户的关注数
+    i32 GetFollowerListCount(1: i64 user_id),//查询某个用户的粉丝数
     bool IsFollowing(1: IsFollowingRequest Request),//判断是否关注
     bool IsFriend(1: IsFriendRequest Request),//判断是否为互关
 }

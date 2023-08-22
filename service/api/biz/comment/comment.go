@@ -80,10 +80,9 @@ func Action(ctx context.Context, c *app.RequestContext) {
 			c.JSON(http.StatusOK, "Invalid Params.")
 			return
 		}
-		userIdUint := int32(userId)
 		req := &comment.CommentActionRequest{
-			UserId:      userIdUint,
-			VideoId:     int32(videoId),
+			UserId:      int64(userId),
+			VideoId:     int64(videoId),
 			ActionType:  int32(actionType),
 			CommentText: proto.String(commentText),
 		}
@@ -109,10 +108,9 @@ func Action(ctx context.Context, c *app.RequestContext) {
 				StatusMsg:  proto.String("Invalid comment ID."),
 			})
 		}
-		userIdUint := uint32(userId)
 		req := &comment.CommentActionRequest{
-			UserId:     int32(userIdUint),
-			VideoId:    int32(videoId),
+			UserId:     int64(userId),
+			VideoId:    int64(videoId),
 			ActionType: int32(actionType),
 			CommentId:  proto.Int32(int32(commentId)),
 		}
@@ -151,8 +149,8 @@ func List(ctx context.Context, c *app.RequestContext) {
 	}
 
 	req := &comment.CommentListRequest{
-		UserId:  int32(userId),
-		VideoId: int32(videoId),
+		UserId:  int64(userId),
+		VideoId: videoId,
 	}
 
 	resp, err := commentClient.GetCommentList(ctx, req)

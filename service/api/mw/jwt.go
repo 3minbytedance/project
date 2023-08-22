@@ -31,7 +31,7 @@ func Auth() app.HandlerFunc {
 			return
 		}
 		// 查看token是否在redis中, 若在，给token续期, 若不在，则阻止后面函数执行
-		exist := redis.TokenIsExisted(claims.ID)
+		exist := redis.TokenIsExisted(uint(claims.ID))
 		if !exist {
 			// token有误，阻止后面函数执行
 			c.Abort()
@@ -42,7 +42,7 @@ func Auth() app.HandlerFunc {
 			return
 		}
 		// 给token续期
-		redis.SetToken(claims.ID, token)
+		redis.SetToken(uint(claims.ID), token)
 
 		zap.L().Debug("CLAIM-ID", zap.Int("ID", int(claims.ID)))
 		c.Set(common.ContextUserIDKey, claims.ID)
@@ -72,7 +72,7 @@ func AuthWithoutLogin() app.HandlerFunc {
 			} else {
 				userId = claims.ID
 				// 给token续期
-				redis.SetToken(claims.ID, token)
+				redis.SetToken(uint(claims.ID), token)
 				tokenValid = true
 			}
 		}
@@ -108,7 +108,7 @@ func AuthBody() app.HandlerFunc {
 				})
 			}
 			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则返回0
-			exist := redis.TokenIsExisted(claims.ID)
+			exist := redis.TokenIsExisted(uint(claims.ID))
 			if !exist {
 				// token有误，阻止后面函数执行
 				c.Abort()
@@ -118,7 +118,7 @@ func AuthBody() app.HandlerFunc {
 				})
 			}
 			// 给token续期
-			redis.SetToken(claims.ID, token)
+			redis.SetToken(uint(claims.ID), token)
 			c.Set(common.ContextUserIDKey, claims.ID)
 			c.Next(ctx)
 		}

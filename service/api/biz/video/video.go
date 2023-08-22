@@ -51,7 +51,7 @@ func init() {
 
 func FeedList(ctx context.Context, c *app.RequestContext) {
 	actorId, _ := c.Get(common.ContextUserIDKey)
-
+	zap.L().Info("FeedList", zap.Uint("actorID", actorId.(uint)))
 	latestTime := c.Query("latest_time")
 	_, err := strconv.Atoi(latestTime)
 	if latestTime == "" || latestTime == biz.MinTime {
@@ -65,7 +65,7 @@ func FeedList(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	req := &video.VideoFeedRequest{
-		UserId:     int32(actorId.(uint)),
+		UserId:     int64(actorId.(uint)),
 		LatestTime: &latestTime,
 	}
 
@@ -83,7 +83,9 @@ func FeedList(ctx context.Context, c *app.RequestContext) {
 }
 
 func GetPublishList(ctx context.Context, c *app.RequestContext) {
-	userId, err := strconv.Atoi(c.Query("user_id"))
+	zap.L().Info("GetPublishList")
+	actionId, _ := c.Get(common.ContextUserIDKey)
+	userId, err := strconv.ParseInt(c.Query("user_id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusOK, video.PublishVideoListResponse{
 			StatusCode: 0,
@@ -91,8 +93,8 @@ func GetPublishList(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	request := &video.PublishVideoListRequest{
-		FromUserId: 0,
-		ToUserId:   int32(userId),
+		FromUserId: int64(actionId.(uint)),
+		ToUserId:   userId,
 	}
 	result, err := videoClient.GetPublishVideoList(ctx, request)
 
@@ -162,7 +164,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 	}
 
 	req := &video.PublishVideoRequest{
-		UserId: int32(userId),
+		UserId: int64(userId),
 		Title:  title,
 		Data:   data,
 	}

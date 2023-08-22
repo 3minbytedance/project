@@ -1,7 +1,7 @@
 namespace go user
 
 struct User {
-    1: i32 id, // 用户id
+    1: i64 id, // 用户id
     2: string name, // 用户名称
     3: i32 follow_count, // 关注总数
     4: i32 follower_count, // 粉丝总数
@@ -22,7 +22,7 @@ struct UserRegisterRequest {
 struct UserRegisterResponse {
     1: i32 status_code, // 状态码，0-成功，其他值-失败
     2: optional string status_msg, // 返回状态描述
-    3: i32 user_id, // 用户id
+    3: i64 user_id, // 用户id
     4: string token, // 用户鉴权token
 }
 
@@ -34,13 +34,13 @@ struct UserLoginRequest {
 struct UserLoginResponse {
     1: i32 status_code, // 状态码，0-成功，其他值-失败
     2: optional string status_msg, // 返回状态描述
-    3: i32 user_id, // 用户id
+    3: i64 user_id, // 用户id
     4: string token, // 用户鉴权token
 }
 
 struct UserInfoByIdRequest {
-    1: i32 actor_id, // 调用者id
-    2: i32 user_id,  // 用户id
+    1: i64 actor_id, // 调用者id
+    2: i64 user_id,  // 查询该id的信息
 }
 
 struct UserInfoByIdResponse {
@@ -56,7 +56,7 @@ struct UserInfoByNameRequest {
 struct UserInfoByNameResponse {
     1: i32 status_code, // 状态码，0-成功，其他值-失败
     2: optional string status_msg, // 返回状态描述
-    3: i32 user_id, // 用户信息
+    3: i64 user_id, // 用户信息
     4: string password,
     5: string salt,
 }
