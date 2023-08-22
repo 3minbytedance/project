@@ -50,17 +50,7 @@ func init() {
 }
 
 func FeedList(ctx context.Context, c *app.RequestContext) {
-	token := c.Query("token")
-	var userId uint
-	userToken, err := common.ParseToken(token)
-	//todo 先这样简单处理
-	if err != nil {
-		//isLogged := false
-		userId = 0
-	} else {
-		//isLogged = true
-		userId = userToken.ID
-	}
+	actorId, _ := c.Get(common.ContextUserIDKey)
 
 	latestTime := c.Query("latest_time")
 	unixTime, err := strconv.Atoi(latestTime)
@@ -72,7 +62,7 @@ func FeedList(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	req := &video.VideoFeedRequest{
-		UserId:     int32(userId),
+		UserId:     int32(actorId.(uint)),
 		LatestTime: &latestTime,
 	}
 

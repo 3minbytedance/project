@@ -221,7 +221,7 @@ func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, userId int
 	if err != nil {
 		return 0, err
 	}
-	return int32(count) - 1, nil
+	return int32(count), nil
 }
 
 // GetFollowerListCount implements the RelationServiceImpl interface.
@@ -231,7 +231,7 @@ func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, userId i
 	if err != nil {
 		return 0, err
 	}
-	return int32(count) - 1, nil
+	return int32(count), nil
 }
 
 // IsFollowing implements the RelationServiceImpl interface.
@@ -285,9 +285,6 @@ func CheckAndSetRedisRelationKey(userId uint, key string) bool {
 		if err != nil {
 			zap.L().Error("mysql获取FollowList失败", zap.Error(err))
 		}
-		if len(id) == 0 {
-			id = append(id, userId)
-		}
 		err = redis.SetFollowListByUserId(userId, id)
 		if err != nil {
 			zap.L().Error("redis更新FollowList失败", zap.Error(err))
@@ -296,9 +293,6 @@ func CheckAndSetRedisRelationKey(userId uint, key string) bool {
 		id, err := mysql.GetFollowerList(userId)
 		if err != nil {
 			zap.L().Error("mysql获取FollowerList失败", zap.Error(err))
-		}
-		if len(id) == 0 {
-			id = append(id, userId)
 		}
 		err = redis.SetFollowerListByUserId(userId, id)
 		if err != nil {
