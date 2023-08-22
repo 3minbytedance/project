@@ -4,9 +4,10 @@ import (
 	"context"
 	"douyin/common"
 	"douyin/mw/redis"
+	"net/http"
+
 	"github.com/cloudwego/hertz/pkg/app"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type Response struct {
@@ -63,9 +64,10 @@ func AuthWithoutLogin() app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
 		token := c.Query("token")
 		var userId uint
+		var tokenValid bool
 		if len(token) == 0 {
 			// 没有token, 设置userId为0，tokenValid为false
-			c.Set(common.TokenValid, false)
+			tokenValid = false
 			userId = 0
 		} else {
 			claims, err := common.ParseToken(token)
@@ -83,18 +85,19 @@ func AuthWithoutLogin() app.HandlerFunc {
 				zap.L().Debug("Token is not existed, user id ", zap.Int("ID", int(claims.ID)))
 				// token有误，设置userId为0,tokenValid为false
 				userId = 0
-				c.Set(common.TokenValid, false)
+				tokenValid = false
 			} else {
 				userId = claims.ID
 				// 给token续期
 				redis.SetToken(claims.ID, token)
+				tokenValid = true
 			}
 			zap.L().Debug("to")
 			zap.L().Debug("USER-ID", zap.Int("ID", int(userId)))
-			c.Set(common.ContextUserIDKey, userId)
-			c.Set(common.TokenValid, true)
-			c.Next(ctx)
 		}
+		c.Set(common.TokenValid, tokenValid)
+		c.Set(common.ContextUserIDKey, userId)
+		c.Next(ctx)
 	}
 }
 

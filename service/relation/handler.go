@@ -31,7 +31,7 @@ func init() {
 		constant.UserServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
-		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.CommentServiceName}))
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.UserServiceName}))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -214,42 +214,6 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 	}, nil
 }
 
-// CheckAndSetRedisRelationKey 返回true表示不存在这个key，并设置key
-// 返回false表示已存在这个key
-func CheckAndSetRedisRelationKey(userId uint, key string) bool {
-	if redis.IsExistUserSetField(userId, key) {
-		return false
-	}
-	//key不存在
-	if key == redis.FollowList {
-		id, err := mysql.GetFollowList(userId)
-		if err != nil {
-			zap.L().Error("mysql获取FollowList失败", zap.Error(err))
-		}
-		if len(id) == 0 {
-			id = append(id, userId)
-		}
-		err = redis.SetFollowListByUserId(userId, id)
-		if err != nil {
-			zap.L().Error("redis更新FollowList失败", zap.Error(err))
-		}
-	} else {
-		id, err := mysql.GetFollowerList(userId)
-		if err != nil {
-			zap.L().Error("mysql获取FollowerList失败", zap.Error(err))
-		}
-		if len(id) == 0 {
-			id = append(id, userId)
-		}
-		err = redis.SetFollowerListByUserId(userId, id)
-		if err != nil {
-			zap.L().Error("redis更新FollowerList失败", zap.Error(err))
-		}
-	}
-	return true
-
-}
-
 // GetFollowListCount implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, userId int32) (resp int32, err error) {
 	CheckAndSetRedisRelationKey(uint(userId), redis.FollowList)
@@ -307,4 +271,39 @@ func (s *RelationServiceImpl) IsFriend(ctx context.Context, request *relation.Is
 	// todo 改为从redis取
 	result, err := mysql.IsFriend(uint(request.ActorId), uint(request.UserId))
 	return result, err
+}
+
+// CheckAndSetRedisRelationKey 返回true表示不存在这个key，并设置key
+// 返回false表示已存在这个key
+func CheckAndSetRedisRelationKey(userId uint, key string) bool {
+	if redis.IsExistUserSetField(userId, key) {
+		return false
+	}
+	//key不存在
+	if key == redis.FollowList {
+		id, err := mysql.GetFollowList(userId)
+		if err != nil {
+			zap.L().Error("mysql获取FollowList失败", zap.Error(err))
+		}
+		if len(id) == 0 {
+			id = append(id, userId)
+		}
+		err = redis.SetFollowListByUserId(userId, id)
+		if err != nil {
+			zap.L().Error("redis更新FollowList失败", zap.Error(err))
+		}
+	} else {
+		id, err := mysql.GetFollowerList(userId)
+		if err != nil {
+			zap.L().Error("mysql获取FollowerList失败", zap.Error(err))
+		}
+		if len(id) == 0 {
+			id = append(id, userId)
+		}
+		err = redis.SetFollowerListByUserId(userId, id)
+		if err != nil {
+			zap.L().Error("redis更新FollowerList失败", zap.Error(err))
+		}
+	}
+	return true
 }

@@ -16,12 +16,17 @@ import (
 // customizeRegister registers customize routers.
 func customizedRegister(r *server.Hertz) {
 	douyin := r.Group("/douyin")
+
+	// 限流中间件，测试时不要开启
+	//douyin.Use(mw.RateLimiter())
+	//douyin.GET("/test", mw.RateLimiter(), user.Test)
+
 	// user service
 	userGroup := douyin.Group("/user")
 	{
 		userGroup.POST("/register/", user.Register)
-		userGroup.POST("/login", user.Login)
-		userGroup.GET("", mw.AuthWithoutLogin(), user.Info)
+		userGroup.POST("/login/", user.Login)
+		userGroup.GET("/", mw.AuthWithoutLogin(), user.Info)
 	}
 
 	// video service

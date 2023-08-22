@@ -9,7 +9,7 @@ import (
 	"douyin/kitex_gen/favorite/favoriteservice"
 	"douyin/kitex_gen/relation"
 	"douyin/kitex_gen/relation/relationservice"
-	"douyin/kitex_gen/user"
+	user "douyin/kitex_gen/user"
 	"douyin/kitex_gen/video/videoservice"
 	"douyin/mw/redis"
 	"douyin/service/user/pack"
@@ -40,13 +40,13 @@ func init() {
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.RelationServiceName}))
 	favoriteClient, err = favoriteservice.NewClient(
-		constant.CommentServiceName,
+		constant.FavoriteServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.FavoriteServiceName}),
 	)
 	videoClient, err = videoservice.NewClient(
-		constant.CommentServiceName,
+		constant.VideoServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.VideoServiceName}),
@@ -61,7 +61,6 @@ type UserServiceImpl struct{}
 
 // Register implements the UserServiceImpl interface.
 func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegisterRequest) (resp *user.UserRegisterResponse, err error) {
-
 	// 检查注册信息是否合理
 	resp = new(user.UserRegisterResponse)
 	statusCode, statusMsg := CheckUserRegisterInfo(request.Username, request.Password)
@@ -141,10 +140,8 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	return
 }
 
-// GetUserInfoById
-// 查询userId 的信息，并判断当前actionId是否和userId关注
+// GetUserInfoById implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.UserInfoByIdRequest) (resp *user.UserInfoByIdResponse, err error) {
-
 	resp = new(user.UserInfoByIdResponse)
 	actionId := request.GetActorId()
 	isLogged := false
@@ -162,7 +159,9 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 		resp.StatusMsg = thrift.StringPtr("User ID not exist")
 		return
 	}
-
+	fmt.Println("get INFO")
+	fmt.Println(actionId)
+	fmt.Println(userId)
 	// 关注数 粉丝数
 	followCount, _ := relationClient.GetFollowListCount(ctx, userId)
 	followerCount, _ := relationClient.GetFollowerListCount(ctx, userId)

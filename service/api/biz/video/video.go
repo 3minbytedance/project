@@ -107,7 +107,7 @@ func GetPublishList(ctx context.Context, c *app.RequestContext) {
 }
 
 func Publish(ctx context.Context, c *app.RequestContext) {
-
+	zap.L().Info("Publish video")
 	token := c.PostForm("token")
 	title := c.PostForm("title")
 	file, err := c.FormFile("data")

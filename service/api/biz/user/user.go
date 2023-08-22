@@ -6,6 +6,10 @@ import (
 	"douyin/constant"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/kitex/client"
@@ -13,9 +17,6 @@ import (
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 var userClient userservice.Client
@@ -92,7 +93,7 @@ func Login(ctx context.Context, c *app.RequestContext) {
 func Info(ctx context.Context, c *app.RequestContext) {
 	actorId, _ := c.Get(common.ContextUserIDKey)
 
-	userId := c.Query("userId")
+	userId := c.Query("user_id")
 	userIdInt64, err := strconv.ParseUint(userId, 10, 64)
 	if err != nil {
 		zap.L().Error("Parse userId error", zap.Error(err))

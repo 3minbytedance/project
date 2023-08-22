@@ -18,14 +18,6 @@ import (
 )
 
 func main() {
-	// OpenTelemetry 链路跟踪
-	//p := provider.NewOpenTelemetryProvider(
-	//	provider.WithServiceName(config.CommentServiceName),
-	//	provider.WithExportEndpoint("localhost:4317"),
-	//	provider.WithInsecure(),
-	//)
-	//defer p.Shutdown(context.Background())
-
 	// Etcd 服务发现
 	r, err := etcd.NewEtcdRegistry([]string{constant.EtcdAddr}) // r should not be reused.
 	if err != nil {

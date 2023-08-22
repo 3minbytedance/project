@@ -36,7 +36,7 @@ func init() {
 	}
 
 	favoriteClient, err = favoriteservice.NewClient(
-		constant.CommentServiceName,
+		constant.FavoriteServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		// Please keep the same as provider.WithServiceName

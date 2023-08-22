@@ -6,9 +6,10 @@ import (
 	"douyin/constant"
 	"douyin/dal/model"
 	"douyin/dal/mysql"
-	"douyin/kitex_gen/comment"
+	comment "douyin/kitex_gen/comment"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
+	"douyin/kitex_gen/video/videoservice"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"douyin/service/comment/pack"
@@ -22,6 +23,7 @@ import (
 )
 
 var userClient userservice.Client
+var videoClient videoservice.Client
 
 func init() {
 	// Etcd 服务发现
@@ -29,6 +31,12 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	videoClient, err = videoservice.NewClient(
+		constant.VideoServiceName,
+		client.WithResolver(r),
+		client.WithSuite(tracing.NewClientSuite()),
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.VideoServiceName}),
+	)
 	userClient, err = userservice.NewClient(
 		constant.UserServiceName,
 		client.WithResolver(r),
@@ -72,7 +80,7 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 			Content: common.ReplaceWord(request.GetCommentText()),
 		}
 		// _, err = mysql.AddComment(&commentData)
-		err := kafka.CommentMQInstance.ProduceAddCommentMsg(&commentData)
+		err = kafka.CommentMQInstance.ProduceAddCommentMsg(&commentData)
 		if err != nil {
 			resp.StatusCode = 1
 			resp.StatusMsg = thrift.StringPtr(err.Error())
@@ -168,6 +176,21 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 	}, nil
 }
 
+// GetCommentCount implements the CommentServiceImpl interface.
+func (s *CommentServiceImpl) GetCommentCount(ctx context.Context, videoId int32) (resp int32, err error) {
+	isSetKey, count := checkAndSetRedisCommentKey(uint(videoId))
+	if isSetKey {
+		return int32(count), nil
+	}
+	// 从redis中获取评论数
+	count, err = redis.GetCommentCountByVideoId(uint(videoId))
+	if err != nil {
+		zap.L().Error("redis获取评论数失败", zap.Error(err))
+		return 0, err
+	}
+	return int32(count), nil
+}
+
 // checkAndSetRedisCommentKey
 // 返回true表示不存在这个key，并设置key
 // 返回false表示已存在这个key，cnt数返回0
@@ -187,19 +210,4 @@ func checkAndSetRedisCommentKey(videoId uint) (isSet bool, count int64) {
 		return true, cnt
 	}
 	return false, cnt
-}
-
-// GetCommentCount implements the CommentServiceImpl interface.
-func (s *CommentServiceImpl) GetCommentCount(ctx context.Context, videoId int32) (resp int32, err error) {
-	isSetKey, count := checkAndSetRedisCommentKey(uint(videoId))
-	if isSetKey {
-		return int32(count), nil
-	}
-	// 从redis中获取评论数
-	count, err = redis.GetCommentCountByVideoId(uint(videoId))
-	if err != nil {
-		zap.L().Error("redis获取评论数失败", zap.Error(err))
-		return 0, err
-	}
-	return int32(count), nil
 }

@@ -7,11 +7,12 @@ import (
 	dalMySQL "douyin/dal/mysql"
 	"douyin/kitex_gen/comment/commentservice"
 	favorite "douyin/kitex_gen/favorite"
+	"douyin/kitex_gen/favorite/favoriteservice"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	"douyin/kitex_gen/video"
-	"douyin/mw/kafka"
 	mwRedis "douyin/mw/redis"
+	"douyin/mw/kafka"
 	"errors"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
@@ -24,8 +25,9 @@ import (
 )
 
 var (
-	userClient    userservice.Client
-	commentClient commentservice.Client
+	userClient     userservice.Client
+	commentClient  commentservice.Client
+	favoriteClient favoriteservice.Client
 )
 
 func init() {
@@ -38,12 +40,20 @@ func init() {
 		constant.UserServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
-		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.FavoriteServiceName}))
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.UserServiceName}))
 	if err != nil {
 		log.Fatal(err)
 	}
 	commentClient, err = commentservice.NewClient(
 		constant.CommentServiceName,
+		client.WithResolver(r),
+		client.WithSuite(tracing.NewClientSuite()),
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.CommentServiceName}))
+	if err != nil {
+		log.Fatal(err)
+	}
+	favoriteClient, err = favoriteservice.NewClient(
+		constant.FavoriteServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.FavoriteServiceName}))
@@ -74,18 +84,8 @@ func (s *FavoriteServiceImpl) FavoriteAction(ctx context.Context, request *favor
 	}, nil
 }
 
-// GetUserTotalFavoritedCount 获取用户的被喜欢总数
-func (s *FavoriteServiceImpl) GetUserTotalFavoritedCount(ctx context.Context, userId int32) (resp int32, err error) {
-	favoritesByUserId, err := getFavoritesByUserId(uint(userId))
-	if err != nil {
-		return 0, err
-	}
-	return int32(len(favoritesByUserId)), nil
-}
-
 // GetFavoriteList implements the FavoriteServiceImpl interface.
 func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favorite.FavoriteListRequest) (resp *favorite.FavoriteListResponse, err error) {
-	zap.L().Debug("GetFavoriteList", zap.Any("request", request))
 	resp = new(favorite.FavoriteListResponse)
 	userId := request.GetUserId()
 	actionId := request.GetActionId()
@@ -122,7 +122,7 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 	}, err
 }
 
-// GetVideoFavoriteCount 获取视频点赞数.
+// GetVideoFavoriteCount implements the FavoriteServiceImpl interface.
 func (s *FavoriteServiceImpl) GetVideoFavoriteCount(ctx context.Context, videoId int32) (resp int32, err error) {
 	count, err := getFavoritesVideoCount(uint(videoId))
 	if err != nil {
@@ -131,20 +131,30 @@ func (s *FavoriteServiceImpl) GetVideoFavoriteCount(ctx context.Context, videoId
 	return int32(count), nil
 }
 
-// IsUserFavorite 判断是否点赞
-func (s *FavoriteServiceImpl) IsUserFavorite(ctx context.Context, request *favorite.IsUserFavoriteRequest) (resp bool, err error) {
-	userId := request.GetUserId()
-	videoId := request.GetVideoId()
-	return isUserFavorite(uint(userId), uint(videoId)), nil
-}
-
-// GetUserFavoriteCount 获取某个用户的点赞数
+// GetUserFavoriteCount implements the FavoriteServiceImpl interface.
 func (s *FavoriteServiceImpl) GetUserFavoriteCount(ctx context.Context, userId int32) (resp int32, err error) {
 	favoritesByUserId, err := getFavoritesByUserId(uint(userId))
 	if err != nil {
 		return 0, err
 	}
 	return int32(len(favoritesByUserId)), nil
+}
+
+// GetUserTotalFavoritedCount implements the FavoriteServiceImpl interface.
+// 获取用户的被喜欢总数
+func (s *FavoriteServiceImpl) GetUserTotalFavoritedCount(ctx context.Context, userId int32) (resp int32, err error) {
+	favoritesByUserId, err := getFavoritesByUserId(uint(userId))
+	if err != nil {
+		return 0, err
+	}
+	return int32(len(favoritesByUserId)), nil
+}
+
+// IsUserFavorite implements the FavoriteServiceImpl interface.
+func (s *FavoriteServiceImpl) IsUserFavorite(ctx context.Context, request *favorite.IsUserFavoriteRequest) (resp bool, err error) {
+	userId := request.GetUserId()
+	videoId := request.GetVideoId()
+	return isUserFavorite(uint(userId), uint(videoId)), nil
 }
 
 // favoriteActions 点赞，取消赞的操作过程
@@ -171,21 +181,21 @@ func favoriteActions(userId uint, videoId uint, actionType int) error {
 		// 更新用户喜欢的视频列表
 		err = mwRedis.AddFavoriteVideoToList(userId, videoId)
 		if err != nil {
-			zap.L().Error("更新用户喜欢的视频列表", zap.Error(err))
+			zap.L().Error("更新用户喜欢的视频列表",zap.Error(err))
 			return err
 		}
 		// 更新用户喜欢的视频数量，这个不用，直接从set中获取
 		// 更新视频被喜欢的数量
 		err = mwRedis.IncrementFavoritedCountByVideoId(videoId)
 		if err != nil {
-			zap.L().Error("更新视频被喜欢的数量", zap.Error(err))
+			zap.L().Error("更新视频被喜欢的数量",zap.Error(err))
 			return err
 		}
 		// 更新视频作者的被点赞量
 		getUserTotalFavoritedCount(videoModel.AuthorId)
 		err = mwRedis.IncrementTotalFavoritedByUserId(videoModel.AuthorId)
 		if err != nil {
-			zap.L().Error("更新视频作者的被点赞量", zap.Error(err))
+			zap.L().Error("更新视频作者的被点赞量",zap.Error(err))
 			return err
 		}
 		// dalMySQL.AddUserFavorite(userId, videoId)
@@ -202,26 +212,26 @@ func favoriteActions(userId uint, videoId uint, actionType int) error {
 		// 更新视频被喜欢的用户列表
 		err = mwRedis.DeleteFavoriteVideoFromList(userId, videoId)
 		if err != nil {
-			zap.L().Error("更新视频被喜欢的用户列表", zap.Error(err))
+			zap.L().Error("更新视频被喜欢的用户列表",zap.Error(err))
 			return err
 		}
 		// 更新视频被喜欢的数量
 		err = mwRedis.DecrementFavoritedCountByVideoId(videoId)
 		if err != nil {
-			zap.L().Error("更新视频被喜欢的数量", zap.Error(err))
+			zap.L().Error("更新视频被喜欢的数量",zap.Error(err))
 			return err
 		}
 		getUserTotalFavoritedCount(videoModel.AuthorId)
 		// 更新视频作者的被点赞量
 		err = mwRedis.DecrementTotalFavoritedByUserId(videoModel.AuthorId)
 		if err != nil {
-			zap.L().Error("更新视频作者的被点赞量", zap.Error(err))
+			zap.L().Error("更新视频作者的被点赞量",zap.Error(err))
 			return err
 		}
 		// err = dalMySQL.DeleteUserFavorite(userId, videoId)
 		err = kafka.FavoriteMQInstance.ProduceDelFavoriteMsg(userId, videoId)
 		if err != nil {
-			zap.L().Error("更新视频作者的被点赞量", zap.Error(err))
+			zap.L().Error("更新视频作者的被点赞量",zap.Error(err))
 			return err
 		}
 	}
@@ -359,3 +369,5 @@ func isUserFavorite(userId, videoId uint) bool {
 	}
 	return mwRedis.IsInUserFavoriteList(userId, videoId)
 }
+
+

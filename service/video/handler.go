@@ -11,6 +11,7 @@ import (
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	video "douyin/kitex_gen/video"
+	"douyin/kitex_gen/video/videoservice"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"github.com/apache/thrift/lib/go/thrift"
@@ -28,6 +29,7 @@ import (
 var userClient userservice.Client
 var commentClient commentservice.Client
 var favoriteClient favoriteservice.Client
+var videoClient videoservice.Client
 
 // VideoServiceImpl implements the last service interface defined in the IDL.
 type VideoServiceImpl struct{}
@@ -38,6 +40,12 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	videoClient, err = videoservice.NewClient(
+		constant.VideoServiceName,
+		client.WithResolver(r),
+		client.WithSuite(tracing.NewClientSuite()),
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.VideoServiceName}),
+	)
 	userClient, err = userservice.NewClient(
 		constant.UserServiceName,
 		client.WithResolver(r),
@@ -50,7 +58,7 @@ func init() {
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.CommentServiceName}),
 	)
 	favoriteClient, err = favoriteservice.NewClient(
-		constant.CommentServiceName,
+		constant.FavoriteServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.FavoriteServiceName}),
@@ -123,6 +131,7 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 	}
 
 	// 通过MQ异步处理视频的上传操作, 包括上传到OSS, 保存到MySQL, 更新redis
+	zap.L().Info("上传视频发送到消息队列", zap.String("videoPath", videoPath))
 	kafka.VideoMQInstance.Produce(&kafka.VideoMessage{
 		VideoPath:     videoPath,
 		VideoFileName: videoFileName,
