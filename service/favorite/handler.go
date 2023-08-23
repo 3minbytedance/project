@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"douyin/constant"
+	"douyin/constant/biz"
 	"douyin/dal/model"
 	dalMySQL "douyin/dal/mysql"
 	"douyin/kitex_gen/comment/commentservice"
@@ -104,8 +105,8 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 		vid := video.Video{
 			Id:            int64(videoByVideoId.ID),
 			Author:        userResp.GetUser(),
-			PlayUrl:       videoByVideoId.VideoUrl,
-			CoverUrl:      videoByVideoId.CoverUrl,
+			PlayUrl:       biz.OSS + videoByVideoId.VideoUrl,
+			CoverUrl:      biz.OSS + videoByVideoId.CoverUrl,
 			FavoriteCount: int32(favoriteCount),
 			CommentCount:  commentCount,
 			IsFavorite:    isUserFavorite(uint(userId), id),
