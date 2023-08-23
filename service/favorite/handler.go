@@ -288,6 +288,9 @@ func getFavoritesVideoCount(videoId uint) (int64, error) {
 		if err != nil {
 			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
 		}
+		if num == 0 {
+			return 0, nil
+		}
 		err = mwRedis.SetVideoFavoritedCountByVideoId(videoId, int64(num)) // 加载视频被点赞数量
 		if err != nil {
 			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
@@ -310,16 +313,12 @@ func getFavoritesByUserId(userId uint) ([]uint, error) {
 	}
 
 	// redis中没有对应的数据，从MYSQL数据库中获取数据
-	favorites, _, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
+	favorites, favoriteLength, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
 	if err != nil {
 		zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
 	}
-	if len(favorites) == 0 {
-		//点赞数为0，设置为0
-		if err = mwRedis.SetFavoriteListByUserId(userId, []uint{0}); err != nil {
-			zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
-		}
-		return []uint{}, err
+	if favoriteLength == 0 {
+		return []uint{}, nil
 	}
 	//removeNilValue(userId)
 	idList := getIdListFromFavoriteSlice(favorites, dalMySQL.IdTypeUser)
@@ -350,24 +349,20 @@ func isUserFavorite(userId, videoId uint) bool {
 	exist := mwRedis.IsExistUserSetField(userId, mwRedis.FavoriteList)
 	if !exist {
 		// redis中没有对应的数据，从MYSQL数据库中获取数据
-		favorites, _, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
+		favorites, favoriteLength, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
 		if err != nil {
 			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
 			return false
 		}
-		if len(favorites) == 0 {
-			//点赞数为0，设置0
-			if err = mwRedis.SetFavoriteListByUserId(userId, []uint{0}); err != nil {
-				zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
-			}
-		} else {
-			//removeNilValue(userId)
-			idList := getIdListFromFavoriteSlice(favorites, dalMySQL.IdTypeUser)
-			// key 不存在需要同步到redis
-			err = mwRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
-			if err != nil {
-				zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
-			}
+		//点赞数为0
+		if favoriteLength == 0 {
+			return false
+		}
+		idList := getIdListFromFavoriteSlice(favorites, dalMySQL.IdTypeUser)
+		// key 不存在需要同步到redis
+		err = mwRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
+		if err != nil {
+			zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
 		}
 	}
 	return mwRedis.IsInUserFavoriteList(userId, videoId)

@@ -49,12 +49,6 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 	)
 	userId := request.GetUserId()
 	toUserId := request.GetToUserId()
-	if userId == toUserId {
-		return &relation.RelationActionResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("不能对自己操作"),
-		}, nil
-	}
 
 	switch request.ActionType {
 	case 1: // 关注
@@ -271,9 +265,6 @@ func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, userId i
 func (s *RelationServiceImpl) IsFollowing(ctx context.Context, request *relation.IsFollowingRequest) (resp bool, err error) {
 	actionId := request.GetActorId()
 	toUserId := request.GetUserId()
-	if actionId == toUserId {
-		return true, nil
-	}
 	// redis存在key
 	if redis.IsExistUserSetField(uint(actionId), redis.FollowList) {
 		found := redis.IsInMyFollowList(uint(actionId), uint(toUserId))
