@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"strconv"
 )
 
@@ -84,11 +85,15 @@ func GetFavoriteListByUserId(userId uint) ([]uint, error) {
 // SetFavoriteListByUserId 设置用户的点赞视频列表
 func SetFavoriteListByUserId(userid uint, id []uint) error {
 	key := fmt.Sprintf("%d_%s", userid, FavoriteList)
-	b := make([]interface{}, len(id))
-	for i := range id {
-		b[i] = id[i]
+	pipe := Rdb.Pipeline()
+	for _, value := range id {
+		err := pipe.SAdd(Ctx, key, value).Err()
+		if err != nil {
+			return err
+		}
 	}
-	err := Rdb.SAdd(Ctx, key, b...).Err()
+	zap.L().Info("Favorite_LIST", zap.Any("List", id))
+	_, err := pipe.Exec(Ctx)
 	return err
 }
 
