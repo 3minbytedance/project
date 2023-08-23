@@ -67,7 +67,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 	}
 
 	// invalid param, return
-	videoId, err := strconv.ParseUint(videoIdStr, 10, 32)
+	videoId, err := strconv.ParseInt(videoIdStr, 10, 64)
 	actionType, err := strconv.ParseUint(actionTypeStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusOK, "Invalid Params.")
@@ -82,7 +82,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		}
 		req := &comment.CommentActionRequest{
 			UserId:      int64(userId),
-			VideoId:     int64(videoId),
+			VideoId:     videoId,
 			ActionType:  int32(actionType),
 			CommentText: proto.String(commentText),
 		}
@@ -101,7 +101,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 			})
 			return
 		}
-		commentId, err := strconv.ParseUint(commentIdStr, 10, 32)
+		commentId, err := strconv.ParseInt(commentIdStr, 10, 64)
 		if err != nil {
 			c.JSON(http.StatusOK, &comment.CommentActionResponse{
 				StatusCode: 1,
@@ -110,7 +110,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		}
 		req := &comment.CommentActionRequest{
 			UserId:     int64(userId),
-			VideoId:    int64(videoId),
+			VideoId:    videoId,
 			ActionType: int32(actionType),
 			CommentId:  proto.Int32(int32(commentId)),
 		}

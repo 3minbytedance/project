@@ -65,7 +65,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 	}
 
 	// invalid param, return
-	toUserId, err := strconv.ParseUint(toUserIdStr, 10, 32)
+	toUserId, err := strconv.ParseInt(toUserIdStr, 10, 64)
 	actionType, err := strconv.ParseUint(actionTypeStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusOK, "Invalid Params.")
@@ -73,7 +73,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 	}
 	req := &relation.RelationActionRequest{
 		UserId:     int64(userId),
-		ToUserId:   int64(toUserId),
+		ToUserId:   toUserId,
 		ActionType: int32(actionType),
 	}
 	// TODO: judge userId
@@ -111,14 +111,14 @@ func FollowList(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	toUserIdStr := c.Query("user_id")
-	toUserId, err := strconv.ParseUint(toUserIdStr, 10, 32)
+	toUserId, err := strconv.ParseInt(toUserIdStr, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusOK, "Invalid Params.")
 		return
 	}
 	req := &relation.FollowListRequest{
 		UserId:   int64(userId),
-		ToUserId: int64(toUserId),
+		ToUserId: toUserId,
 	}
 
 	resp, err := relationClient.GetFollowList(ctx, req)
@@ -144,7 +144,7 @@ func FollowerList(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	toUserIdStr := c.Query("user_id")
-	toUserId, err := strconv.ParseUint(toUserIdStr, 10, 32)
+	toUserId, err := strconv.ParseInt(toUserIdStr, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusOK, "Invalid Params.")
 		return
@@ -178,7 +178,7 @@ func FriendList(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	toUserIdStr := c.Query("user_id")
-	toUserId, err := strconv.ParseUint(toUserIdStr, 10, 32)
+	toUserId, err := strconv.ParseInt(toUserIdStr, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusOK, "Invalid Params.")
 		return
@@ -186,7 +186,7 @@ func FriendList(ctx context.Context, c *app.RequestContext) {
 
 	req := &relation.FriendListRequest{
 		UserId:   int64(userId),
-		ToUserId: int64(toUserId),
+		ToUserId: toUserId,
 	}
 	resp, err := relationClient.GetFriendList(ctx, req)
 	if err != nil {
