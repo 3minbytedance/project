@@ -66,9 +66,9 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 	latestTime := request.GetLatestTime()
 	videos := mysql.GetLatestVideos(latestTime)
 	if len(videos) == 0 {
-		zap.L().Error("根据LatestTime取视频失败", zap.Error(err))
+		zap.L().Info("根据LatestTime取视频失败")
 		return &video.VideoFeedResponse{
-			StatusCode: 1,
+			StatusCode: 0,
 			StatusMsg:  thrift.StringPtr("获取视频列表失败"),
 			VideoList:  nil,
 		}, err

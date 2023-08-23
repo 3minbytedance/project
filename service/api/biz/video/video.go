@@ -4,7 +4,6 @@ import (
 	"context"
 	"douyin/common"
 	"douyin/constant"
-	"douyin/constant/biz"
 	"douyin/kitex_gen/video"
 	"douyin/kitex_gen/video/videoservice"
 	"github.com/apache/thrift/lib/go/thrift"
@@ -53,10 +52,10 @@ func FeedList(ctx context.Context, c *app.RequestContext) {
 	actorId, _ := common.GetCurrentUserID(c)
 	zap.L().Info("FeedList", zap.Uint("actorID", actorId))
 	latestTime := c.Query("latest_time")
-	_, err := strconv.Atoi(latestTime)
-	if latestTime == "" || latestTime == biz.MinTime {
+	t, err := strconv.Atoi(latestTime)
+	if latestTime == "" {
 		latestTime = strconv.FormatInt(time.Now().Unix(), 10)
-	} else if err != nil || latestTime < biz.MinTime {
+	} else if err != nil || t < 0 {
 		zap.L().Info("Parse videoIdStr err:", zap.Error(err))
 		c.JSON(http.StatusOK, video.VideoFeedResponse{
 			StatusCode: 1,
@@ -88,7 +87,7 @@ func GetPublishList(ctx context.Context, c *app.RequestContext) {
 	userId, err := strconv.ParseInt(c.Query("user_id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusOK, video.PublishVideoListResponse{
-			StatusCode: 0,
+			StatusCode: 1,
 		})
 		return
 	}
@@ -153,15 +152,12 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-
 	req := &video.PublishVideoRequest{
 		UserId: int64(actionId),
 		Title:  title,
 		Data:   data,
 	}
-
 	resp, err := videoClient.PublishVideo(ctx, req)
-
 	if err != nil {
 		zap.L().Error("PublishVideo err.", zap.Error(err))
 		c.JSON(http.StatusOK, video.PublishVideoResponse{

@@ -7,6 +7,4 @@ const (
 	SecretId      = "AKIDFKMQPakpcN6tkV9oJg6PanzAGC0hGkCZ"
 	SecretKey     = "MWXXLzQlutgMtLl5HH9pPp5CB0cfcMxR"
 	SessionToken  = "SECRETTOKEN"
-
-	MinTime = "1692777106"
 )

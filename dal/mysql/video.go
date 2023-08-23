@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"douyin/dal/model"
+	"strconv"
 	"time"
 )
 
@@ -40,6 +41,10 @@ func GetLatestVideos(latestTime string) []model.Video {
 	videos := make([]model.Video, 0)
 
 	DB.Model(&model.Video{}).Where("created_at < ?", latestTime).Order("created_at DESC").Limit(30).Find(&videos)
-
+	if len(videos) == 0 {
+		//如果视频都看完，重置时间戳
+		latestTime = strconv.FormatInt(time.Now().Unix(), 10)
+		DB.Model(&model.Video{}).Where("created_at < ?", latestTime).Order("created_at DESC").Limit(30).Find(&videos)
+	}
 	return videos
 }
