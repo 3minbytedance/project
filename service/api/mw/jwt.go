@@ -25,7 +25,7 @@ func Auth() app.HandlerFunc {
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
 				StatusCode: -1,
-				StatusMsg:  "Token Error",
+				StatusMsg:  "Token Error1"+token,
 			})
 			return
 		}
@@ -36,7 +36,7 @@ func Auth() app.HandlerFunc {
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
 				StatusCode: -1,
-				StatusMsg:  "Token Error",
+				StatusMsg:  "Token Error2"+token,
 			})
 			return
 		}
@@ -88,38 +88,33 @@ func AuthWithoutLogin() app.HandlerFunc {
 func AuthBody() app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
 		token := c.PostForm("token")
-		// 没携带token
-		if len(token) == 0 {
-			// 没有token, 阻止后面函数执行
+		// 解析token
+		claims, err := common.ParseToken(token)
+		if err != nil {
+			// token有误（含len(token)=0的情况），阻止后面函数执行
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
 				StatusCode: -1,
-				StatusMsg:  "Unauthorized",
+				StatusMsg:  "Token Error1"+token,
 			})
-		} else {
-			claims, err := common.ParseToken(token)
-			if err != nil {
-				// token有误，阻止后面函数执行
-				c.Abort()
-				c.JSON(http.StatusUnauthorized, Response{
-					StatusCode: -1,
-					StatusMsg:  "Token Error",
-				})
-			}
-			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则返回0
-			exist := redis.TokenIsExisted(uint(claims.ID))
-			if !exist {
-				// token有误，阻止后面函数执行
-				c.Abort()
-				c.JSON(http.StatusUnauthorized, Response{
-					StatusCode: -1,
-					StatusMsg:  "Token Error",
-				})
-			}
-			// 给token续期
-			redis.SetToken(uint(claims.ID), token)
-			c.Set(common.ContextUserIDKey, claims.ID)
-			c.Next(ctx)
+			return
 		}
+		// 查看token是否在redis中, 若在，给token续期, 若不在，则阻止后面函数执行
+		exist := redis.TokenIsExisted(uint(claims.ID))
+		if !exist {
+			// token有误，阻止后面函数执行
+			c.Abort()
+			c.JSON(http.StatusUnauthorized, Response{
+				StatusCode: -1,
+				StatusMsg:  "Token Error2"+token,
+			})
+			return
+		}
+		// 给token续期
+		redis.SetToken(uint(claims.ID), token)
+
+		zap.L().Debug("CLAIM-ID", zap.Int("ID", int(claims.ID)))
+		c.Set(common.ContextUserIDKey, claims.ID)
+		c.Next(ctx)
 	}
 }
