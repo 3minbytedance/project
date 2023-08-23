@@ -143,7 +143,7 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 // GetPublishVideoList implements the VideoServiceImpl interface.
 func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *video.PublishVideoListRequest) (resp *video.PublishVideoListResponse, err error) {
 	zap.L().Info("GetPublishVideoList", zap.Any("request", request))
-	videos, found := mysql.FindVideosByAuthorId(uint(request.GetFromUserId()))
+	videos, found := mysql.FindVideosByAuthorId(uint(request.GetToUserId()))
 	if !found {
 		return &video.PublishVideoListResponse{
 			StatusCode: 1,

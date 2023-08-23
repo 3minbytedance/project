@@ -10,7 +10,7 @@ for port in "${port_list[@]}"; do
     if [ -n "$pid" ]; then
         # 终止进程
         echo "Terminating process on port $port (PID: $pid)"
-        kill "$pid"
+        kill -9 "$pid"
     else
         echo "No process found on port $port"
     fi
