@@ -3,6 +3,7 @@
 package main
 
 import (
+	"douyin/common"
 	"douyin/service/api/biz/comment"
 	"douyin/service/api/biz/favorite"
 	"douyin/service/api/biz/message"
@@ -15,6 +16,7 @@ import (
 
 // customizeRegister registers customize routers.
 func customizedRegister(r *server.Hertz) {
+	r.Use(common.AccessLog())
 	douyin := r.Group("/douyin")
 
 	// 限流中间件，测试时不要开启
@@ -24,7 +26,7 @@ func customizedRegister(r *server.Hertz) {
 	// user service
 	userGroup := douyin.Group("/user")
 	{
-		userGroup.POST("/register/", user.Register)
+		userGroup.POST("/register/",user.Register)
 		userGroup.POST("/login/", user.Login)
 		userGroup.GET("/", mw.AuthWithoutLogin(), user.Info)
 	}
