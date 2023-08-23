@@ -79,27 +79,31 @@ func GetFriendListById(userId uint) ([]uint, error) {
 // SetFollowListByUserId 设置关注列表
 func SetFollowListByUserId(userid uint, ids []uint) error {
 	key := fmt.Sprintf("%d_%s", userid, FollowList)
-	// 转换为[]interface{}
-	b := make([]interface{}, 0, len(ids))
-	for i, _ := range ids {
-		b[i] = ids[i]
+	pipe := Rdb.Pipeline()
+	for _, value := range ids {
+		err := pipe.SAdd(Ctx, key, value).Err()
+		if err != nil {
+			return err
+		}
 	}
-	zap.L().Info("LIST", zap.Any("List", b))
-	err := Rdb.SAdd(Ctx, key, b...).Err()
+	zap.L().Info("Follow_LIST", zap.Any("List", ids))
+	_, err := pipe.Exec(Ctx)
 	return err
 }
 
 // SetFollowerListByUserId 设置粉丝列表
 func SetFollowerListByUserId(userid uint, ids []uint) error {
 	key := fmt.Sprintf("%d_%s", userid, FollowerList)
+	pipe := Rdb.Pipeline()
 	// 转换为[]interface{}
-	b := make([]interface{}, 0, len(ids))
-	fmt.Println(b)
-	fmt.Println("setfollow")
-	for i, _ := range ids {
-		b[i] = ids[i]
+	for _, value := range ids {
+		err := pipe.SAdd(Ctx, key, value).Err()
+		if err != nil {
+			return err
+		}
 	}
-	err := Rdb.SAdd(Ctx, key, b...).Err()
+	zap.L().Info("Follower_LIST", zap.Any("List", ids))
+	_, err := pipe.Exec(Ctx)
 	return err
 }
 
