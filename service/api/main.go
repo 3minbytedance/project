@@ -38,6 +38,7 @@ func main() {
 	}
 	h := server.Default(
 		server.WithHostPorts(constant.ApiServicePort),
+		server.WithMaxRequestBodySize(50*1024*1024),
 	)
 
 	customizedRegister(h)
