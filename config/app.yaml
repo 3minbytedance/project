@@ -31,7 +31,7 @@ local:
   mongo:
     address: "114.115.222.161"
     port: 27017
-    username: douyin
+    username: admin
     password: w5W7PNXYBzLBGHRx
 #  mysql:
 #    address: "127.0.0.1"

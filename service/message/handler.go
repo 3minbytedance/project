@@ -8,6 +8,7 @@ import (
 	message "douyin/kitex_gen/message"
 	"douyin/kitex_gen/relation"
 	"douyin/kitex_gen/relation/relationservice"
+	"douyin/mw/kafka"
 	"douyin/service/message/pack"
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
@@ -114,15 +115,15 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 		CreateTime: time.Now().Unix(),
 	}
 
-	// 聊天记录发向kafka
-	//go kafka.MessageMQInstance.Produce(messageData)
+	//聊天记录发向kafka
+	go kafka.MessageMQInstance.Produce(messageData)
 
-	//往mongo发送聊天记录
-	err = mongo.SendMessage(messageData)
-	if err != nil {
-		log.Println("mongo.SendMessage err:", err)
-		return
-	}
+	////往mongo发送聊天记录
+	//err = mongo.SendMessage(messageData)
+	//if err != nil {
+	//	log.Println("mongo.SendMessage err:", err)
+	//	return
+	//}
 
 	return &message.MessageActionResponse{
 		StatusCode: 0,
