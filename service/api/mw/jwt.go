@@ -4,10 +4,9 @@ import (
 	"context"
 	"douyin/common"
 	"douyin/mw/redis"
-	"net/http"
-
 	"github.com/cloudwego/hertz/pkg/app"
 	"go.uber.org/zap"
+	"net/http"
 )
 
 type Response struct {
@@ -65,14 +64,14 @@ func AuthWithoutLogin() app.HandlerFunc {
 			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则将userID设为0
 			exist := redis.TokenIsExisted(claims.ID)
 			if !exist {
-				zap.L().Debug("Token is not existed, user id ", zap.Int("ID", int(claims.ID)))
+				zap.L().Debug("Token is not existed, user id ", zap.Uint("ID", claims.ID))
 				// token有误，设置userId为0,tokenValid为false
 				userId = 0
 				tokenValid = false
 			} else {
 				userId = claims.ID
 				// 给token续期
-				redis.SetToken(uint(claims.ID), token)
+				redis.SetToken(claims.ID, token)
 				tokenValid = true
 			}
 		}
