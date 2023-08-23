@@ -34,7 +34,7 @@ func customizedRegister(r *server.Hertz) {
 	videoGroup := douyin.Group("/publish")
 	{
 		videoGroup.GET("/list/", mw.AuthWithoutLogin(), video.GetPublishList)
-		videoGroup.POST("/action/", mw.Auth(), video.Publish)
+		videoGroup.POST("/action/", mw.AuthBody(), video.Publish)
 	}
 	// comment service
 	commentGroup := douyin.Group("/comment")

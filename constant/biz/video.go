@@ -8,5 +8,5 @@ const (
 	SecretKey     = "MWXXLzQlutgMtLl5HH9pPp5CB0cfcMxR"
 	SessionToken  = "SECRETTOKEN"
 
-	MinTime = "1692091625"
+	MinTime = "1692777106"
 )
