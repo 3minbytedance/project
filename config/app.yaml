@@ -33,12 +33,13 @@ local:
     port: 27017
     username: admin
     password: w5W7PNXYBzLBGHRx
+    db: admin
 #  mysql:
 #    address: "127.0.0.1"
 #    port: 3306
 #    username: root
-#    password: 123456
-#    database: doushen
+#    password: 12345678
+#    database: douyin
 #    timeout: 10
 #  redis:
 #    address: "127.0.0.1"
@@ -52,7 +53,7 @@ local:
 #    address: "127.0.0.1"
 #    port: 9092
 #  mongo:
-#    address: "114.115.222.161"
+#    address: "127.0.0.1"
 #    port: 27017
 #    username: douyin
 #    password: douyin

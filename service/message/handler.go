@@ -115,7 +115,7 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 		CreateTime: time.Now().Unix(),
 	}
 
-	//聊天记录发向kafka
+	// 聊天记录发向kafka
 	go kafka.MessageMQInstance.Produce(messageData)
 
 	////往mongo发送聊天记录

@@ -25,18 +25,18 @@ func Auth() app.HandlerFunc {
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
 				StatusCode: -1,
-				StatusMsg:  "Token Error1"+token,
+				StatusMsg:  "Token Error1" + token,
 			})
 			return
 		}
 		// 查看token是否在redis中, 若在，给token续期, 若不在，则阻止后面函数执行
-		exist := redis.TokenIsExisted(uint(claims.ID))
+		exist := redis.TokenIsExisted(claims.ID)
 		if !exist {
 			// token有误，阻止后面函数执行
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
 				StatusCode: -1,
-				StatusMsg:  "Token Error2"+token,
+				StatusMsg:  "Token Error2" + token,
 			})
 			return
 		}
@@ -95,7 +95,7 @@ func AuthBody() app.HandlerFunc {
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
 				StatusCode: -1,
-				StatusMsg:  "Token Error1"+token,
+				StatusMsg:  "Token Error1" + token,
 			})
 			return
 		}
@@ -106,7 +106,7 @@ func AuthBody() app.HandlerFunc {
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
 				StatusCode: -1,
-				StatusMsg:  "Token Error2"+token,
+				StatusMsg:  "Token Error2" + token,
 			})
 			return
 		}

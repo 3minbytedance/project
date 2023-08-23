@@ -76,6 +76,7 @@ type MongoConfig struct {
 	Port     int    `mapstructure:"port"`
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
+	DB       string `mapstructure:"db"`
 }
 
 func Init() (err error) {
@@ -83,7 +84,7 @@ func Init() (err error) {
 	//viper.SetConfigName("app")
 	viper.SetConfigFile("config/app.yaml") // 指定配置文件路径
 	err = viper.ReadInConfig()             // 读取配置信息
-	if err != nil {                        // 读取配置信息失败
+	if err != nil {                        // 读取配置信息失败¬
 		panic(fmt.Errorf("Read app.yaml failed: %s \n", err))
 	}
 
