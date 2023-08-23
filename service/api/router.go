@@ -11,6 +11,7 @@ import (
 	"douyin/service/api/biz/user"
 	"douyin/service/api/biz/video"
 	"douyin/service/api/mw"
+
 	"github.com/cloudwego/hertz/pkg/app/server"
 )
 
@@ -26,7 +27,7 @@ func customizedRegister(r *server.Hertz) {
 	// user service
 	userGroup := douyin.Group("/user")
 	{
-		userGroup.POST("/register/",user.Register)
+		userGroup.POST("/register/", user.Register)
 		userGroup.POST("/login/", user.Login)
 		userGroup.GET("/", mw.AuthWithoutLogin(), user.Info)
 	}
@@ -56,9 +57,9 @@ func customizedRegister(r *server.Hertz) {
 	relationGroup := douyin.Group("/relation")
 	{
 		relationGroup.POST("/action/", mw.Auth(), relation.Action)
-		relationGroup.GET("/follow/list/", mw.Auth(), relation.FollowList)
-		relationGroup.GET("/follower/list/", mw.Auth(), relation.FollowerList)
-		relationGroup.GET("/friend/list/", mw.Auth(), relation.FriendList)
+		relationGroup.GET("/follow/list/", mw.AuthWithoutLogin(), relation.FollowList)
+		relationGroup.GET("/follower/list/", mw.AuthWithoutLogin(), relation.FollowerList)
+		relationGroup.GET("/friend/list/", mw.AuthWithoutLogin(), relation.FriendList)
 	}
 	// message service
 	messageGroup := douyin.Group("/message")

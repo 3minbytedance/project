@@ -13,7 +13,6 @@ import (
 	"douyin/kitex_gen/video/videoservice"
 	"douyin/mw/redis"
 	"douyin/service/user/pack"
-	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/bwmarrin/snowflake"
 	"github.com/cloudwego/kitex/client"
@@ -167,9 +166,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 		resp.StatusMsg = thrift.StringPtr("User ID not exist")
 		return
 	}
-	fmt.Println("get INFO")
-	fmt.Println(actionId)
-	fmt.Println(userId)
+
 	// 关注数 粉丝数
 	followCount, _ := relationClient.GetFollowListCount(ctx, userId)
 	followerCount, _ := relationClient.GetFollowerListCount(ctx, userId)
