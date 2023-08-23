@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/apache/thrift v0.13.0
 	github.com/bits-and-blooms/bloom/v3 v3.5.0
+	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cloudwego/hertz v0.6.7
 	github.com/cloudwego/kitex v0.5.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -20,6 +21,7 @@ require (
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.42
 	go.mongodb.org/mongo-driver v1.12.1
 	go.uber.org/zap v1.25.0
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 	google.golang.org/protobuf v1.31.0
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/gorm v1.25.3
@@ -93,7 +95,6 @@ require (
 	go.uber.org/goleak v1.2.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.2.0 // indirect
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect

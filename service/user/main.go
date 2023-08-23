@@ -9,6 +9,7 @@ import (
 	"douyin/logger"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
+	"github.com/bwmarrin/snowflake"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -16,6 +17,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"net"
+	"strconv"
 )
 
 func main() {
@@ -63,8 +65,20 @@ func main() {
 		panic(err)
 	}
 
+	num, err := strconv.ParseInt(config.Conf.Node, 10, 64)
+	if err != nil {
+		zap.L().Error("Snowflake node num failed, err:%v\n", zap.Error(err))
+		return
+	}
+
+	node, err := snowflake.NewNode(num)
+	if err != nil {
+		zap.L().Error("Snowflake node failed, err:%v\n", zap.Error(err))
+		return
+	}
+
 	svr := user.NewServer(
-		new(UserServiceImpl),
+		NewUserServiceImpl(node),
 		server.WithServiceAddr(addr),
 		server.WithSuite(tracing.NewServerSuite()),
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.UserServiceName}),

@@ -13,6 +13,7 @@ var (
 
 type AppConfig struct {
 	Name       string `mapstructure:"name"`
+	Node       string `mapstructure:"node"`
 	Mode       string `mapstructure:"mode"`
 	Port       int    `mapstructure:"port"`
 	Version    string `mapstructure:"version"`
