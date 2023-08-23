@@ -244,7 +244,7 @@ func CheckUserRegisterInfo(username string, password string) (int32, string) {
 		return 1, "username is illegal."
 	}
 
-	if len(password) <= 6 || len(password) > 32 {
+	if len(password) < 6 || len(password) > 32 {
 		return 2, "password is illegal"
 	}
 
