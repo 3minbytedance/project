@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -22,16 +22,21 @@ func Init(appConfig *config.AppConfig) (err error) {
 	}
 	Ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	mongoUrl := fmt.Sprintf("mongodb://%s:%d", conf.Address, conf.Port)
+	mongoUrl := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s", conf.Username, conf.Password, conf.Address, conf.Port, conf.DB)
 	client, err := mongo.Connect(Ctx, options.Client().ApplyURI(mongoUrl))
-	//.SetAuth(options.Credential{
-	//		Username: conf.Username,
-	//		Password: conf.Password,
-	//	}
+
 	if err != nil {
-		log.Println("Connection MongoDB Error:", err)
+		zap.L().Error("Connection MongoDB Error:", zap.Error(err))
 		return
 	}
-	Mongo = client.Database("3minbytedance")
+
+	// 检查连接
+	err = client.Ping(Ctx, nil)
+	if err != nil {
+		zap.L().Error("Connection MongoDB Error:", zap.Error(err))
+		return
+	}
+
+	Mongo = client.Database("admin")
 	return
 }

@@ -2,13 +2,19 @@ package mongo
 
 import (
 	"douyin/dal/model"
+	"encoding/json"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	_ "go.mongodb.org/mongo-driver/bson"
 	"log"
 )
 
-func SendMessage(message *model.Message) (err error) {
+func SendMessage(data []byte) (err error) {
+	message := new(model.Message)
+	err = json.Unmarshal(data, message)
+	if err != nil {
+		log.Println("kafka获取message反序列化失败：", err)
+	}
 	collection := Mongo.Collection("messages")
 	_, err = collection.InsertOne(Ctx, message)
 	if err != nil {
