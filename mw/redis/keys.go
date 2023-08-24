@@ -30,8 +30,6 @@ const (
 	FollowerList = "follower_list" //粉丝列表
 )
 
-
-
 const TokenKey = "token_"
 
 func IsExistUserField(userId uint, field string) bool {
@@ -56,7 +54,7 @@ func IsExistVideoField(videoId uint, field string) bool {
 
 // IsExistUserSetField 判断set类型的是否存在
 func IsExistUserSetField(userId uint, field string) bool {
-	key := fmt.Sprintf("%d_%S", userId, field)
+	key := fmt.Sprintf("%s_%d", field, userId)
 	exists, err := Rdb.Exists(Ctx, key).Result()
 	if err != nil {
 		log.Println("redis isExistUser 连接失败")
@@ -67,6 +65,6 @@ func IsExistUserSetField(userId uint, field string) bool {
 
 // 根据参数合成并删除key
 func DelKey(userId uint, field string) {
-	key := fmt.Sprintf("%d_%S", userId, field)
+	key := fmt.Sprintf("%s_%d", field, userId)
 	Rdb.Del(Ctx, key)
 }

@@ -69,7 +69,7 @@ func SetVideoFavoritedCountByVideoId(videoId uint, totalFavorited int64) error {
 
 // GetFavoriteListByUserId 根据userId查找喜欢的视频list
 func GetFavoriteListByUserId(userId uint) ([]uint, error) {
-	key := fmt.Sprintf("%d_%s", userId, FavoriteList)
+	key := fmt.Sprintf("%s_%d", FavoriteList, userId)
 	list, err := Rdb.SMembers(Ctx, key).Result()
 	var result []uint
 	for _, i := range list {
@@ -83,8 +83,8 @@ func GetFavoriteListByUserId(userId uint) ([]uint, error) {
 }
 
 // SetFavoriteListByUserId 设置用户的点赞视频列表
-func SetFavoriteListByUserId(userid uint, id []uint) error {
-	key := fmt.Sprintf("%d_%s", userid, FavoriteList)
+func SetFavoriteListByUserId(userId uint, id []uint) error {
+	key := fmt.Sprintf("%s_%d", FavoriteList, userId)
 	pipe := Rdb.Pipeline()
 	for _, value := range id {
 		err := pipe.SAdd(Ctx, key, value).Err()
@@ -99,28 +99,28 @@ func SetFavoriteListByUserId(userid uint, id []uint) error {
 
 // AddFavoriteVideoToList 给用户的点赞视频列表加一个video
 func AddFavoriteVideoToList(userId uint, videoId uint) error {
-	key := fmt.Sprintf("%d_%s", userId, FavoriteList)
+	key := fmt.Sprintf("%s_%d", FavoriteList, userId)
 	err := Rdb.SAdd(Ctx, key, videoId).Err()
 	return err
 }
 
 // DeleteFavoriteVideoFromList 给用户的点赞视频列表删除一个video
 func DeleteFavoriteVideoFromList(userId uint, videoId uint) error {
-	key := fmt.Sprintf("%d_%s", userId, FavoriteList)
+	key := fmt.Sprintf("%s_%d", FavoriteList, userId)
 	err := Rdb.SRem(Ctx, key, videoId).Err()
 	return err
 }
 
 // IsInUserFavoriteList 判断用户点赞视频列表中是否有对应的video
 func IsInUserFavoriteList(userId uint, videoId uint) bool {
-	key := fmt.Sprintf("%d_%s", userId, FavoriteList)
+	key := fmt.Sprintf("%s_%d", FavoriteList, userId)
 	found, _ := Rdb.SIsMember(Ctx, key, videoId).Result()
 	return found
 }
 
 // GetUserFavoriteVideoCountById 根据userId查找喜欢的视频数量
 func GetUserFavoriteVideoCountById(userId uint) (int64, error) {
-	key := fmt.Sprintf("%d_%s", userId, FavoriteList)
+	key := fmt.Sprintf("%s_%d", FavoriteList, userId)
 	size, err := Rdb.SCard(Ctx, key).Result()
 	return size, err
 }

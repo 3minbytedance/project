@@ -55,12 +55,20 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		c.JSON(http.StatusOK, "Unauthorized operation.")
 		return
 	}
+	actionIdStr := strconv.FormatUint(uint64(actionId), 10)
 	toUserIdStr, toUserIdExists := c.GetQuery("to_user_id")
 	actionTypeStr, actionTypeExists := c.GetQuery("action_type")
 
 	// miss param, return
 	if !toUserIdExists || !actionTypeExists {
 		c.JSON(http.StatusOK, "Invalid Params.")
+		return
+	}
+	if actionIdStr == toUserIdStr {
+		c.JSON(http.StatusOK, &relation.RelationActionResponse{
+			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("不能对自己操作"),
+		})
 		return
 	}
 

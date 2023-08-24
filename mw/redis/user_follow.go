@@ -9,21 +9,21 @@ import (
 
 // GetFollowCountById 根据userId查找关注数
 func GetFollowCountById(userId uint) (int, error) {
-	key := fmt.Sprintf("%d_%s", userId, FollowList)
+	key := fmt.Sprintf("%s_%d", FollowList, userId)
 	size, err := Rdb.SCard(Ctx, key).Result()
 	return int(size), err
 }
 
 // GetFollowerCountById 根据userId查找粉丝数
 func GetFollowerCountById(userId uint) (int, error) {
-	key := fmt.Sprintf("%d_%s", userId, FollowerList)
+	key := fmt.Sprintf("%s_%d", FollowerList, userId)
 	size, err := Rdb.SCard(Ctx, key).Result()
 	return int(size), err
 }
 
 // GetFollowListById 根据userId查找关注list
 func GetFollowListById(userId uint) ([]uint, error) {
-	key := fmt.Sprintf("%d_%s", userId, FollowList)
+	key := fmt.Sprintf("%s_%d", FollowList, userId)
 	list, err := Rdb.SMembers(Ctx, key).Result()
 	result := make([]uint, 0)
 	if err != nil {
@@ -41,7 +41,7 @@ func GetFollowListById(userId uint) ([]uint, error) {
 
 // GetFollowerListById 根据userId查找粉丝list
 func GetFollowerListById(userId uint) ([]uint, error) {
-	key := fmt.Sprintf("%d_%s", userId, FollowerList)
+	key := fmt.Sprintf("%s_%d", FollowerList, userId)
 	list, err := Rdb.SMembers(Ctx, key).Result()
 	result := make([]uint, 0)
 	if err != nil {
@@ -59,10 +59,10 @@ func GetFollowerListById(userId uint) ([]uint, error) {
 
 // GetFriendListById 根据userId查找好友list
 func GetFriendListById(userId uint) ([]uint, error) {
-	key1 := fmt.Sprintf("%d_%s", userId, FollowerList)
-	key2 := fmt.Sprintf("%d_%s", userId, FollowList)
+	key1 := fmt.Sprintf("%s_%d", FollowerList, userId)
+	key2 := fmt.Sprintf("%s_%d", FollowList, userId)
 	friend, err := Rdb.SInter(Ctx, key2, key1).Result()
-	result := make([]uint, 0)
+	result := make([]uint, 0, len(friend))
 	if err != nil {
 		return result, err
 	}
@@ -77,8 +77,8 @@ func GetFriendListById(userId uint) ([]uint, error) {
 }
 
 // SetFollowListByUserId 设置关注列表
-func SetFollowListByUserId(userid uint, ids []uint) error {
-	key := fmt.Sprintf("%d_%s", userid, FollowList)
+func SetFollowListByUserId(userId uint, ids []uint) error {
+	key := fmt.Sprintf("%s_%d", FollowList, userId)
 	pipe := Rdb.Pipeline()
 	for _, value := range ids {
 		err := pipe.SAdd(Ctx, key, value).Err()
@@ -92,8 +92,8 @@ func SetFollowListByUserId(userid uint, ids []uint) error {
 }
 
 // SetFollowerListByUserId 设置粉丝列表
-func SetFollowerListByUserId(userid uint, ids []uint) error {
-	key := fmt.Sprintf("%d_%s", userid, FollowerList)
+func SetFollowerListByUserId(userId uint, ids []uint) error {
+	key := fmt.Sprintf("%s_%d", FollowerList, userId)
 	pipe := Rdb.Pipeline()
 	// 转换为[]interface{}
 	for _, value := range ids {
@@ -107,37 +107,37 @@ func SetFollowerListByUserId(userid uint, ids []uint) error {
 	return err
 }
 
-// 给Id对应的关注set加上 id
+// IncreaseFollowCountByUserId 给Id对应的关注set加上 id
 func IncreaseFollowCountByUserId(userId uint, id uint) error {
-	key := fmt.Sprintf("%d_%s", userId, FollowList)
+	key := fmt.Sprintf("%s_%d", FollowList, userId)
 	err := Rdb.SAdd(Ctx, key, id).Err()
 	return err
 }
 
 // DecreaseFollowCountByUserId userId 关注列表取关 followId
 func DecreaseFollowCountByUserId(userId uint, followId uint) error {
-	key := fmt.Sprintf("%d_%s", userId, FollowList)
+	key := fmt.Sprintf("%s_%d", FollowList, userId)
 	err := Rdb.SRem(Ctx, key, followId).Err()
 	return err
 }
 
 // IncreaseFollowerCountByUserId 给userId粉丝列表加上 followid
 func IncreaseFollowerCountByUserId(userId uint, followId uint) error {
-	key := fmt.Sprintf("%d_%s", userId, FollowerList)
+	key := fmt.Sprintf("%s_%d", FollowerList, userId)
 	err := Rdb.SAdd(Ctx, key, followId).Err()
 	return err
 }
 
-// 给userId对应的粉丝列表减去id
+// DecreaseFollowerCountByUserId 给userId对应的粉丝列表减去id
 func DecreaseFollowerCountByUserId(userId uint, id uint) error {
-	key := fmt.Sprintf("%d_%s", userId, FollowerList)
+	key := fmt.Sprintf("%s_%d", FollowerList, userId)
 	err := Rdb.SRem(Ctx, key, id).Err()
 	return err
 }
 
 // IsInMyFollowList id是不是userid 的好友
 func IsInMyFollowList(userId uint, id uint) bool {
-	key := fmt.Sprintf("%d_%s", userId, FollowerList)
+	key := fmt.Sprintf("%s_%d", FollowerList, userId)
 	found, _ := Rdb.SIsMember(Ctx, key, id).Result()
 	return found
 }

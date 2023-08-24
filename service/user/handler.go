@@ -178,7 +178,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	// 作品数
 	workCount, _ := videoClient.GetWorkCount(ctx, userId)
 	// 喜欢数
-	favoriteCount, _ := favoriteClient.GetUserTotalFavoritedCount(ctx, userId)
+	favoriteCount, _ := favoriteClient.GetUserFavoriteCount(ctx, userId)
 	// 总的被点赞数
 	totalFavoriteCount, _ := favoriteClient.GetUserTotalFavoritedCount(ctx, userId)
 	// 检查是否已关注

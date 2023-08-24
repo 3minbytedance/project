@@ -35,13 +35,13 @@ func Auth() app.HandlerFunc {
 			// token有误，阻止后面函数执行
 			c.Abort()
 			c.JSON(http.StatusOK, Response{
-				StatusCode: 0,
+				StatusCode: -1,
 				StatusMsg:  "登录已过期，请退出账户并重新登陆",
 			})
 			return
 		}
 		// 给token续期
-		redis.SetToken(uint(claims.ID), token)
+		redis.SetToken(claims.ID, token)
 
 		zap.L().Debug("CLAIM-ID", zap.Uint("ID", claims.ID))
 		c.Set(common.ContextUserIDKey, claims.ID)
@@ -104,7 +104,7 @@ func AuthBody() app.HandlerFunc {
 			// token有误，阻止后面函数执行
 			c.Abort()
 			c.JSON(http.StatusOK, Response{
-				StatusCode: 0,
+				StatusCode: -1,
 				StatusMsg:  "登录已过期，请退出账户并重新登陆",
 			})
 			return
