@@ -105,6 +105,10 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		// 设置redis
 		go func() {
 			// todo
+			isSetKey, _ := checkAndSetRedisCommentKey(uint(videoId))
+			if isSetKey {
+				return
+			}
 			err = redis.DecrementCommentCountByVideoId(uint(videoId))
 			if err != nil {
 				zap.L().Error("DecrementCommentCountByVideoId error", zap.Error(err))

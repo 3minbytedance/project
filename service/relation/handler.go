@@ -47,16 +47,16 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		zap.Int32("action_type", request.ActionType),
 		zap.Int64("ToUserId", request.ToUserId),
 	)
-	userId := request.GetUserId()
+	fromUserId := request.GetUserId()
 	toUserId := request.GetToUserId()
 
 	switch request.ActionType {
 	case 1: // 关注
 		// 延迟双删
-		redis.DelKey(uint(userId), redis.FollowList)
+		redis.DelKey(uint(fromUserId), redis.FollowList)
 		redis.DelKey(uint(toUserId), redis.FollowerList)
 
-		err = mysql.AddFollow(uint(userId), uint(toUserId))
+		err = mysql.AddFollow(uint(fromUserId), uint(toUserId))
 		//err = kafka.FollowMQInstance.ProduceAddFollowMsg(uint(userId), uint(toUserId))
 		if err != nil {
 			resp.StatusCode = 1
@@ -66,8 +66,8 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 
 		time.Sleep(1 * time.Second)
 
-		redis.DelKey(uint(request.UserId), redis.FollowList)
-		redis.DelKey(uint(request.ToUserId), redis.FollowerList)
+		redis.DelKey(uint(fromUserId), redis.FollowList)
+		redis.DelKey(uint(toUserId), redis.FollowerList)
 
 		return &relation.RelationActionResponse{
 			StatusCode: 0,
@@ -75,10 +75,10 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		}, nil
 	case 2: // 取关
 		// 延迟双删
-		redis.DelKey(uint(request.UserId), redis.FollowList)
-		redis.DelKey(uint(request.ToUserId), redis.FollowerList)
+		redis.DelKey(uint(fromUserId), redis.FollowList)
+		redis.DelKey(uint(toUserId), redis.FollowerList)
 
-		err = mysql.DeleteFollowById(uint(request.UserId), uint(request.ToUserId))
+		err = mysql.DeleteFollowById(uint(fromUserId), uint(toUserId))
 		//err = kafka.FollowMQInstance.ProduceDelFollowMsg(uint(userId), uint(toUserId))
 		if err != nil {
 			resp.StatusCode = 1
@@ -88,8 +88,8 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 
 		time.Sleep(1 * time.Second)
 
-		redis.DelKey(uint(request.UserId), redis.FollowList)
-		redis.DelKey(uint(request.ToUserId), redis.FollowerList)
+		redis.DelKey(uint(fromUserId), redis.FollowList)
+		redis.DelKey(uint(toUserId), redis.FollowerList)
 
 		return &relation.RelationActionResponse{
 			StatusCode: 0,
@@ -106,7 +106,10 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 
 // GetFollowList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relation.FollowListRequest) (resp *relation.FollowListResponse, err error) {
-	res := CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowList)
+	actionId := request.GetUserId()
+	toUserId := request.GetToUserId()
+
+	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowList)
 	if res == 2 {
 		return &relation.FollowListResponse{
 			StatusCode: 0,
@@ -114,7 +117,7 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 			UserList:   nil,
 		}, nil
 	}
-	id, err := redis.GetFollowListById(uint(request.GetToUserId()))
+	id, err := redis.GetFollowListById(uint(toUserId))
 	if err != nil {
 		return &relation.FollowListResponse{
 			StatusCode: 1,
@@ -125,7 +128,7 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	followList := make([]*user.User, 0, len(id))
 	for _, com := range id {
 		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: request.GetUserId(),
+			ActorId: actionId,
 			UserId:  int64(com),
 		})
 		if err != nil {
@@ -147,7 +150,9 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 
 // GetFollowerList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *relation.FollowerListRequest) (resp *relation.FollowerListResponse, err error) {
-	res := CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowerList)
+	actionId := request.GetUserId()
+	toUserId := request.GetToUserId()
+	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowerList)
 	if res == 2 {
 		return &relation.FollowerListResponse{
 			StatusCode: 0,
@@ -155,7 +160,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 			UserList:   nil,
 		}, nil
 	}
-	id, err := redis.GetFollowerListById(uint(request.GetToUserId()))
+	id, err := redis.GetFollowerListById(uint(toUserId))
 	if err != nil {
 		return &relation.FollowerListResponse{
 			StatusCode: 1,
@@ -166,7 +171,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 	followerList := make([]*user.User, 0, len(id))
 	for _, com := range id {
 		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: request.GetUserId(),
+			ActorId: actionId,
 			UserId:  int64(com),
 		})
 		if err != nil {
@@ -188,7 +193,9 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 
 // GetFriendList implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relation.FriendListRequest) (resp *relation.FriendListResponse, err error) {
-	res := CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowList)
+	actionId := request.GetUserId()
+	toUserId := request.GetToUserId()
+	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowList)
 	if res == 2 {
 		return &relation.FriendListResponse{
 			StatusCode: 0,
@@ -196,7 +203,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 			UserList:   nil,
 		}, nil
 	}
-	res = CheckAndSetRedisRelationKey(uint(request.GetToUserId()), redis.FollowerList)
+	res = CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowerList)
 	if res == 2 {
 		return &relation.FriendListResponse{
 			StatusCode: 0,
@@ -204,7 +211,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 			UserList:   nil,
 		}, nil
 	}
-	id, err := redis.GetFriendListById(uint(request.GetToUserId()))
+	id, err := redis.GetFriendListById(uint(toUserId))
 	if err != nil {
 		return &relation.FriendListResponse{
 			StatusCode: 1,
@@ -215,7 +222,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 	friendList := make([]*user.User, 0, len(id))
 	for _, com := range id {
 		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: request.GetUserId(),
+			ActorId: actionId,
 			UserId:  int64(com),
 		})
 		if err != nil {

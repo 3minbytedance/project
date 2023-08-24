@@ -157,7 +157,9 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	}
 	userId := request.GetUserId()
 	if userId == 0 {
-		userId = actionId
+		resp.StatusCode = 1
+		resp.StatusMsg = thrift.StringPtr("User ID not exist")
+		return
 	}
 	name, exist := GetName(uint(userId))
 	// 用户名不存在

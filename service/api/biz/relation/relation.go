@@ -49,7 +49,7 @@ func init() {
 }
 
 func Action(ctx context.Context, c *app.RequestContext) {
-	userId, err := common.GetCurrentUserID(c)
+	actionId, err := common.GetCurrentUserID(c)
 	if err != nil {
 		zap.L().Error("Get user id from ctx", zap.Error(err))
 		c.JSON(http.StatusOK, "Unauthorized operation.")
@@ -72,7 +72,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	req := &relation.RelationActionRequest{
-		UserId:     int64(userId),
+		UserId:     int64(actionId),
 		ToUserId:   toUserId,
 		ActionType: int32(actionType),
 	}
@@ -101,7 +101,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 }
 
 func FollowList(ctx context.Context, c *app.RequestContext) {
-	userId, err := common.GetCurrentUserID(c)
+	actionId, err := common.GetCurrentUserID(c)
 	if err != nil {
 		zap.L().Error("Get user id from ctx", zap.Error(err))
 		c.JSON(http.StatusOK, relation.FollowListResponse{
@@ -117,7 +117,7 @@ func FollowList(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	req := &relation.FollowListRequest{
-		UserId:   int64(userId),
+		UserId:   int64(actionId),
 		ToUserId: toUserId,
 	}
 
@@ -137,7 +137,7 @@ func FollowList(ctx context.Context, c *app.RequestContext) {
 
 func FollowerList(ctx context.Context, c *app.RequestContext) {
 	// 已经有鉴权中间件，鉴过token了
-	userId, err := common.GetCurrentUserID(c)
+	actionId, err := common.GetCurrentUserID(c)
 	// not logged in
 	if err != nil {
 		c.JSON(http.StatusOK, "Unauthorized operation.")
@@ -151,8 +151,8 @@ func FollowerList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	req := &relation.FollowerListRequest{
-		UserId:   int64(userId),
-		ToUserId: int64(toUserId),
+		UserId:   int64(actionId),
+		ToUserId: toUserId,
 	}
 
 	resp, err := relationClient.GetFollowerList(ctx, req)
@@ -171,7 +171,7 @@ func FollowerList(ctx context.Context, c *app.RequestContext) {
 
 func FriendList(ctx context.Context, c *app.RequestContext) {
 	// 已经有鉴权中间件，鉴过token了
-	userId, err := common.GetCurrentUserID(c)
+	actionId, err := common.GetCurrentUserID(c)
 	// not logged in
 	if err != nil {
 		c.JSON(http.StatusOK, "Unauthorized operation.")
@@ -185,7 +185,7 @@ func FriendList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	req := &relation.FriendListRequest{
-		UserId:   int64(userId),
+		UserId:   int64(actionId),
 		ToUserId: toUserId,
 	}
 	resp, err := relationClient.GetFriendList(ctx, req)
@@ -199,5 +199,4 @@ func FriendList(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	c.JSON(http.StatusOK, resp)
-
 }

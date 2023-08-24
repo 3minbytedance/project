@@ -144,6 +144,8 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *video.PublishVideoListRequest) (resp *video.PublishVideoListResponse, err error) {
 	zap.L().Info("GetPublishVideoList", zap.Any("request", request))
 	videos, found := mysql.FindVideosByAuthorId(uint(request.GetToUserId()))
+	fromUserId := request.GetFromUserId()
+	toUserId := request.GetToUserId()
 	if !found {
 		return &video.PublishVideoListResponse{
 			StatusCode: 1,
@@ -152,15 +154,18 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 	}
 	// 将查询结果转换为VideoResponse类型
 	videoList := make([]*video.Video, 0, len(videos))
+	//toUserId的用户信息
+	userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+		ActorId: fromUserId,
+		UserId:  toUserId,
+	})
+	//toUserId 发布的视频
 	for _, v := range videos {
-		userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			UserId:  request.GetToUserId(),
-			ActorId: request.GetFromUserId(),
-		})
 		commentCount, _ := commentClient.GetCommentCount(ctx, int64(v.ID))
 		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int64(v.ID))
+		//判断当前请求用户是否点赞该视频
 		isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
-			UserId:  request.GetToUserId(),
+			UserId:  fromUserId,
 			VideoId: int64(v.ID),
 		})
 		videoResponse := video.Video{
@@ -183,6 +188,7 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 }
 
 // GetWorkCount implements the VideoServiceImpl interface.
+// 获取userId的作品数
 func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, userId int64) (resp int32, err error) {
 	// 从redis中获取作品数
 	// 1. 缓存中有数据, 直接返回

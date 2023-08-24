@@ -92,25 +92,26 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 	}
 	videos := make([]*video.Video, 0, len(favoritesByUserId))
 	for _, id := range favoritesByUserId {
-		videoByVideoId, b := dalMySQL.FindVideoByVideoId(id)
+		videoModel, b := dalMySQL.FindVideoByVideoId(id)
 		if b == false {
 			continue
 		}
 		userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 			ActorId: actionId,
-			UserId:  int64(videoByVideoId.AuthorId),
+			UserId:  int64(videoModel.AuthorId),
 		})
 		commentCount, _ := commentClient.GetCommentCount(ctx, int64(id))
 		favoriteCount, _ := getFavoritesVideoCount(id)
 		vid := video.Video{
-			Id:            int64(videoByVideoId.ID),
+			Id:            int64(videoModel.ID),
 			Author:        userResp.GetUser(),
-			PlayUrl:       biz.OSS + videoByVideoId.VideoUrl,
-			CoverUrl:      biz.OSS + videoByVideoId.CoverUrl,
+			PlayUrl:       biz.OSS + videoModel.VideoUrl,
+			CoverUrl:      biz.OSS + videoModel.CoverUrl,
 			FavoriteCount: int32(favoriteCount),
 			CommentCount:  commentCount,
-			IsFavorite:    isUserFavorite(uint(userId), id),
-			Title:         videoByVideoId.Title,
+			//判断当前请求ID是否点赞该视频
+			IsFavorite: isUserFavorite(uint(actionId), id),
+			Title:      videoModel.Title,
 		}
 		videos = append(videos, &vid)
 	}
