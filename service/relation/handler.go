@@ -283,12 +283,30 @@ func (s *RelationServiceImpl) IsFollowing(ctx context.Context, request *relation
 
 }
 
-// IsFriend implements the RelationServiceImpl interface.
+// IsFriend 判断二者是不是friend
 func (s *RelationServiceImpl) IsFriend(ctx context.Context, request *relation.IsFriendRequest) (resp bool, err error) {
 	// 从数据库查询是否已关注
-	// todo 改为从redis取
-	result, err := mysql.IsFriend(uint(request.ActorId), uint(request.UserId))
-	return result, err
+	// 先判断actorid的关注ser和粉丝set是否存在
+	res := CheckAndSetRedisRelationKey(uint(request.ActorId), redis.FollowerList)
+	if res == 2 {
+		return false, nil
+	}
+	res = CheckAndSetRedisRelationKey(uint(request.ActorId), redis.FollowList)
+	if res == 2 {
+		return false, nil
+	}
+
+	// 如果发生err了，返回false吧
+	result1, err := redis.IsInMyFollowerList(uint(request.ActorId), uint(request.UserId))
+	if err != nil {
+		return false, err
+	}
+	result2, err := redis.IsInMyFollowList(uint(request.ActorId), uint(request.UserId))
+	if err != nil {
+		return false, err
+	}
+	//result, err := mysql.IsFriend(uint(request.ActorId), uint(request.UserId))
+	return result2 && result1, err
 }
 
 // CheckAndSetRedisRelationKey 返回0表示这个key存在，返回1表示，这个key不存在，已更新。返回2表示，这个key不存在，这个用户没有所对应的值
