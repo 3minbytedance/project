@@ -135,9 +135,16 @@ func DecreaseFollowerCountByUserId(userId uint, id uint) error {
 	return err
 }
 
-// IsInMyFollowList userid是否关注了id
+// IsInMyFollowList userid的follow list是否存在id
 func IsInMyFollowList(userId uint, id uint) (bool, error) {
 	key := fmt.Sprintf("%s_%d", FollowList, userId)
+	found, err := Rdb.SIsMember(Ctx, key, id).Result()
+	return found, err
+}
+
+// IsInMyFollowerList userid的follower list是否存在id
+func IsInMyFollowerList(userId uint, id uint) (bool, error) {
+	key := fmt.Sprintf("%s_%d", FollowerList, userId)
 	found, err := Rdb.SIsMember(Ctx, key, id).Result()
 	return found, err
 }
