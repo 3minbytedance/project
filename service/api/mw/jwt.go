@@ -25,7 +25,7 @@ func Auth() app.HandlerFunc {
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
 				StatusCode: -1,
-				StatusMsg:  "Token Error1" + token,
+				StatusMsg:  "Token Error",
 			})
 			return
 		}
@@ -34,16 +34,16 @@ func Auth() app.HandlerFunc {
 		if !exist {
 			// token有误，阻止后面函数执行
 			c.Abort()
-			c.JSON(http.StatusUnauthorized, Response{
-				StatusCode: -1,
-				StatusMsg:  "Token Error2" + token,
+			c.JSON(http.StatusOK, Response{
+				StatusCode: 0,
+				StatusMsg:  "登录已过期，请退出账户并重新登陆",
 			})
 			return
 		}
 		// 给token续期
 		redis.SetToken(uint(claims.ID), token)
 
-		zap.L().Debug("CLAIM-ID", zap.Int("ID", int(claims.ID)))
+		zap.L().Debug("CLAIM-ID", zap.Uint("ID", claims.ID))
 		c.Set(common.ContextUserIDKey, claims.ID)
 		c.Next(ctx)
 	}
@@ -76,8 +76,7 @@ func AuthWithoutLogin() app.HandlerFunc {
 			}
 		}
 
-		zap.L().Debug("to")
-		zap.L().Debug("USER-ID", zap.Int("ID", int(userId)))
+		zap.L().Debug("USER-ID", zap.Uint("ID", userId))
 		c.Set(common.TokenValid, tokenValid)
 		c.Set(common.ContextUserIDKey, userId)
 		c.Next(ctx)
@@ -95,25 +94,25 @@ func AuthBody() app.HandlerFunc {
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
 				StatusCode: -1,
-				StatusMsg:  "Token Error1" + token,
+				StatusMsg:  "Token Error",
 			})
 			return
 		}
 		// 查看token是否在redis中, 若在，给token续期, 若不在，则阻止后面函数执行
-		exist := redis.TokenIsExisted(uint(claims.ID))
+		exist := redis.TokenIsExisted(claims.ID)
 		if !exist {
 			// token有误，阻止后面函数执行
 			c.Abort()
-			c.JSON(http.StatusUnauthorized, Response{
-				StatusCode: -1,
-				StatusMsg:  "Token Error2" + token,
+			c.JSON(http.StatusOK, Response{
+				StatusCode: 0,
+				StatusMsg:  "登录已过期，请退出账户并重新登陆",
 			})
 			return
 		}
 		// 给token续期
-		redis.SetToken(uint(claims.ID), token)
+		redis.SetToken(claims.ID, token)
 
-		zap.L().Debug("CLAIM-ID", zap.Int("ID", int(claims.ID)))
+		zap.L().Debug("CLAIM-ID", zap.Uint("ID", claims.ID))
 		c.Set(common.ContextUserIDKey, claims.ID)
 		c.Next(ctx)
 	}

@@ -136,7 +136,7 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 
 	return &video.PublishVideoResponse{
 		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("Success"),
+		StatusMsg:  thrift.StringPtr("上传成功，服务器解析中，预计15-30秒"),
 	}, nil
 }
 
