@@ -268,34 +268,19 @@ func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, userId i
 	return int32(count), nil
 }
 
-// IsFollowing implements the RelationServiceImpl interface.
+// IsFollowing 判断actionID的关注表里是否有toUserID
 func (s *RelationServiceImpl) IsFollowing(ctx context.Context, request *relation.IsFollowingRequest) (resp bool, err error) {
 	actionId := request.GetActorId()
 	toUserId := request.GetUserId()
-	actionId, toUserId = toUserId, actionId
-	// redis存在key
-	if redis.IsExistUserSetField(uint(actionId), redis.FollowList) {
-		found := redis.IsInMyFollowList(uint(actionId), uint(toUserId))
-		return found, nil
+
+	res := CheckAndSetRedisRelationKey(uint(actionId), redis.FollowList)
+	if res == 2 {
+		return false, nil
 	}
-	// redis不存在，从数据库查询是否已关注
-	found := mysql.IsFollowing(uint(actionId), uint(toUserId))
-	// 获取所有关注列表id
-	followListId, err := mysql.GetFollowList(uint(actionId))
-	if err != nil {
-		zap.L().Error("GetFollowList error", zap.Error(err))
-		return false, err
-	}
-	// 往redis赋值
-	if len(followListId) == 0 {
-		return false, err
-	}
-	err = redis.SetFollowListByUserId(uint(actionId), followListId)
-	if err != nil {
-		zap.L().Error("SetFollowListByUserId error", zap.Error(err))
-		return
-	}
+
+	found, err := redis.IsInMyFollowList(uint(actionId), uint(toUserId))
 	return found, err
+
 }
 
 // IsFriend implements the RelationServiceImpl interface.
