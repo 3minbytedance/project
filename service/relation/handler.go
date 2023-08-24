@@ -272,6 +272,7 @@ func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, userId i
 func (s *RelationServiceImpl) IsFollowing(ctx context.Context, request *relation.IsFollowingRequest) (resp bool, err error) {
 	actionId := request.GetActorId()
 	toUserId := request.GetUserId()
+	actionId, toUserId = toUserId, actionId
 	// redis存在key
 	if redis.IsExistUserSetField(uint(actionId), redis.FollowList) {
 		found := redis.IsInMyFollowList(uint(actionId), uint(toUserId))
