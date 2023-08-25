@@ -5,10 +5,10 @@ import (
 )
 
 type Video struct {
-	ID        uint `gorm:"primaryKey"`
-	AuthorId  uint `gorm:"index"`
-	VideoUrl  string
-	CoverUrl  string
+	ID        uint   `gorm:"primaryKey"`
+	AuthorId  uint   `gorm:"index"`
+	VideoUrl  string `gorm:"not null"`
+	CoverUrl  string `gorm:"not null"`
 	Title     string
 	CreatedAt int64 `gorm:"autoCreateTime"`
 	DeletedAt gorm.DeletedAt

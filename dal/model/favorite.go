@@ -2,8 +2,8 @@ package model
 
 type Favorite struct {
 	ID      uint `gorm:"primaryKey"`
-	UserId  uint `gorm:"index:idx_user_video,uniqueIndex:idx_user_video"`
-	VideoId uint `gorm:"index:idx_user_video,uniqueIndex:idx_user_video"`
+	UserId  uint `gorm:"index;not null"`
+	VideoId uint `gorm:"index;not null"`
 }
 
 func (*Favorite) TableName() string {

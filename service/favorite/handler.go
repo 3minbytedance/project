@@ -259,7 +259,7 @@ func getUserTotalFavoritedCount(userId uint) (int64, error) {
 	// 获取用户发布的视频列表
 	videosByAuthorId, exist := dalMySQL.FindVideosByAuthorId(userId)
 	if !exist {
-		return 0, errors.New("user doesn't published videos")
+		return 0, nil
 	}
 	for _, videoModel := range videosByAuthorId {
 		count, _ := getFavoritesVideoCount(videoModel.ID)
