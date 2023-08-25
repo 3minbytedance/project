@@ -63,11 +63,12 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 			resp.StatusMsg = thrift.StringPtr(err.Error())
 			return
 		}
+		go func() {
+			time.Sleep(1 * time.Second)
 
-		time.Sleep(1 * time.Second)
-
-		redis.DelKey(uint(fromUserId), redis.FollowList)
-		redis.DelKey(uint(toUserId), redis.FollowerList)
+			redis.DelKey(uint(fromUserId), redis.FollowList)
+			redis.DelKey(uint(toUserId), redis.FollowerList)
+		}()
 
 		return &relation.RelationActionResponse{
 			StatusCode: 0,
@@ -85,11 +86,12 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 			resp.StatusMsg = thrift.StringPtr(err.Error())
 			return
 		}
+		go func() {
+			time.Sleep(1 * time.Second)
 
-		time.Sleep(1 * time.Second)
-
-		redis.DelKey(uint(fromUserId), redis.FollowList)
-		redis.DelKey(uint(toUserId), redis.FollowerList)
+			redis.DelKey(uint(fromUserId), redis.FollowList)
+			redis.DelKey(uint(toUserId), redis.FollowerList)
+		}()
 
 		return &relation.RelationActionResponse{
 			StatusCode: 0,

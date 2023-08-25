@@ -3,6 +3,8 @@ package redis
 import (
 	"fmt"
 	"log"
+	"math/rand"
+	"time"
 )
 
 const (
@@ -39,6 +41,11 @@ func IsExistUserField(userId uint, field string) bool {
 		log.Println("redis isExistUser 连接失败")
 		return false
 	}
+	if exists {
+		randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+		expiration := time.Duration(randomSeconds) * time.Second
+		Rdb.Expire(Ctx, key, expiration)
+	}
 	return exists
 }
 
@@ -48,6 +55,11 @@ func IsExistVideoField(videoId uint, field string) bool {
 	if err != nil {
 		log.Println("redis isExistVideo 连接失败")
 		return false
+	}
+	if exists {
+		randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+		expiration := time.Duration(randomSeconds) * time.Second
+		Rdb.Expire(Ctx, key, expiration)
 	}
 	return exists
 }
@@ -59,6 +71,11 @@ func IsExistUserSetField(userId uint, field string) bool {
 	if err != nil {
 		log.Println("redis isExistUser 连接失败")
 		return false
+	}
+	if exists != 0 {
+		randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+		expiration := time.Duration(randomSeconds) * time.Second
+		Rdb.Expire(Ctx, key, expiration)
 	}
 	return exists != 0
 }
