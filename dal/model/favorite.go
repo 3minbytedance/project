@@ -1,12 +1,9 @@
 package model
 
-import "gorm.io/gorm"
-
 type Favorite struct {
-	ID       uint `gorm:"primaryKey"`
-	UserId   uint `gorm:"index"`
-	VideoId  uint `gorm:"index"`
-	DeleteAt gorm.DeletedAt
+	ID      uint `gorm:"primaryKey"`
+	UserId  uint `gorm:"index:idx_user_video,uniqueIndex:idx_user_video"`
+	VideoId uint `gorm:"index:idx_user_video,uniqueIndex:idx_user_video"`
 }
 
 func (*Favorite) TableName() string {
