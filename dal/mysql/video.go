@@ -38,7 +38,7 @@ func InsertVideo(videoUrl string, coverUrl string, authorID uint, title string) 
 }
 
 func GetLatestVideos(latestTime string) []model.Video {
-	videos := make([]model.Video, 0)
+	videos := make([]model.Video, 0, 30)
 
 	DB.Model(&model.Video{}).Where("created_at < ?", latestTime).Order("created_at DESC").Limit(30).Find(&videos)
 	if len(videos) == 0 {

@@ -7,6 +7,7 @@ import (
 	relation "douyin/kitex_gen/relation"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
+	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
@@ -65,12 +66,13 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		redis.DelKey(uint(fromUserId), redis.FollowList)
 		redis.DelKey(uint(toUserId), redis.FollowerList)
 
-		err = mysql.AddFollow(uint(fromUserId), uint(toUserId))
-		//err = kafka.FollowMQInstance.ProduceAddFollowMsg(uint(userId), uint(toUserId))
+		//err = mysql.AddFollow(uint(fromUserId), uint(toUserId))
+		err = kafka.FollowMQInstance.ProduceAddFollowMsg(uint(fromUserId), uint(toUserId))
 		if err != nil {
-			resp.StatusCode = 1
-			resp.StatusMsg = thrift.StringPtr(err.Error())
-			return
+			return &relation.RelationActionResponse{
+				StatusCode: 1,
+				StatusMsg:  thrift.StringPtr("内部错误"),
+			}, err
 		}
 		go func() {
 			time.Sleep(1 * time.Second)
@@ -88,12 +90,13 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		redis.DelKey(uint(fromUserId), redis.FollowList)
 		redis.DelKey(uint(toUserId), redis.FollowerList)
 
-		err = mysql.DeleteFollowById(uint(fromUserId), uint(toUserId))
-		//err = kafka.FollowMQInstance.ProduceDelFollowMsg(uint(userId), uint(toUserId))
+		//err = mysql.DeleteFollowById(uint(fromUserId), uint(toUserId))
+		err = kafka.FollowMQInstance.ProduceDelFollowMsg(uint(fromUserId), uint(toUserId))
 		if err != nil {
-			resp.StatusCode = 1
-			resp.StatusMsg = thrift.StringPtr(err.Error())
-			return
+			return &relation.RelationActionResponse{
+				StatusCode: 1,
+				StatusMsg:  thrift.StringPtr("内部错误"),
+			}, err
 		}
 		go func() {
 			time.Sleep(1 * time.Second)
@@ -259,10 +262,7 @@ func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, userId int
 	if res == 2 {
 		return 0, nil
 	}
-	count, err := redis.GetFollowCountById(uint(userId))
-	if err != nil {
-		return 0, err
-	}
+	count, _ := redis.GetFollowCountById(uint(userId))
 	return int32(count), nil
 }
 
@@ -272,10 +272,7 @@ func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, userId i
 	if res == 2 {
 		return 0, nil
 	}
-	count, err := redis.GetFollowerCountById(uint(userId))
-	if err != nil {
-		return 0, err
-	}
+	count, _ := redis.GetFollowerCountById(uint(userId))
 	return int32(count), nil
 }
 
