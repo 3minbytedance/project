@@ -15,6 +15,7 @@ import (
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -313,10 +314,16 @@ func (s *RelationServiceImpl) IsFriend(ctx context.Context, request *relation.Is
 
 // CheckAndSetRedisRelationKey 返回0表示这个key存在，返回1表示，这个key不存在，已更新。返回2表示，这个key不存在，这个用户没有所对应的值
 func CheckAndSetRedisRelationKey(userId uint, key string) int {
+	var m sync.RWMutex
 	if redis.IsExistUserSetField(userId, key) {
 		return 0
 	}
-	//key不存在
+	//key不存在 double check
+	m.Lock()
+	defer m.Unlock()
+	if redis.IsExistUserSetField(userId, key) {
+		return 0
+	}
 	if key == redis.FollowList {
 		id, err := mysql.GetFollowList(userId)
 		if err != nil {

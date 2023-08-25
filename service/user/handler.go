@@ -21,6 +21,7 @@ import (
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
+	"sync"
 )
 
 var relationClient relationservice.Client
@@ -213,27 +214,38 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 // GetName 根据userId获取用户名
 func GetName(userId uint) (string, bool) {
 	// 从redis中获取用户名
+	var m sync.RWMutex
 	// 1. 缓存中有数据, 直接返回
 	if redis.IsExistUserField(userId, redis.NameField) {
+		m.RLock()
+		defer m.RUnlock()
 		name, err := redis.GetNameByUserId(userId)
 		if err != nil {
 			log.Println("从redis中获取用户名失败：", err)
 		}
 		return name, true
 	}
-
+	m.Lock()
+	defer m.Unlock()
+	if redis.IsExistUserField(userId, redis.NameField) {
+		m.RLock()
+		defer m.RUnlock()
+		name, err := redis.GetNameByUserId(userId)
+		if err != nil {
+			log.Println("从redis中获取用户名失败：", err)
+		}
+		return name, true
+	}
 	// 2. 缓存中没有数据，从数据库中获取
 	userModel, exist, _ := mysql.FindUserByUserID(userId)
 	if !exist {
 		return "", false
 	}
 	// 将用户名写入redis
-	go func() {
-		err := redis.SetNameByUserId(userId, userModel.Name)
-		if err != nil {
-			log.Println("将用户名写入redis失败：", err)
-		}
-	}()
+	err := redis.SetNameByUserId(userId, userModel.Name)
+	if err != nil {
+		log.Println("将用户名写入redis失败：", err)
+	}
 	return userModel.Name, true
 }
 

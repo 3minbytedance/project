@@ -67,17 +67,18 @@ func (m *VideoMQ) Consume() {
 			//视频存储到oss
 			if err = utils.UploadToOSS(videoMsg.VideoPath, videoMsg.VideoFileName); err != nil {
 				zap.L().Error("上传视频到OSS失败", zap.Error(err))
+				return
 			}
 
 			//利用oss功能获取封面图
 			imgName, err := utils.GetVideoCover(videoMsg.VideoFileName)
 			if err != nil {
 				zap.L().Error("图片截帧失败", zap.Error(err))
+				return
 			}
 
 			// 视频信息存储到MySQL
 			mysql.InsertVideo(videoMsg.VideoFileName, imgName, videoMsg.UserID, videoMsg.Title)
-
 			// 更新redis中的用户作品数
 			if !redis.IsExistUserField(videoMsg.UserID, redis.WorkCountField) {
 				cnt := mysql.FindWorkCountsByAuthorId(videoMsg.UserID)
