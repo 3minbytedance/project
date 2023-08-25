@@ -53,6 +53,14 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 
 	switch request.ActionType {
 	case 1: // 关注
+		// 判断用户是否已经关注过了
+		res, err := redis.IsInMyFollowList(uint(fromUserId), uint(toUserId))
+		if res {
+			return &relation.RelationActionResponse{
+				StatusCode: 0,
+				StatusMsg:  thrift.StringPtr("success, 用户关注过了"),
+			}, nil
+		}
 		// 延迟双删
 		redis.DelKey(uint(fromUserId), redis.FollowList)
 		redis.DelKey(uint(toUserId), redis.FollowerList)
