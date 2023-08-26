@@ -90,7 +90,9 @@ func List(ctx context.Context, c *app.RequestContext) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, favorite.FavoriteListResponse{
 			StatusCode: 1,
+			StatusMsg:  thrift.StringPtr("参数 error."),
 		})
+		return
 	}
 
 	req := &favorite.FavoriteListRequest{

@@ -211,7 +211,7 @@ func favoriteActions(userId uint, videoId uint, actionType int) error {
 		}
 		m.Lock()
 		defer m.Unlock()
-		if isUserFavorite(userId, videoId) {
+		if !isUserFavorite(userId, videoId) {
 			return nil
 		}
 		err := mwRedis.ActionCancelLike(userId, videoId, videoModel.AuthorId)

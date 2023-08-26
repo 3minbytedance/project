@@ -333,8 +333,12 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 	switch key {
 	case redis.FollowList:
 		id, err := mysql.GetFollowList(userId)
-		if err != nil || len(id) == 0 {
+		if err != nil  {
 			zap.L().Error("mysql获取FollowList失败", zap.Error(err))
+			return 2
+		}
+		if len(id) == 0{
+			zap.L().Info("mysql没有该FollowList")
 			return 2
 		}
 		err = redis.SetFollowListByUserId(userId, id)
@@ -345,8 +349,12 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 		return 1
 	case redis.FollowerList:
 		id, err := mysql.GetFollowerList(userId)
-		if err != nil || len(id) == 0 {
+		if err != nil{
 			zap.L().Error("mysql获取FollowerList失败", zap.Error(err))
+			return 2
+		}
+		if len(id) == 0{
+			zap.L().Info("mysql没有该FollowerList")
 			return 2
 		}
 		err = redis.SetFollowerListByUserId(userId, id)
