@@ -17,6 +17,7 @@ require (
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/redis/go-redis/v9 v9.0.5
 	github.com/segmentio/kafka-go v0.4.42
+	github.com/sony/sonyflake v1.2.0
 	github.com/spf13/viper v1.7.0
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.42
 	go.mongodb.org/mongo-driver v1.12.1

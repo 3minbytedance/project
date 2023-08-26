@@ -1,6 +1,7 @@
 package main
 
 import (
+	"douyin/common"
 	"douyin/config"
 	"douyin/constant"
 	"douyin/dal"
@@ -15,6 +16,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"net"
+	"strconv"
 )
 
 func main() {
@@ -52,6 +54,18 @@ func main() {
 	}
 	// 初始化消息模块的kafka
 	kafka.InitMessageKafka()
+
+	nodeNum, err := strconv.ParseInt(config.Conf.Node, 10, 64)
+	if err != nil {
+		zap.L().Error("Snowflake node num failed, err:%v\n", zap.Error(err))
+		return
+	}
+
+	err = common.InitSnowflake(nodeNum)
+	if err != nil {
+		zap.L().Error("Snowflake node failed, err:%v\n", zap.Error(err))
+		return
+	}
 
 	addr, err := net.ResolveTCPAddr("tcp", constant.MessageServicePort)
 	if err != nil {

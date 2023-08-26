@@ -14,7 +14,6 @@ import (
 	"douyin/mw/redis"
 	"douyin/service/user/pack"
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/bwmarrin/snowflake"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -58,13 +57,10 @@ func init() {
 
 // UserServiceImpl implements the last service interface defined in the IDL.
 type UserServiceImpl struct {
-	Node *snowflake.Node
 }
 
-func NewUserServiceImpl(node *snowflake.Node) *UserServiceImpl {
-	return &UserServiceImpl{
-		Node: node,
-	}
+func NewUserServiceImpl() *UserServiceImpl {
+	return &UserServiceImpl{}
 }
 
 // Register implements the UserServiceImpl interface.
@@ -81,7 +77,7 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 
 	userData := model.User{}
 	userData.Name = request.Username
-	userData.ID = uint(s.Node.Generate().Int64())
+	userData.ID = common.GetUid()
 	// 用户名存入Bloom Filter
 	common.AddToBloom(request.Username)
 

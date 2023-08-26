@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"douyin/common"
 	"douyin/constant"
 	"douyin/dal/model"
 	"douyin/dal/mongo"
@@ -107,12 +108,12 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 		}, nil
 	}
 
-	// TODO 对数据进行非对称加密
 	messageData := &model.Message{
+		ID:         int64(common.GetUid()),
 		FromUserId: uint(request.GetFromUserId()),
 		ToUserId:   uint(request.GetToUserId()),
 		Content:    request.GetContent(),
-		CreateTime: time.Now().Unix(),
+		CreateTime: time.Now().UnixMilli(),
 	}
 
 	// 聊天记录发向kafka
