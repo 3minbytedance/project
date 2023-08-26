@@ -43,7 +43,7 @@ func DeleteUserFavorite(userId, videoId uint) error {
 	favorite := model.Favorite{UserId: userId, VideoId: videoId}
 	result := DB.Delete(&model.Favorite{}, favorite)
 	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
-		log.Println("未找到 Follow", userId, videoId)
+		log.Println("未找到喜欢关系", userId, videoId)
 		return result.Error
 	}
 	return nil

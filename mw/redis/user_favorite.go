@@ -114,7 +114,10 @@ func DeleteFavoriteVideoFromList(userId uint, videoId uint) error {
 // IsInUserFavoriteList 判断用户点赞视频列表中是否有对应的video
 func IsInUserFavoriteList(userId uint, videoId uint) bool {
 	key := fmt.Sprintf("%s_%d", FavoriteList, userId)
-	found, _ := Rdb.SIsMember(Ctx, key, videoId).Result()
+	found, err := Rdb.SIsMember(Ctx, key, videoId).Result()
+	if err != nil {
+		return false
+	}
 	return found
 }
 

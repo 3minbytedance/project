@@ -76,10 +76,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 	resp, err := favoriteClient.FavoriteAction(ctx, req)
 	if err != nil {
 		zap.L().Error("FavoriteAction err.", zap.Error(err))
-		c.JSON(http.StatusOK, favorite.FavoriteActionResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("FavoriteAction error."),
-		})
+		c.JSON(http.StatusOK, resp)
 		return
 	}
 	c.JSON(http.StatusOK, resp)
