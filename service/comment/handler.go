@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"sync"
+	"time"
 )
 
 var userClient userservice.Client
@@ -71,6 +72,7 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 			UserId:  uint(request.GetUserId()),
 			VideoId: uint(request.GetVideoId()),
 			Content: common.ReplaceWord(request.GetCommentText()),
+			CreatedAt: time.Now(),
 		}
 		// _, err = mysql.AddComment(&commentData)
 		err = kafka.CommentMQInstance.ProduceAddCommentMsg(&commentData)
