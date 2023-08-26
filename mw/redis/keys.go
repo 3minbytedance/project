@@ -9,33 +9,33 @@ import (
 
 const (
 	//VideoKey hash 类型 key:video_videoId
-	VideoKey = "video_"
+	VideoKey = "video"
 
-	CommentCountField = "comment_count"
+	CommentCountField = "commentCount"
 
-	VideoFavoritedCountField = "favorited_count" // 视频被点赞总数
+	VideoFavoritedCountField = "favoritedCount" // 视频被点赞总数
 )
 
 const (
 	//UserKey hash 类型 key:user_userId
-	UserKey = "user_"
+	UserKey = "user"
 
-	WorkCountField     = "work_count"      //作品数
-	NameField          = "name"            //用户名
-	TotalFavoriteField = "total_favorited" //发布视频的总获赞数量
+	WorkCountField     = "workCount"      //作品数
+	NameField          = "name"           //用户名
+	TotalFavoriteField = "totalFavorited" //发布视频的总获赞数量
 
 	// FavoriteList  set类型
-	FavoriteList = "favorite_list" //喜欢视频列表
+	FavoriteList = "favoriteList" //喜欢视频列表
 
 	// FollowList and FollowerList  set类型
-	FollowList   = "follow_list"   //关注列表
-	FollowerList = "follower_list" //粉丝列表
+	FollowList   = "followList"   //关注列表
+	FollowerList = "followerList" //粉丝列表
 )
 
-const TokenKey = "token_"
+const TokenKey = "token:"
 
 func IsExistUserField(userId uint, field string) bool {
-	key := UserKey + fmt.Sprintf("%d", userId)
+	key := fmt.Sprintf("%s:%d", UserKey, userId)
 	exists, err := Rdb.HExists(Ctx, key, field).Result()
 	if err != nil {
 		log.Println("redis isExistUser 连接失败")
@@ -50,7 +50,7 @@ func IsExistUserField(userId uint, field string) bool {
 }
 
 func IsExistVideoField(videoId uint, field string) bool {
-	key := VideoKey + fmt.Sprintf("%d", videoId)
+	key := fmt.Sprintf("%s:%d", VideoKey, videoId)
 	exists, err := Rdb.HExists(Ctx, key, field).Result()
 	if err != nil {
 		log.Println("redis isExistVideo 连接失败")
@@ -66,7 +66,7 @@ func IsExistVideoField(videoId uint, field string) bool {
 
 // IsExistUserSetField 判断set类型的是否存在
 func IsExistUserSetField(userId uint, field string) bool {
-	key := fmt.Sprintf("%s_%d", field, userId)
+	key := fmt.Sprintf("%s:%d", field, userId)
 	exists, err := Rdb.Exists(Ctx, key).Result()
 	if err != nil {
 		log.Println("redis isExistUser 连接失败")
@@ -80,8 +80,8 @@ func IsExistUserSetField(userId uint, field string) bool {
 	return exists != 0
 }
 
-// 根据参数合成并删除key
+// DelKey 根据参数合成并删除key
 func DelKey(userId uint, field string) {
-	key := fmt.Sprintf("%s_%d", field, userId)
+	key := fmt.Sprintf("%s:%d", field, userId)
 	Rdb.Del(Ctx, key)
 }
