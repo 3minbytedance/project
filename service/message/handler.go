@@ -113,7 +113,7 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 		FromUserId: uint(request.GetFromUserId()),
 		ToUserId:   uint(request.GetToUserId()),
 		Content:    request.GetContent(),
-		CreateTime: time.Now().Unix(),
+		CreateTime: time.Now().UnixMilli(),
 	}
 
 	// 聊天记录发向kafka
