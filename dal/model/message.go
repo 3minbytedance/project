@@ -1,6 +1,7 @@
 package model
 
 type Message struct {
+	ID         int64  `bson:"id"`
 	FromUserId uint   `json:"from_user_id"`
 	ToUserId   uint   `json:"to_user_id"`
 	Content    string `json:"content,omitempty"`

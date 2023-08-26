@@ -9,7 +9,6 @@ import (
 	"douyin/logger"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
-	"github.com/bwmarrin/snowflake"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -60,25 +59,25 @@ func main() {
 	common.InitBloomFilter()
 	common.LoadUsernamesToBloomFilter()
 
-	addr, err := net.ResolveTCPAddr("tcp", constant.UserServicePort)
-	if err != nil {
-		panic(err)
-	}
-
-	num, err := strconv.ParseInt(config.Conf.Node, 10, 64)
+	nodeNum, err := strconv.ParseInt(config.Conf.Node, 10, 64)
 	if err != nil {
 		zap.L().Error("Snowflake node num failed, err:%v\n", zap.Error(err))
 		return
 	}
 
-	node, err := snowflake.NewNode(num)
+	err = common.InitSnowflake(nodeNum)
 	if err != nil {
 		zap.L().Error("Snowflake node failed, err:%v\n", zap.Error(err))
 		return
 	}
 
+	addr, err := net.ResolveTCPAddr("tcp", constant.UserServicePort)
+	if err != nil {
+		panic(err)
+	}
+
 	svr := user.NewServer(
-		NewUserServiceImpl(node),
+		NewUserServiceImpl(),
 		server.WithServiceAddr(addr),
 		server.WithSuite(tracing.NewServerSuite()),
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.UserServiceName}),
