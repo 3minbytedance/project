@@ -76,6 +76,15 @@ func (s *MessageServiceImpl) MessageChat(ctx context.Context, request *message.M
 			StatusMsg:  thrift.StringPtr("Internal server error"),
 		}, err
 	}
+	//防止将自己的消息返回给自己
+	if request.GetPreMsgTime() != 0 {
+		for i, msg := range msgList {
+			if msg.FromUserId == uint(request.GetFromUserId()) {
+				msgList = append(msgList[:i], msgList[i+1:]...)
+			}
+		}
+	}
+
 	// 封装数据
 	packedMsgList := pack.Messages(msgList)
 	return &message.MessageChatResponse{
