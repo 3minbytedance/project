@@ -136,7 +136,7 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	}
 	token := common.GenerateToken(userModel.ID, userModel.Name)
 	resp.StatusCode = common.CodeSuccess
-	resp.StatusMsg = common.MapErrMsg(common.CodeWrongLoginCredentials)
+	resp.StatusMsg = common.MapErrMsg(common.CodeSuccess)
 
 	resp.Token = token
 	resp.UserId = int64(userModel.ID)
