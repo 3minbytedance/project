@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
@@ -60,7 +59,7 @@ func Register(ctx context.Context, c *app.RequestContext) {
 		zap.L().Error("Invoke userClient Register err:", zap.Error(err))
 		c.JSON(http.StatusOK, &user.UserRegisterResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Server internal error"),
+			StatusMsg:  "Server internal error",
 			UserId:     0,
 			Token:      "",
 		})
@@ -81,7 +80,7 @@ func Login(ctx context.Context, c *app.RequestContext) {
 		zap.L().Error("Invoke userClient Login err:", zap.Error(err))
 		c.JSON(http.StatusOK, &user.UserLoginResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Server Internal error"),
+			StatusMsg:  "Server Internal error",
 			UserId:     0,
 			Token:      "",
 		})
@@ -99,7 +98,7 @@ func Info(ctx context.Context, c *app.RequestContext) {
 		zap.L().Error("Parse userId error", zap.Error(err))
 		c.JSON(http.StatusOK, &user.UserInfoByIdResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("user参数错"),
+			StatusMsg:  "user参数错",
 		})
 		return
 	}
@@ -113,7 +112,7 @@ func Info(ctx context.Context, c *app.RequestContext) {
 		zap.L().Error("Invoke userClient getUserInfoById err:", zap.Error(err))
 		c.JSON(http.StatusOK, &user.UserInfoByIdResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Server internal error"),
+			StatusMsg:  "Server internal error",
 			User:       nil,
 		})
 		return

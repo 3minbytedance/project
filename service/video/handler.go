@@ -13,7 +13,6 @@ import (
 	video "douyin/kitex_gen/video"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/google/uuid"
@@ -69,7 +68,7 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 		zap.L().Info("根据LatestTime取视频失败")
 		return &video.VideoFeedResponse{
 			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("获取视频列表失败"),
+			StatusMsg:  "获取视频列表失败",
 			VideoList:  nil,
 		}, err
 	}
@@ -104,9 +103,9 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 
 	return &video.VideoFeedResponse{
 		StatusCode: 0,
-		StatusMsg:  nil,
+		StatusMsg:  "",
 		VideoList:  videoList,
-		NextTime:   &nextTime,
+		NextTime:   nextTime,
 	}, nil
 }
 
@@ -119,7 +118,7 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 	if err != nil {
 		return &video.PublishVideoResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("文件上传失败"),
+			StatusMsg:  "文件上传失败",
 		}, err
 	}
 
@@ -136,7 +135,7 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 
 	return &video.PublishVideoResponse{
 		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("上传成功，服务器解析中，预计15-30秒"),
+		StatusMsg:  "上传成功，服务器解析中，预计15-30秒",
 	}, nil
 }
 
@@ -149,7 +148,7 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 	if !found {
 		return &video.PublishVideoListResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("获取视频列表失败"),
+			StatusMsg:  "获取视频列表失败",
 		}, nil
 	}
 	// 将查询结果转换为VideoResponse类型

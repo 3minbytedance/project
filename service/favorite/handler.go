@@ -14,7 +14,6 @@ import (
 	mwRedis "douyin/mw/redis"
 	"errors"
 	"fmt"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -71,12 +70,12 @@ func (s *FavoriteServiceImpl) FavoriteAction(ctx context.Context, request *favor
 	if err != nil {
 		return &favorite.FavoriteActionResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr(err.Error()),
+			StatusMsg:  err.Error(),
 		}, err
 	}
 	return &favorite.FavoriteActionResponse{
 		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("action down"),
+		StatusMsg:  "action down",
 	}, nil
 }
 
@@ -117,7 +116,7 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 	}
 	return &favorite.FavoriteListResponse{
 		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("get favorite video list done"),
+		StatusMsg:  "get favorite video list done",
 		VideoList:  videos,
 	}, nil
 }

@@ -6,7 +6,6 @@ import (
 	"douyin/constant"
 	"douyin/kitex_gen/video"
 	"douyin/kitex_gen/video/videoservice"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
@@ -59,7 +58,7 @@ func FeedList(ctx context.Context, c *app.RequestContext) {
 		zap.L().Info("Parse videoIdStr err:", zap.Error(err))
 		c.JSON(http.StatusOK, video.VideoFeedResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("不合法的请求"),
+			StatusMsg:  "不合法的请求",
 		})
 		return
 	}
@@ -74,7 +73,7 @@ func FeedList(ctx context.Context, c *app.RequestContext) {
 		zap.L().Error("Get feed list from video client err.", zap.Error(err))
 		c.JSON(http.StatusOK, video.VideoFeedResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Server internal error."),
+			StatusMsg:  "Server internal error.",
 		})
 		return
 	}
@@ -109,7 +108,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 	if err != nil || title == "" || file.Size == 0 {
 		c.JSON(http.StatusOK, video.PublishVideoResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("参数不合法"),
+			StatusMsg:  "参数不合法",
 		})
 		return
 	}
@@ -120,7 +119,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 		zap.L().Error(msg)
 		c.JSON(http.StatusOK, video.PublishVideoResponse{
 			StatusCode: 1,
-			StatusMsg:  &msg})
+			StatusMsg:  msg})
 		return
 	}
 
@@ -128,7 +127,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 	if file.Size > maxFileSize || file.Size < minFileSize {
 		c.JSON(http.StatusOK, video.PublishVideoResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("文件过大或过小"),
+			StatusMsg:  "文件过大或过小",
 		})
 		return
 	}
@@ -140,7 +139,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 		zap.L().Error("打开文件失败", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, video.PublishVideoResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("打开文件失败"),
+			StatusMsg:  "打开文件失败",
 		})
 		return
 	}
@@ -148,7 +147,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, video.PublishVideoResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("读取内容失败"),
+			StatusMsg:  "读取内容失败",
 		})
 		return
 	}
@@ -162,7 +161,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 		zap.L().Error("PublishVideo err.", zap.Error(err))
 		c.JSON(http.StatusOK, video.PublishVideoResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("PublishVideo error."),
+			StatusMsg:  "PublishVideo error.",
 		})
 		return
 	}

@@ -97,7 +97,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		if !commentIdExists {
 			c.JSON(http.StatusOK, &comment.CommentActionResponse{
 				StatusCode: 1,
-				StatusMsg:  proto.String("Invalid param."),
+				StatusMsg:  "Invalid param.",
 			})
 			return
 		}
@@ -105,7 +105,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		if err != nil {
 			c.JSON(http.StatusOK, &comment.CommentActionResponse{
 				StatusCode: 1,
-				StatusMsg:  proto.String("Invalid comment ID."),
+				StatusMsg:  "Invalid comment ID.",
 			})
 		}
 		req := &comment.CommentActionRequest{
@@ -119,7 +119,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		if err != nil {
 			c.JSON(http.StatusOK, &comment.CommentActionResponse{
 				StatusCode: 1,
-				StatusMsg:  proto.String("Server internal error."),
+				StatusMsg:  "Server internal error.",
 			})
 			return
 		}
@@ -128,7 +128,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 	default: // wrong action_type
 		c.JSON(http.StatusOK, &comment.CommentActionResponse{
 			StatusCode: 1,
-			StatusMsg:  proto.String("Invalid param."),
+			StatusMsg:  "Invalid param.",
 		})
 		return
 	}
@@ -158,7 +158,7 @@ func List(ctx context.Context, c *app.RequestContext) {
 		zap.L().Error("Get comment list from comment client err.", zap.Error(err))
 		c.JSON(http.StatusOK, comment.CommentListResponse{
 			StatusCode:  1,
-			StatusMsg:   proto.String("Server internal error."),
+			StatusMsg:   "Server internal error.",
 			CommentList: nil,
 		})
 		return

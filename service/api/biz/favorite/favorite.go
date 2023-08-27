@@ -6,7 +6,6 @@ import (
 	"douyin/constant"
 	"douyin/kitex_gen/favorite"
 	"douyin/kitex_gen/favorite/favoriteservice"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
@@ -90,7 +89,7 @@ func List(ctx context.Context, c *app.RequestContext) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, favorite.FavoriteListResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("参数 error."),
+			StatusMsg:  "参数 error.",
 		})
 		return
 	}
@@ -105,7 +104,7 @@ func List(ctx context.Context, c *app.RequestContext) {
 		zap.L().Error("GetFavoriteList err.", zap.Error(err))
 		c.JSON(http.StatusOK, favorite.FavoriteListResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("GetFavoriteList error."),
+			StatusMsg:  "GetFavoriteList error.",
 		})
 		return
 	}

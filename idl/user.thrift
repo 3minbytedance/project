@@ -9,7 +9,7 @@ struct User {
     6: string avatar, // 用户头像
     7: string background_image, // 用户个人顶部大图
     8: string signature, // 个人简介
-    9: i32 total_favorited, // 获赞数量
+    9: string total_favorited, // 获赞数量
     10: i32 work_count, // 作品数量
     11: i32 favorite_count, // 点赞数量
 }
@@ -21,7 +21,7 @@ struct UserRegisterRequest {
 
 struct UserRegisterResponse {
     1: i32 status_code, // 状态码，0-成功，其他值-失败
-    2: optional string status_msg, // 返回状态描述
+    2: string status_msg, // 返回状态描述
     3: i64 user_id, // 用户id
     4: string token, // 用户鉴权token
 }
@@ -33,7 +33,7 @@ struct UserLoginRequest {
 
 struct UserLoginResponse {
     1: i32 status_code, // 状态码，0-成功，其他值-失败
-    2: optional string status_msg, // 返回状态描述
+    2: string status_msg, // 返回状态描述
     3: i64 user_id, // 用户id
     4: string token, // 用户鉴权token
 }
@@ -45,7 +45,7 @@ struct UserInfoByIdRequest {
 
 struct UserInfoByIdResponse {
     1: i32 status_code, // 状态码，0-成功，其他值-失败
-    2: optional string status_msg, // 返回状态描述
+    2: string status_msg, // 返回状态描述
     3: User user, // 用户信息
 }
 
@@ -55,10 +55,9 @@ struct UserInfoByNameRequest {
 
 struct UserInfoByNameResponse {
     1: i32 status_code, // 状态码，0-成功，其他值-失败
-    2: optional string status_msg, // 返回状态描述
+    2: string status_msg, // 返回状态描述
     3: i64 user_id, // 用户信息
     4: string password,
-    5: string salt,
 }
 
 struct UserExistsRequest {

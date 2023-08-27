@@ -25,6 +25,6 @@ func Message(messageModel *model.Message) *message.Message {
 		ToUserId:   int64(messageModel.ToUserId),
 		FromUserId: int64(messageModel.FromUserId),
 		Content:    messageModel.Content,
-		CreateTime: &messageModel.CreateTime,
+		CreateTime: messageModel.CreateTime,
 	}
 }

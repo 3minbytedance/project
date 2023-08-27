@@ -293,8 +293,8 @@ func (p *RelationActionRequest) Field3DeepEqual(src int32) bool {
 }
 
 type RelationActionResponse struct {
-	StatusCode int32   `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
-	StatusMsg  *string `thrift:"status_msg,2,optional" frugal:"2,optional,string" json:"status_msg,omitempty"`
+	StatusCode int32  `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
+	StatusMsg  string `thrift:"status_msg,2" frugal:"2,default,string" json:"status_msg"`
 }
 
 func NewRelationActionResponse() *RelationActionResponse {
@@ -309,28 +309,19 @@ func (p *RelationActionResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
-var RelationActionResponse_StatusMsg_DEFAULT string
-
 func (p *RelationActionResponse) GetStatusMsg() (v string) {
-	if !p.IsSetStatusMsg() {
-		return RelationActionResponse_StatusMsg_DEFAULT
-	}
-	return *p.StatusMsg
+	return p.StatusMsg
 }
 func (p *RelationActionResponse) SetStatusCode(val int32) {
 	p.StatusCode = val
 }
-func (p *RelationActionResponse) SetStatusMsg(val *string) {
+func (p *RelationActionResponse) SetStatusMsg(val string) {
 	p.StatusMsg = val
 }
 
 var fieldIDToName_RelationActionResponse = map[int16]string{
 	1: "status_code",
 	2: "status_msg",
-}
-
-func (p *RelationActionResponse) IsSetStatusMsg() bool {
-	return p.StatusMsg != nil
 }
 
 func (p *RelationActionResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -415,7 +406,7 @@ func (p *RelationActionResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = &v
+		p.StatusMsg = v
 	}
 	return nil
 }
@@ -471,16 +462,14 @@ WriteFieldEndError:
 }
 
 func (p *RelationActionResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetStatusMsg() {
-		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.StatusMsg); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.StatusMsg); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -518,14 +507,9 @@ func (p *RelationActionResponse) Field1DeepEqual(src int32) bool {
 	}
 	return true
 }
-func (p *RelationActionResponse) Field2DeepEqual(src *string) bool {
+func (p *RelationActionResponse) Field2DeepEqual(src string) bool {
 
-	if p.StatusMsg == src {
-		return true
-	} else if p.StatusMsg == nil || src == nil {
-		return false
-	}
-	if strings.Compare(*p.StatusMsg, *src) != 0 {
+	if strings.Compare(p.StatusMsg, src) != 0 {
 		return false
 	}
 	return true
@@ -756,7 +740,7 @@ func (p *FollowListRequest) Field2DeepEqual(src int64) bool {
 
 type FollowListResponse struct {
 	StatusCode int32        `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
-	StatusMsg  *string      `thrift:"status_msg,2,optional" frugal:"2,optional,string" json:"status_msg,omitempty"`
+	StatusMsg  string       `thrift:"status_msg,2" frugal:"2,default,string" json:"status_msg"`
 	UserList   []*user.User `thrift:"user_list,3" frugal:"3,default,list<user.User>" json:"user_list"`
 }
 
@@ -772,13 +756,8 @@ func (p *FollowListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
-var FollowListResponse_StatusMsg_DEFAULT string
-
 func (p *FollowListResponse) GetStatusMsg() (v string) {
-	if !p.IsSetStatusMsg() {
-		return FollowListResponse_StatusMsg_DEFAULT
-	}
-	return *p.StatusMsg
+	return p.StatusMsg
 }
 
 func (p *FollowListResponse) GetUserList() (v []*user.User) {
@@ -787,7 +766,7 @@ func (p *FollowListResponse) GetUserList() (v []*user.User) {
 func (p *FollowListResponse) SetStatusCode(val int32) {
 	p.StatusCode = val
 }
-func (p *FollowListResponse) SetStatusMsg(val *string) {
+func (p *FollowListResponse) SetStatusMsg(val string) {
 	p.StatusMsg = val
 }
 func (p *FollowListResponse) SetUserList(val []*user.User) {
@@ -798,10 +777,6 @@ var fieldIDToName_FollowListResponse = map[int16]string{
 	1: "status_code",
 	2: "status_msg",
 	3: "user_list",
-}
-
-func (p *FollowListResponse) IsSetStatusMsg() bool {
-	return p.StatusMsg != nil
 }
 
 func (p *FollowListResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -896,7 +871,7 @@ func (p *FollowListResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = &v
+		p.StatusMsg = v
 	}
 	return nil
 }
@@ -976,16 +951,14 @@ WriteFieldEndError:
 }
 
 func (p *FollowListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetStatusMsg() {
-		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.StatusMsg); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.StatusMsg); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -1051,14 +1024,9 @@ func (p *FollowListResponse) Field1DeepEqual(src int32) bool {
 	}
 	return true
 }
-func (p *FollowListResponse) Field2DeepEqual(src *string) bool {
+func (p *FollowListResponse) Field2DeepEqual(src string) bool {
 
-	if p.StatusMsg == src {
-		return true
-	} else if p.StatusMsg == nil || src == nil {
-		return false
-	}
-	if strings.Compare(*p.StatusMsg, *src) != 0 {
+	if strings.Compare(p.StatusMsg, src) != 0 {
 		return false
 	}
 	return true
@@ -1302,7 +1270,7 @@ func (p *FollowerListRequest) Field2DeepEqual(src int64) bool {
 
 type FollowerListResponse struct {
 	StatusCode int32        `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
-	StatusMsg  *string      `thrift:"status_msg,2,optional" frugal:"2,optional,string" json:"status_msg,omitempty"`
+	StatusMsg  string       `thrift:"status_msg,2" frugal:"2,default,string" json:"status_msg"`
 	UserList   []*user.User `thrift:"user_list,3" frugal:"3,default,list<user.User>" json:"user_list"`
 }
 
@@ -1318,13 +1286,8 @@ func (p *FollowerListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
-var FollowerListResponse_StatusMsg_DEFAULT string
-
 func (p *FollowerListResponse) GetStatusMsg() (v string) {
-	if !p.IsSetStatusMsg() {
-		return FollowerListResponse_StatusMsg_DEFAULT
-	}
-	return *p.StatusMsg
+	return p.StatusMsg
 }
 
 func (p *FollowerListResponse) GetUserList() (v []*user.User) {
@@ -1333,7 +1296,7 @@ func (p *FollowerListResponse) GetUserList() (v []*user.User) {
 func (p *FollowerListResponse) SetStatusCode(val int32) {
 	p.StatusCode = val
 }
-func (p *FollowerListResponse) SetStatusMsg(val *string) {
+func (p *FollowerListResponse) SetStatusMsg(val string) {
 	p.StatusMsg = val
 }
 func (p *FollowerListResponse) SetUserList(val []*user.User) {
@@ -1344,10 +1307,6 @@ var fieldIDToName_FollowerListResponse = map[int16]string{
 	1: "status_code",
 	2: "status_msg",
 	3: "user_list",
-}
-
-func (p *FollowerListResponse) IsSetStatusMsg() bool {
-	return p.StatusMsg != nil
 }
 
 func (p *FollowerListResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -1442,7 +1401,7 @@ func (p *FollowerListResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = &v
+		p.StatusMsg = v
 	}
 	return nil
 }
@@ -1522,16 +1481,14 @@ WriteFieldEndError:
 }
 
 func (p *FollowerListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetStatusMsg() {
-		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.StatusMsg); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.StatusMsg); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -1597,14 +1554,9 @@ func (p *FollowerListResponse) Field1DeepEqual(src int32) bool {
 	}
 	return true
 }
-func (p *FollowerListResponse) Field2DeepEqual(src *string) bool {
+func (p *FollowerListResponse) Field2DeepEqual(src string) bool {
 
-	if p.StatusMsg == src {
-		return true
-	} else if p.StatusMsg == nil || src == nil {
-		return false
-	}
-	if strings.Compare(*p.StatusMsg, *src) != 0 {
+	if strings.Compare(p.StatusMsg, src) != 0 {
 		return false
 	}
 	return true
@@ -2176,7 +2128,7 @@ func (p *FriendListRequest) Field2DeepEqual(src int64) bool {
 
 type FriendListResponse struct {
 	StatusCode int32        `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
-	StatusMsg  *string      `thrift:"status_msg,2,optional" frugal:"2,optional,string" json:"status_msg,omitempty"`
+	StatusMsg  string       `thrift:"status_msg,2" frugal:"2,default,string" json:"status_msg"`
 	UserList   []*user.User `thrift:"user_list,3" frugal:"3,default,list<user.User>" json:"user_list"`
 }
 
@@ -2192,13 +2144,8 @@ func (p *FriendListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
-var FriendListResponse_StatusMsg_DEFAULT string
-
 func (p *FriendListResponse) GetStatusMsg() (v string) {
-	if !p.IsSetStatusMsg() {
-		return FriendListResponse_StatusMsg_DEFAULT
-	}
-	return *p.StatusMsg
+	return p.StatusMsg
 }
 
 func (p *FriendListResponse) GetUserList() (v []*user.User) {
@@ -2207,7 +2154,7 @@ func (p *FriendListResponse) GetUserList() (v []*user.User) {
 func (p *FriendListResponse) SetStatusCode(val int32) {
 	p.StatusCode = val
 }
-func (p *FriendListResponse) SetStatusMsg(val *string) {
+func (p *FriendListResponse) SetStatusMsg(val string) {
 	p.StatusMsg = val
 }
 func (p *FriendListResponse) SetUserList(val []*user.User) {
@@ -2218,10 +2165,6 @@ var fieldIDToName_FriendListResponse = map[int16]string{
 	1: "status_code",
 	2: "status_msg",
 	3: "user_list",
-}
-
-func (p *FriendListResponse) IsSetStatusMsg() bool {
-	return p.StatusMsg != nil
 }
 
 func (p *FriendListResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -2316,7 +2259,7 @@ func (p *FriendListResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = &v
+		p.StatusMsg = v
 	}
 	return nil
 }
@@ -2396,16 +2339,14 @@ WriteFieldEndError:
 }
 
 func (p *FriendListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetStatusMsg() {
-		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.StatusMsg); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.StatusMsg); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -2471,14 +2412,9 @@ func (p *FriendListResponse) Field1DeepEqual(src int32) bool {
 	}
 	return true
 }
-func (p *FriendListResponse) Field2DeepEqual(src *string) bool {
+func (p *FriendListResponse) Field2DeepEqual(src string) bool {
 
-	if p.StatusMsg == src {
-		return true
-	} else if p.StatusMsg == nil || src == nil {
-		return false
-	}
-	if strings.Compare(*p.StatusMsg, *src) != 0 {
+	if strings.Compare(p.StatusMsg, src) != 0 {
 		return false
 	}
 	return true

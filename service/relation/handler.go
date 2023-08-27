@@ -9,7 +9,6 @@ import (
 	"douyin/kitex_gen/user/userservice"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -59,7 +58,7 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		if res {
 			return &relation.RelationActionResponse{
 				StatusCode: 0,
-				StatusMsg:  thrift.StringPtr("success, 用户关注过了"),
+				StatusMsg:  "success, 用户关注过了",
 			}, nil
 		}
 		// 延迟双删
@@ -71,7 +70,7 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		if err != nil {
 			return &relation.RelationActionResponse{
 				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("内部错误"),
+				StatusMsg:  "内部错误",
 			}, err
 		}
 		go func() {
@@ -83,7 +82,7 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 
 		return &relation.RelationActionResponse{
 			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success"),
+			StatusMsg:  "success",
 		}, nil
 	case 2: // 取关
 		// 延迟双删
@@ -95,7 +94,7 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		if err != nil {
 			return &relation.RelationActionResponse{
 				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("内部错误"),
+				StatusMsg:  "内部错误",
 			}, err
 		}
 		go func() {
@@ -107,13 +106,13 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 
 		return &relation.RelationActionResponse{
 			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success"),
+			StatusMsg:  "success",
 		}, nil
 
 	default:
 		return &relation.RelationActionResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("参数不合法"),
+			StatusMsg:  "参数不合法",
 		}, nil
 	}
 }
@@ -127,7 +126,7 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	if res == 2 {
 		return &relation.FollowListResponse{
 			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success, 没有关注用户"),
+			StatusMsg:  "success, 没有关注用户",
 			UserList:   nil,
 		}, nil
 	}
@@ -135,7 +134,7 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	if err != nil {
 		return &relation.FollowListResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("获取Follow list失败"),
+			StatusMsg:  "获取Follow list失败",
 			UserList:   nil,
 		}, err
 	}
@@ -149,7 +148,7 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 			zap.L().Error("查询Follow用户信息失败", zap.Error(err))
 			return &relation.FollowListResponse{
 				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("查询Follow list用户信息失败"),
+				StatusMsg:  "查询Follow list用户信息失败",
 				UserList:   nil,
 			}, err
 		}
@@ -157,7 +156,7 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	}
 	return &relation.FollowListResponse{
 		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("success"),
+		StatusMsg:  "success",
 		UserList:   followList,
 	}, nil
 }
@@ -170,7 +169,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 	if res == 2 {
 		return &relation.FollowerListResponse{
 			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success, 没有粉丝用户"),
+			StatusMsg:  "success, 没有粉丝用户",
 			UserList:   nil,
 		}, nil
 	}
@@ -178,7 +177,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 	if err != nil {
 		return &relation.FollowerListResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("获取Follow list失败"),
+			StatusMsg:  "获取Follow list失败",
 			UserList:   nil,
 		}, err
 	}
@@ -192,7 +191,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 			zap.L().Error("查询Follower用户信息失败", zap.Error(err))
 			return &relation.FollowerListResponse{
 				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("查询Follower list用户信息失败"),
+				StatusMsg:  "查询Follower list用户信息失败",
 				UserList:   nil,
 			}, err
 		}
@@ -200,7 +199,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 	}
 	return &relation.FollowerListResponse{
 		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("success"),
+		StatusMsg:  "success",
 		UserList:   followerList,
 	}, nil
 }
@@ -213,7 +212,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 	if res == 2 {
 		return &relation.FriendListResponse{
 			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success, 没有关注用户，所以没有friend"),
+			StatusMsg:  "success, 没有关注用户，所以没有friend",
 			UserList:   nil,
 		}, nil
 	}
@@ -221,7 +220,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 	if res == 2 {
 		return &relation.FriendListResponse{
 			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success, 没有粉丝用户，所以没有friend"),
+			StatusMsg:  "success, 没有粉丝用户，所以没有friend",
 			UserList:   nil,
 		}, nil
 	}
@@ -229,7 +228,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 	if err != nil {
 		return &relation.FriendListResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("获取Friend list失败"),
+			StatusMsg:  "获取Friend list失败",
 			UserList:   nil,
 		}, err
 	}
@@ -243,7 +242,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 			zap.L().Error("查询Friend用户信息失败", zap.Error(err))
 			return &relation.FriendListResponse{
 				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("查询Friend list用户信息失败"),
+				StatusMsg:  "查询Friend list用户信息失败",
 				UserList:   nil,
 			}, err
 		}
@@ -251,7 +250,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 	}
 	return &relation.FriendListResponse{
 		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("success"),
+		StatusMsg:  "success",
 		UserList:   friendList,
 	}, nil
 }
@@ -333,11 +332,11 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 	switch key {
 	case redis.FollowList:
 		id, err := mysql.GetFollowList(userId)
-		if err != nil  {
+		if err != nil {
 			zap.L().Error("mysql获取FollowList失败", zap.Error(err))
 			return 2
 		}
-		if len(id) == 0{
+		if len(id) == 0 {
 			zap.L().Info("mysql没有该FollowList")
 			return 2
 		}
@@ -349,11 +348,11 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 		return 1
 	case redis.FollowerList:
 		id, err := mysql.GetFollowerList(userId)
-		if err != nil{
+		if err != nil {
 			zap.L().Error("mysql获取FollowerList失败", zap.Error(err))
 			return 2
 		}
-		if len(id) == 0{
+		if len(id) == 0 {
 			zap.L().Info("mysql没有该FollowerList")
 			return 2
 		}

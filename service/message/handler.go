@@ -11,7 +11,6 @@ import (
 	"douyin/kitex_gen/relation/relationservice"
 	"douyin/mw/kafka"
 	"douyin/service/message/pack"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -53,7 +52,7 @@ func (s *MessageServiceImpl) MessageChat(ctx context.Context, request *message.M
 		zap.L().Error("relationClient.IsFriend error", zap.Error(err))
 		return &message.MessageChatResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Internal server error"),
+			StatusMsg:  "Internal server error",
 		}, err
 	}
 	// 不是好友关系
@@ -61,7 +60,7 @@ func (s *MessageServiceImpl) MessageChat(ctx context.Context, request *message.M
 		zap.L().Info("Not a friend, cannot see chat list")
 		return &message.MessageChatResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("The user is not your friend"),
+			StatusMsg:  "The user is not your friend",
 		}, nil
 	}
 	// 获取聊天记录
@@ -73,7 +72,7 @@ func (s *MessageServiceImpl) MessageChat(ctx context.Context, request *message.M
 		zap.L().Error("mongo.GetMessageList error", zap.Error(err))
 		return &message.MessageChatResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Internal server error"),
+			StatusMsg:  "Internal server error",
 		}, err
 	}
 	//防止将自己的消息返回给自己
@@ -89,7 +88,7 @@ func (s *MessageServiceImpl) MessageChat(ctx context.Context, request *message.M
 	packedMsgList := pack.Messages(msgList)
 	return &message.MessageChatResponse{
 		StatusCode:  0,
-		StatusMsg:   thrift.StringPtr("success"),
+		StatusMsg:   "success",
 		MessageList: packedMsgList,
 	}, nil
 }
@@ -105,7 +104,7 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 		zap.L().Error("relationClient.IsFriend error", zap.Error(err))
 		return &message.MessageActionResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Internal server error"),
+			StatusMsg:  "Internal server error",
 		}, err
 	}
 	// 不是好友关系
@@ -113,7 +112,7 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 		zap.L().Info("Not a friend, cannot see chat list")
 		return &message.MessageActionResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("The user is not your friend"),
+			StatusMsg:  "The user is not your friend",
 		}, nil
 	}
 
@@ -137,6 +136,6 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 
 	return &message.MessageActionResponse{
 		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("Success"),
+		StatusMsg:  "Success",
 	}, nil
 }

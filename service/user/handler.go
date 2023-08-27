@@ -13,13 +13,13 @@ import (
 	"douyin/kitex_gen/video/videoservice"
 	"douyin/mw/redis"
 	"douyin/service/user/pack"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
+	"strconv"
 	"sync"
 )
 
@@ -69,7 +69,7 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	resp = new(user.UserRegisterResponse)
 	statusCode, statusMsg := CheckUserRegisterInfo(request.Username, request.Password)
 	resp.StatusCode = statusCode
-	resp.StatusMsg = thrift.StringPtr(statusMsg)
+	resp.StatusMsg = statusMsg
 
 	if statusCode != 0 {
 		return
@@ -91,7 +91,7 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	if err != nil {
 		zap.L().Error("Create user err:", zap.Error(err))
 		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("Server internal error.")
+		resp.StatusMsg = "Server internal error."
 		return
 	}
 
@@ -114,7 +114,7 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	if !exist {
 		zap.L().Info("Check user exists info:", zap.Bool("exist", exist))
 		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("Username not exist")
+		resp.StatusMsg = "Username not exist"
 		return
 	}
 
@@ -123,7 +123,7 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	if err != nil {
 		zap.L().Info("Find user by name err:", zap.Error(err))
 		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("Server Internal error")
+		resp.StatusMsg = "Server Internal error"
 		return
 	}
 	// 检查密码
@@ -131,12 +131,12 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	if !match {
 		zap.L().Info("User password wrong.")
 		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("Wrong password.")
+		resp.StatusMsg = "Wrong password."
 		return
 	}
 	token := common.GenerateToken(userModel.ID, userModel.Name)
 	resp.StatusCode = 0
-	resp.StatusMsg = thrift.StringPtr("success")
+	resp.StatusMsg = "success"
 	resp.Token = token
 	resp.UserId = int64(userModel.ID)
 	// 将token存入redis
@@ -155,14 +155,14 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	userId := request.GetUserId()
 	if userId == 0 {
 		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("User ID not exist")
+		resp.StatusMsg = "User ID not exist"
 		return
 	}
 	name, exist := GetName(uint(userId))
 	// 用户名不存在
 	if !exist {
 		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("User ID not exist")
+		resp.StatusMsg = "User ID not exist"
 		return
 	}
 
@@ -171,7 +171,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	followerCount, _ := relationClient.GetFollowerListCount(ctx, userId)
 
 	resp.StatusCode = 0
-	resp.StatusMsg = thrift.StringPtr("success")
+	resp.StatusMsg = "success"
 	// 作品数
 	workCount, _ := videoClient.GetWorkCount(ctx, userId)
 	// 喜欢数
@@ -191,7 +191,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 		if err != nil {
 			zap.L().Error("relationClient err:", zap.Error(err))
 			resp.StatusCode = 1
-			resp.StatusMsg = thrift.StringPtr("Server Internal error")
+			resp.StatusMsg = "Server Internal error"
 			return
 		}
 	}
@@ -203,7 +203,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	resp.User.SetIsFollow(isFollow)
 	resp.User.SetWorkCount(workCount)
 	resp.User.SetFavoriteCount(favoriteCount)
-	resp.User.SetTotalFavorited(totalFavoriteCount)
+	resp.User.SetTotalFavorited(strconv.Itoa(int(totalFavoriteCount)))
 	return
 }
 

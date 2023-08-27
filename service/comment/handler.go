@@ -12,7 +12,6 @@ import (
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"douyin/service/comment/pack"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -62,23 +61,23 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 	})
 	if userResp.GetUser() == nil || err != nil {
 		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr(err.Error())
+		resp.StatusMsg = err.Error()
 		return resp, err
 	}
 
 	switch request.GetActionType() {
 	case 1: // 新增评论
 		commentData := model.Comment{
-			UserId:  uint(request.GetUserId()),
-			VideoId: uint(request.GetVideoId()),
-			Content: common.ReplaceWord(request.GetCommentText()),
+			UserId:    uint(request.GetUserId()),
+			VideoId:   uint(request.GetVideoId()),
+			Content:   common.ReplaceWord(request.GetCommentText()),
 			CreatedAt: time.Now(),
 		}
 		// _, err = mysql.AddComment(&commentData)
 		err = kafka.CommentMQInstance.ProduceAddCommentMsg(&commentData)
 		if err != nil {
 			resp.StatusCode = 1
-			resp.StatusMsg = thrift.StringPtr(err.Error())
+			resp.StatusMsg = err.Error()
 			return
 		}
 		// 增加redis
@@ -100,7 +99,7 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		//comment := pack.Comment(&commentData, user.User)
 		return &comment.CommentActionResponse{
 			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success"),
+			StatusMsg:  "success",
 			Comment:    pack.Comment(&commentData, userResp.GetUser()),
 		}, nil
 
@@ -125,17 +124,17 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 			zap.L().Error("DeleteCommentById error", zap.Error(err))
 			return &comment.CommentActionResponse{
 				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("Internal server error"),
+				StatusMsg:  "Internal server error",
 			}, err
 		}
 		return &comment.CommentActionResponse{
 			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success"),
+			StatusMsg:  "success",
 		}, nil
 	default:
 		return &comment.CommentActionResponse{
 			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Invalid Param"),
+			StatusMsg:  "Invalid Param",
 		}, nil
 	}
 }
@@ -147,7 +146,7 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 		zap.L().Error("根据视频ID取评论失败", zap.Error(err))
 		return &comment.CommentListResponse{
 			StatusCode:  1,
-			StatusMsg:   thrift.StringPtr("获取评论列表失败"),
+			StatusMsg:   "获取评论列表失败",
 			CommentList: nil,
 		}, err
 	}
@@ -162,7 +161,7 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 			zap.L().Error("查询评论用户信息失败", zap.Error(err))
 			return &comment.CommentListResponse{
 				StatusCode:  1,
-				StatusMsg:   thrift.StringPtr("查询评论用户信息失败"),
+				StatusMsg:   "查询评论用户信息失败",
 				CommentList: nil,
 			}, err
 		}
@@ -170,7 +169,7 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 	}
 	return &comment.CommentListResponse{
 		StatusCode:  0,
-		StatusMsg:   thrift.StringPtr("success"),
+		StatusMsg:   "success",
 		CommentList: commentList,
 	}, nil
 }

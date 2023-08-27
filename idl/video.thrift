@@ -20,9 +20,9 @@ struct VideoFeedRequest {
 
 struct VideoFeedResponse {
     1: i32 status_code, // 状态码，0-成功，其他值-失败
-    2: optional string status_msg, // 返回状态描述
+    2: string status_msg, // 返回状态描述
     3: list<Video> video_list, // 视频列表
-    4: optional i64 next_time, // 本次返回的视频中，发布最早的时间，作为下次请求时的latest_time
+    4: i64 next_time, // 本次返回的视频中，发布最早的时间，作为下次请求时的latest_time
 }
 
 struct PublishVideoRequest {
@@ -33,7 +33,7 @@ struct PublishVideoRequest {
 
 struct PublishVideoResponse {
     1: i32 status_code, // 状态码，0-成功，其他值-失败
-    2: optional string status_msg, // 返回状态描述
+    2: string status_msg, // 返回状态描述
 }
 
 struct PublishVideoListRequest {
@@ -43,7 +43,7 @@ struct PublishVideoListRequest {
 
 struct PublishVideoListResponse {
     1: i32 status_code,
-    2: optional string status_msg,
+    2: string status_msg,
     3: list<Video> video_list,
 }
 

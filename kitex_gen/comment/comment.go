@@ -793,7 +793,7 @@ func (p *CommentActionRequest) Field5DeepEqual(src *int32) bool {
 
 type CommentActionResponse struct {
 	StatusCode int32    `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
-	StatusMsg  *string  `thrift:"status_msg,2,optional" frugal:"2,optional,string" json:"status_msg,omitempty"`
+	StatusMsg  string   `thrift:"status_msg,2" frugal:"2,default,string" json:"status_msg"`
 	Comment    *Comment `thrift:"comment,3,optional" frugal:"3,optional,Comment" json:"comment,omitempty"`
 }
 
@@ -809,13 +809,8 @@ func (p *CommentActionResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
-var CommentActionResponse_StatusMsg_DEFAULT string
-
 func (p *CommentActionResponse) GetStatusMsg() (v string) {
-	if !p.IsSetStatusMsg() {
-		return CommentActionResponse_StatusMsg_DEFAULT
-	}
-	return *p.StatusMsg
+	return p.StatusMsg
 }
 
 var CommentActionResponse_Comment_DEFAULT *Comment
@@ -829,7 +824,7 @@ func (p *CommentActionResponse) GetComment() (v *Comment) {
 func (p *CommentActionResponse) SetStatusCode(val int32) {
 	p.StatusCode = val
 }
-func (p *CommentActionResponse) SetStatusMsg(val *string) {
+func (p *CommentActionResponse) SetStatusMsg(val string) {
 	p.StatusMsg = val
 }
 func (p *CommentActionResponse) SetComment(val *Comment) {
@@ -840,10 +835,6 @@ var fieldIDToName_CommentActionResponse = map[int16]string{
 	1: "status_code",
 	2: "status_msg",
 	3: "comment",
-}
-
-func (p *CommentActionResponse) IsSetStatusMsg() bool {
-	return p.StatusMsg != nil
 }
 
 func (p *CommentActionResponse) IsSetComment() bool {
@@ -942,7 +933,7 @@ func (p *CommentActionResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = &v
+		p.StatusMsg = v
 	}
 	return nil
 }
@@ -1010,16 +1001,14 @@ WriteFieldEndError:
 }
 
 func (p *CommentActionResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetStatusMsg() {
-		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.StatusMsg); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.StatusMsg); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -1079,14 +1068,9 @@ func (p *CommentActionResponse) Field1DeepEqual(src int32) bool {
 	}
 	return true
 }
-func (p *CommentActionResponse) Field2DeepEqual(src *string) bool {
+func (p *CommentActionResponse) Field2DeepEqual(src string) bool {
 
-	if p.StatusMsg == src {
-		return true
-	} else if p.StatusMsg == nil || src == nil {
-		return false
-	}
-	if strings.Compare(*p.StatusMsg, *src) != 0 {
+	if strings.Compare(p.StatusMsg, src) != 0 {
 		return false
 	}
 	return true
@@ -1324,7 +1308,7 @@ func (p *CommentListRequest) Field2DeepEqual(src int64) bool {
 
 type CommentListResponse struct {
 	StatusCode  int32      `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
-	StatusMsg   *string    `thrift:"status_msg,2,optional" frugal:"2,optional,string" json:"status_msg,omitempty"`
+	StatusMsg   string     `thrift:"status_msg,2" frugal:"2,default,string" json:"status_msg"`
 	CommentList []*Comment `thrift:"comment_list,3" frugal:"3,default,list<Comment>" json:"comment_list"`
 }
 
@@ -1340,13 +1324,8 @@ func (p *CommentListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
-var CommentListResponse_StatusMsg_DEFAULT string
-
 func (p *CommentListResponse) GetStatusMsg() (v string) {
-	if !p.IsSetStatusMsg() {
-		return CommentListResponse_StatusMsg_DEFAULT
-	}
-	return *p.StatusMsg
+	return p.StatusMsg
 }
 
 func (p *CommentListResponse) GetCommentList() (v []*Comment) {
@@ -1355,7 +1334,7 @@ func (p *CommentListResponse) GetCommentList() (v []*Comment) {
 func (p *CommentListResponse) SetStatusCode(val int32) {
 	p.StatusCode = val
 }
-func (p *CommentListResponse) SetStatusMsg(val *string) {
+func (p *CommentListResponse) SetStatusMsg(val string) {
 	p.StatusMsg = val
 }
 func (p *CommentListResponse) SetCommentList(val []*Comment) {
@@ -1366,10 +1345,6 @@ var fieldIDToName_CommentListResponse = map[int16]string{
 	1: "status_code",
 	2: "status_msg",
 	3: "comment_list",
-}
-
-func (p *CommentListResponse) IsSetStatusMsg() bool {
-	return p.StatusMsg != nil
 }
 
 func (p *CommentListResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -1464,7 +1439,7 @@ func (p *CommentListResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = &v
+		p.StatusMsg = v
 	}
 	return nil
 }
@@ -1544,16 +1519,14 @@ WriteFieldEndError:
 }
 
 func (p *CommentListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetStatusMsg() {
-		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.StatusMsg); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.StatusMsg); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -1619,14 +1592,9 @@ func (p *CommentListResponse) Field1DeepEqual(src int32) bool {
 	}
 	return true
 }
-func (p *CommentListResponse) Field2DeepEqual(src *string) bool {
+func (p *CommentListResponse) Field2DeepEqual(src string) bool {
 
-	if p.StatusMsg == src {
-		return true
-	} else if p.StatusMsg == nil || src == nil {
-		return false
-	}
-	if strings.Compare(*p.StatusMsg, *src) != 0 {
+	if strings.Compare(p.StatusMsg, src) != 0 {
 		return false
 	}
 	return true
