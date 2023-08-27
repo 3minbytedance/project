@@ -180,7 +180,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	totalFavoriteCount, _ := favoriteClient.GetUserTotalFavoritedCount(ctx, userId)
 	// 检查是否已关注
 
-	zap.L().Info("IDS", zap.Any("actorId", actionId), zap.Any("userId", userId))
+	//zap.L().Info("IDS", zap.Any("actorId", actionId), zap.Any("userId", userId))
 	isFollow := false
 	//已登录
 	if isLogged {
