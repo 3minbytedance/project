@@ -1,6 +1,7 @@
 package main
 
 import (
+	"douyin/common"
 	"douyin/config"
 	"douyin/constant"
 	"douyin/dal/mysql"
@@ -53,6 +54,12 @@ func main() {
 	// 初始化视频模块的kafka
 	kafka.InitVideoKafka()
 
+	// 创建临时文件夹
+	err = common.CreateDirectoryIfNotExist()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	addr, err := net.ResolveTCPAddr("tcp", constant.VideoServicePort)
 	if err != nil {
 		panic(err)
@@ -65,6 +72,7 @@ func main() {
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.VideoServiceName}),
 		server.WithRegistry(r),
 	)
+
 	err = svr.Run()
 	if err != nil {
 		log.Fatal(err)

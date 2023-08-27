@@ -2,9 +2,9 @@ package kafka
 
 import (
 	"context"
+	"douyin/common"
 	"douyin/dal/mysql"
 	"douyin/mw/redis"
-	"douyin/utils"
 	"encoding/json"
 	"fmt"
 	"go.uber.org/zap"
@@ -65,13 +65,13 @@ func (m *VideoMQ) Consume() {
 		go func() {
 			zap.L().Info("开始处理视频消息", zap.Any("videoMsg", videoMsg))
 			//视频存储到oss
-			if err = utils.UploadToOSS(videoMsg.VideoPath, videoMsg.VideoFileName); err != nil {
+			if err = common.UploadToOSS(videoMsg.VideoPath, videoMsg.VideoFileName); err != nil {
 				zap.L().Error("上传视频到OSS失败", zap.Error(err))
 				return
 			}
 
 			//利用oss功能获取封面图
-			imgName, err := utils.GetVideoCover(videoMsg.VideoFileName)
+			imgName, err := common.GetVideoCover(videoMsg.VideoFileName)
 			if err != nil {
 				zap.L().Error("图片截帧失败", zap.Error(err))
 				return
