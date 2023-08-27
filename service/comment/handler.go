@@ -12,6 +12,7 @@ import (
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"douyin/service/comment/pack"
+	"errors"
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
@@ -75,8 +76,8 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		// _, err = mysql.AddComment(&commentData)
 		err = kafka.CommentMQInstance.ProduceAddCommentMsg(&commentData)
 		if err != nil {
-			resp.StatusCode = 1
-			resp.StatusMsg = thrift.StringPtr(err.Error())
+			resp.StatusCode = common.CodeDBError
+			resp.StatusMsg = common.MapErrMsg(common.CodeDBError)
 			return
 		}
 		// 增加redis
@@ -97,8 +98,8 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		// 封装返回数据
 		//comment := pack.Comment(&commentData, user.User)
 		return &comment.CommentActionResponse{
-			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success"),
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 			Comment:    pack.Comment(&commentData, userResp.GetUser()),
 		}, nil
 
@@ -122,19 +123,19 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		if err != nil {
 			zap.L().Error("DeleteCommentById error", zap.Error(err))
 			return &comment.CommentActionResponse{
-				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("Internal server error"),
+				StatusCode: common.CodeServerBusy,
+				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 			}, err
 		}
 		return &comment.CommentActionResponse{
-			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success"),
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		}, nil
 	default:
 		return &comment.CommentActionResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Invalid Param"),
-		}, nil
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+		}, errors.New(*common.MapErrMsg(common.CodeInvalidParam))
 	}
 }
 
@@ -144,8 +145,8 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 	if err != nil {
 		zap.L().Error("根据视频ID取评论失败", zap.Error(err))
 		return &comment.CommentListResponse{
-			StatusCode:  1,
-			StatusMsg:   thrift.StringPtr("获取评论列表失败"),
+			StatusCode:  common.CodeDBError,
+			StatusMsg:   common.MapErrMsg(common.CodeDBError),
 			CommentList: nil,
 		}, err
 	}
@@ -159,16 +160,16 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 		if err != nil {
 			zap.L().Error("查询评论用户信息失败", zap.Error(err))
 			return &comment.CommentListResponse{
-				StatusCode:  1,
-				StatusMsg:   thrift.StringPtr("查询评论用户信息失败"),
+				StatusCode:  common.CodeDBError,
+				StatusMsg:   common.MapErrMsg(common.CodeDBError),
 				CommentList: nil,
 			}, err
 		}
 		commentList = append(commentList, pack.Comment(&com, userResp.GetUser()))
 	}
 	return &comment.CommentListResponse{
-		StatusCode:  0,
-		StatusMsg:   thrift.StringPtr("success"),
+		StatusCode:  common.CodeSuccess,
+		StatusMsg:   common.MapErrMsg(common.CodeSuccess),
 		CommentList: commentList,
 	}, nil
 }

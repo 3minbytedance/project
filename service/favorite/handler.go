@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"douyin/common"
 	"douyin/constant"
 	"douyin/constant/biz"
 	"douyin/dal/model"
@@ -15,7 +16,6 @@ import (
 	mwRedis "douyin/mw/redis"
 	"errors"
 	"fmt"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -71,13 +71,13 @@ func (s *FavoriteServiceImpl) FavoriteAction(ctx context.Context, request *favor
 	err = favoriteActions(userId, videoId, actionType)
 	if err != nil {
 		return &favorite.FavoriteActionResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("action failed，err: " + err.Error()),
+			StatusCode: common.CodeServerBusy,
+			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 		}, err
 	}
 	return &favorite.FavoriteActionResponse{
-		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("action down"),
+		StatusCode: common.CodeSuccess,
+		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 	}, nil
 }
 
@@ -89,7 +89,10 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 
 	favoritesByUserId, err := getFavoritesByUserId(uint(userId))
 	if err != nil {
-		return nil, err
+		return &favorite.FavoriteListResponse{
+			StatusCode: common.CodeServerBusy,
+			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
+		}, err
 	}
 	videos := make([]*video.Video, 0, len(favoritesByUserId))
 	for _, id := range favoritesByUserId {
@@ -117,10 +120,10 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 		videos = append(videos, &vid)
 	}
 	return &favorite.FavoriteListResponse{
-		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("get favorite video list done"),
+		StatusCode: common.CodeSuccess,
+		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		VideoList:  videos,
-	}, err
+	}, nil
 }
 
 // GetVideoFavoriteCount implements the FavoriteServiceImpl interface.

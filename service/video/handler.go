@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"douyin/common"
 	"douyin/constant"
 	"douyin/constant/biz"
 	"douyin/dal/mysql"
@@ -13,7 +14,6 @@ import (
 	video "douyin/kitex_gen/video"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/google/uuid"
@@ -66,12 +66,12 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 	latestTime := request.GetLatestTime()
 	videos := mysql.GetLatestVideos(latestTime)
 	if len(videos) == 0 {
-		zap.L().Info("根据LatestTime取视频失败")
+		zap.L().Info("视频列表为空")
 		return &video.VideoFeedResponse{
-			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("获取视频列表失败"),
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 			VideoList:  nil,
-		}, err
+		}, nil
 	}
 	currentId := request.GetUserId()
 
@@ -103,8 +103,8 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 	nextTime := videos[len(videos)-1].CreatedAt
 
 	return &video.VideoFeedResponse{
-		StatusCode: 0,
-		StatusMsg:  nil,
+		StatusCode: common.CodeSuccess,
+		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		VideoList:  videoList,
 		NextTime:   &nextTime,
 	}, nil
@@ -118,8 +118,8 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 	err = os.WriteFile(videoPath, request.GetData(), 0644)
 	if err != nil {
 		return &video.PublishVideoResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("文件上传失败"),
+			StatusCode: common.CodeUploadFileError,
+			StatusMsg:  common.MapErrMsg(common.CodeUploadFileError),
 		}, err
 	}
 
@@ -135,8 +135,8 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 	}()
 
 	return &video.PublishVideoResponse{
-		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("上传成功，服务器解析中，预计15-30秒"),
+		StatusCode: common.CodeSuccess,
+		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 	}, nil
 }
 
@@ -148,8 +148,8 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 	toUserId := request.GetToUserId()
 	if !found {
 		return &video.PublishVideoListResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("获取视频列表失败"),
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		}, nil
 	}
 	// 将查询结果转换为VideoResponse类型
@@ -182,7 +182,8 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 	}
 
 	return &video.PublishVideoListResponse{
-		StatusCode: 0,
+		StatusCode: common.CodeSuccess,
+		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		VideoList:  videoList,
 	}, nil
 }

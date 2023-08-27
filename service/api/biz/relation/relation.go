@@ -4,8 +4,6 @@ import (
 	"context"
 	"douyin/common"
 	"douyin/constant"
-	"github.com/apache/thrift/lib/go/thrift"
-
 	"douyin/kitex_gen/relation"
 	"douyin/kitex_gen/relation/relationservice"
 	"github.com/cloudwego/hertz/pkg/app"
@@ -22,14 +20,6 @@ import (
 var relationClient relationservice.Client
 
 func init() {
-	// OpenTelemetry 链路跟踪 还没配置好，先注释
-	//p := provider.NewOpenTelemetryProvider(
-	//	provider.WithServiceName(config.CommentServiceName),
-	//	provider.WithExportEndpoint("localhost:4317"),
-	//	provider.WithInsecure(),
-	//)
-	//defer p.Shutdown(context.Background())
-
 	// Etcd 服务发现
 	r, err := etcd.NewEtcdResolver([]string{constant.EtcdAddr})
 	if err != nil {
@@ -52,7 +42,10 @@ func Action(ctx context.Context, c *app.RequestContext) {
 	actionId, err := common.GetCurrentUserID(c)
 	if err != nil {
 		zap.L().Error("Get user id from ctx", zap.Error(err))
-		c.JSON(http.StatusOK, "Unauthorized operation.")
+		c.JSON(http.StatusOK, relation.RelationActionResponse{
+			StatusCode: common.CodeInvalidToken,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidToken),
+		})
 		return
 	}
 	actionIdStr := strconv.FormatUint(uint64(actionId), 10)
@@ -61,13 +54,16 @@ func Action(ctx context.Context, c *app.RequestContext) {
 
 	// miss param, return
 	if !toUserIdExists || !actionTypeExists {
-		c.JSON(http.StatusOK, "Invalid Params.")
+		c.JSON(http.StatusOK, relation.RelationActionResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+		})
 		return
 	}
 	if actionIdStr == toUserIdStr {
-		c.JSON(http.StatusOK, &relation.RelationActionResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("不能对自己操作"),
+		c.JSON(http.StatusOK, relation.RelationActionResponse{
+			StatusCode: common.CodeFollowMyself,
+			StatusMsg:  common.MapErrMsg(common.CodeFollowMyself),
 		})
 		return
 	}
@@ -76,7 +72,10 @@ func Action(ctx context.Context, c *app.RequestContext) {
 	toUserId, err := strconv.ParseInt(toUserIdStr, 10, 64)
 	actionType, err := strconv.ParseUint(actionTypeStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusOK, "Invalid Params.")
+		c.JSON(http.StatusOK, relation.RelationActionResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+		})
 		return
 	}
 	req := &relation.RelationActionRequest{
@@ -91,18 +90,18 @@ func Action(ctx context.Context, c *app.RequestContext) {
 	case 1, 2: // 关注
 		resp, err := relationClient.RelationAction(ctx, req)
 		if err != nil {
-			c.JSON(http.StatusOK, &relation.RelationActionResponse{
-				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("Server internal error."),
+			c.JSON(http.StatusOK, relation.RelationActionResponse{
+				StatusCode: resp.StatusCode,
+				StatusMsg:  common.MapErrMsg(resp.StatusCode),
 			})
 			return
 		}
 		c.JSON(http.StatusOK, resp)
 		return
 	default: // wrong action_type
-		c.JSON(http.StatusOK, &relation.RelationActionResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Invalid param."),
+		c.JSON(http.StatusOK, relation.RelationActionResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 		})
 		return
 	}
@@ -113,15 +112,18 @@ func FollowList(ctx context.Context, c *app.RequestContext) {
 	if err != nil {
 		zap.L().Error("Get user id from ctx", zap.Error(err))
 		c.JSON(http.StatusOK, relation.FollowListResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Unauthorized operation."),
+			StatusCode: common.CodeInvalidToken,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidToken),
 		})
 		return
 	}
 	toUserIdStr := c.Query("user_id")
 	toUserId, err := strconv.ParseInt(toUserIdStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusOK, "Invalid Params.")
+		c.JSON(http.StatusOK, relation.FollowListResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+		})
 		return
 	}
 	req := &relation.FollowListRequest{
@@ -132,10 +134,9 @@ func FollowList(ctx context.Context, c *app.RequestContext) {
 	resp, err := relationClient.GetFollowList(ctx, req)
 	if err != nil {
 		zap.L().Error("Get follow list from relation client err.", zap.Error(err))
-		c.JSON(http.StatusOK, relation.FollowListResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Server internal error."),
-			UserList:   nil,
+		c.JSON(http.StatusInternalServerError, relation.FollowListResponse{
+			StatusCode: common.CodeServerBusy,
+			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 		})
 		return
 	}
@@ -148,13 +149,19 @@ func FollowerList(ctx context.Context, c *app.RequestContext) {
 	actionId, err := common.GetCurrentUserID(c)
 	// not logged in
 	if err != nil {
-		c.JSON(http.StatusOK, "Unauthorized operation.")
+		c.JSON(http.StatusOK, relation.FollowListResponse{
+			StatusCode: common.CodeInvalidToken,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidToken),
+		})
 		return
 	}
 	toUserIdStr := c.Query("user_id")
 	toUserId, err := strconv.ParseInt(toUserIdStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusOK, "Invalid Params.")
+		c.JSON(http.StatusOK, relation.FollowListResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+		})
 		return
 	}
 
@@ -166,10 +173,9 @@ func FollowerList(ctx context.Context, c *app.RequestContext) {
 	resp, err := relationClient.GetFollowerList(ctx, req)
 	if err != nil {
 		zap.L().Error("Get follow list from relation client err.", zap.Error(err))
-		c.JSON(http.StatusOK, relation.FollowerListResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Server internal error."),
-			UserList:   nil,
+		c.JSON(http.StatusInternalServerError, relation.FollowListResponse{
+			StatusCode: common.CodeServerBusy,
+			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 		})
 		return
 	}
@@ -182,13 +188,19 @@ func FriendList(ctx context.Context, c *app.RequestContext) {
 	actionId, err := common.GetCurrentUserID(c)
 	// not logged in
 	if err != nil {
-		c.JSON(http.StatusOK, "Unauthorized operation.")
+		c.JSON(http.StatusOK, relation.FriendListResponse{
+			StatusCode: common.CodeInvalidToken,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidToken),
+		})
 		return
 	}
 	toUserIdStr := c.Query("user_id")
 	toUserId, err := strconv.ParseInt(toUserIdStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusOK, "Invalid Params.")
+		c.JSON(http.StatusOK, relation.FriendListResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+		})
 		return
 	}
 
@@ -199,10 +211,9 @@ func FriendList(ctx context.Context, c *app.RequestContext) {
 	resp, err := relationClient.GetFriendList(ctx, req)
 	if err != nil {
 		zap.L().Error("Get follow list from relation client err.", zap.Error(err))
-		c.JSON(http.StatusOK, relation.FriendListResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Server internal error."),
-			UserList:   nil,
+		c.JSON(http.StatusInternalServerError, relation.FriendListResponse{
+			StatusCode: common.CodeServerBusy,
+			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 		})
 		return
 	}

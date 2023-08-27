@@ -43,7 +43,7 @@ local:
 #    timeout: 10
 #  redis:
 #    address: "127.0.0.1"
-#    port: 6379
+#    port: 36379
 #    password: ""
 #    comment_db: 0
 #    pool_size: 30
@@ -55,32 +55,33 @@ local:
 #  mongo:
 #    address: "127.0.0.1"
 #    port: 27017
+#    db: 3minbytedance
+#    username: ""
+#    password: ""
+#
+
+
+#remote:
+#  mysql:
+#    address: "114.115.222.161"
+#    port: 3306
+#    username: doushen
+#    password: CEzYXnXpGcx5rZwW
+#    database: doushen
+#    timeout: 10
+#  redis:
+#    address: "114.115.222.161"
+#    port: 6379
+#    password: ""
+#    comment_db: 0
+#    pool_size: 30
+#    min_idle_conns: 30
+#    expire_time: 1800   # 30分钟
+#  kafka:
+#    address: "114.115.222.161"
+#    port: 9092
+#  mongo:
+#    address: "114.115.222.161"
+#    port: 27017
 #    username: douyin
 #    password: douyin
-
-
-
-remote:
-  mysql:
-    address: "114.115.222.161"
-    port: 3306
-    username: doushen
-    password: CEzYXnXpGcx5rZwW
-    database: doushen
-    timeout: 10
-  redis:
-    address: "114.115.222.161"
-    port: 6379
-    password: ""
-    comment_db: 0
-    pool_size: 30
-    min_idle_conns: 30
-    expire_time: 1800   # 30分钟
-  kafka:
-    address: "114.115.222.161"
-    port: 9092
-  mongo:
-    address: "114.115.222.161"
-    port: 27017
-    username: douyin
-    password: douyin

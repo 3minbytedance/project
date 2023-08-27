@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"douyin/common"
 	"douyin/constant"
 	"douyin/dal/mysql"
 	relation "douyin/kitex_gen/relation"
@@ -9,7 +10,7 @@ import (
 	"douyin/kitex_gen/user/userservice"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
-	"github.com/apache/thrift/lib/go/thrift"
+	"errors"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -58,8 +59,8 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		res, err := redis.IsInMyFollowList(uint(fromUserId), uint(toUserId))
 		if res {
 			return &relation.RelationActionResponse{
-				StatusCode: 0,
-				StatusMsg:  thrift.StringPtr("success, 用户关注过了"),
+				StatusCode: common.CodeSuccess,
+				StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 			}, nil
 		}
 		// 延迟双删
@@ -70,8 +71,8 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		err = kafka.FollowMQInstance.ProduceAddFollowMsg(uint(fromUserId), uint(toUserId))
 		if err != nil {
 			return &relation.RelationActionResponse{
-				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("内部错误"),
+				StatusCode: common.CodeServerBusy,
+				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 			}, err
 		}
 		go func() {
@@ -82,8 +83,8 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		}()
 
 		return &relation.RelationActionResponse{
-			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success"),
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		}, nil
 	case 2: // 取关
 		// 延迟双删
@@ -94,8 +95,8 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		err = kafka.FollowMQInstance.ProduceDelFollowMsg(uint(fromUserId), uint(toUserId))
 		if err != nil {
 			return &relation.RelationActionResponse{
-				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("内部错误"),
+				StatusCode: common.CodeServerBusy,
+				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 			}, err
 		}
 		go func() {
@@ -106,15 +107,15 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		}()
 
 		return &relation.RelationActionResponse{
-			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success"),
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		}, nil
 
 	default:
 		return &relation.RelationActionResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("参数不合法"),
-		}, nil
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+		}, errors.New(*common.MapErrMsg(common.CodeInvalidParam))
 	}
 }
 
@@ -126,16 +127,16 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowList)
 	if res == 2 {
 		return &relation.FollowListResponse{
-			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success, 没有关注用户"),
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 			UserList:   nil,
 		}, nil
 	}
 	id, err := redis.GetFollowListById(uint(toUserId))
 	if err != nil {
 		return &relation.FollowListResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("获取Follow list失败"),
+			StatusCode: common.CodeDBError,
+			StatusMsg:  common.MapErrMsg(common.CodeDBError),
 			UserList:   nil,
 		}, err
 	}
@@ -148,16 +149,16 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 		if err != nil {
 			zap.L().Error("查询Follow用户信息失败", zap.Error(err))
 			return &relation.FollowListResponse{
-				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("查询Follow list用户信息失败"),
+				StatusCode: common.CodeServerBusy,
+				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 				UserList:   nil,
 			}, err
 		}
 		followList = append(followList, userResp.GetUser())
 	}
 	return &relation.FollowListResponse{
-		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("success"),
+		StatusCode: common.CodeSuccess,
+		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		UserList:   followList,
 	}, nil
 }
@@ -169,16 +170,16 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowerList)
 	if res == 2 {
 		return &relation.FollowerListResponse{
-			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success, 没有粉丝用户"),
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 			UserList:   nil,
 		}, nil
 	}
 	id, err := redis.GetFollowerListById(uint(toUserId))
 	if err != nil {
 		return &relation.FollowerListResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("获取Follow list失败"),
+			StatusCode: common.CodeDBError,
+			StatusMsg:  common.MapErrMsg(common.CodeDBError),
 			UserList:   nil,
 		}, err
 	}
@@ -191,16 +192,16 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 		if err != nil {
 			zap.L().Error("查询Follower用户信息失败", zap.Error(err))
 			return &relation.FollowerListResponse{
-				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("查询Follower list用户信息失败"),
+				StatusCode: common.CodeServerBusy,
+				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 				UserList:   nil,
 			}, err
 		}
 		followerList = append(followerList, userResp.GetUser())
 	}
 	return &relation.FollowerListResponse{
-		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("success"),
+		StatusCode: common.CodeSuccess,
+		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		UserList:   followerList,
 	}, nil
 }
@@ -212,24 +213,24 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowList)
 	if res == 2 {
 		return &relation.FriendListResponse{
-			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success, 没有关注用户，所以没有friend"),
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 			UserList:   nil,
 		}, nil
 	}
 	res = CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowerList)
 	if res == 2 {
 		return &relation.FriendListResponse{
-			StatusCode: 0,
-			StatusMsg:  thrift.StringPtr("success, 没有粉丝用户，所以没有friend"),
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 			UserList:   nil,
 		}, nil
 	}
 	id, err := redis.GetFriendListById(uint(toUserId))
 	if err != nil {
 		return &relation.FriendListResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("获取Friend list失败"),
+			StatusCode: common.CodeDBError,
+			StatusMsg:  common.MapErrMsg(common.CodeDBError),
 			UserList:   nil,
 		}, err
 	}
@@ -242,16 +243,16 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 		if err != nil {
 			zap.L().Error("查询Friend用户信息失败", zap.Error(err))
 			return &relation.FriendListResponse{
-				StatusCode: 1,
-				StatusMsg:  thrift.StringPtr("查询Friend list用户信息失败"),
+				StatusCode: common.CodeServerBusy,
+				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 				UserList:   nil,
 			}, err
 		}
 		friendList = append(friendList, userResp.User)
 	}
 	return &relation.FriendListResponse{
-		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("success"),
+		StatusCode: common.CodeSuccess,
+		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		UserList:   friendList,
 	}, nil
 }

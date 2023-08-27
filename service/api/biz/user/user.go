@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
@@ -22,14 +21,6 @@ import (
 var userClient userservice.Client
 
 func init() {
-	// OpenTelemetry 链路跟踪 还没配置好，先注释
-	//p := provider.NewOpenTelemetryProvider(
-	//	provider.WithServiceName(config.CommentServiceName),
-	//	provider.WithExportEndpoint("localhost:4317"),
-	//	provider.WithInsecure(),
-	//)
-	//defer p.Shutdown(context.Background())
-
 	// Etcd 服务发现
 	r, err := etcd.NewEtcdResolver([]string{constant.EtcdAddr})
 	if err != nil {
@@ -58,11 +49,9 @@ func Register(ctx context.Context, c *app.RequestContext) {
 	})
 	if err != nil {
 		zap.L().Error("Invoke userClient Register err:", zap.Error(err))
-		c.JSON(http.StatusOK, &user.UserRegisterResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Server internal error"),
-			UserId:     0,
-			Token:      "",
+		c.JSON(http.StatusOK, user.UserRegisterResponse{
+			StatusCode: resp.StatusCode,
+			StatusMsg:  common.MapErrMsg(resp.StatusCode),
 		})
 		return
 	}
@@ -79,11 +68,9 @@ func Login(ctx context.Context, c *app.RequestContext) {
 	})
 	if err != nil {
 		zap.L().Error("Invoke userClient Login err:", zap.Error(err))
-		c.JSON(http.StatusOK, &user.UserLoginResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Server Internal error"),
-			UserId:     0,
-			Token:      "",
+		c.JSON(http.StatusOK, user.UserLoginResponse{
+			StatusCode: resp.StatusCode,
+			StatusMsg:  common.MapErrMsg(resp.StatusCode),
 		})
 		return
 	}
@@ -97,9 +84,9 @@ func Info(ctx context.Context, c *app.RequestContext) {
 	userIdInt64, err := strconv.ParseInt(userId, 10, 64)
 	if err != nil || userIdInt64 < 0 {
 		zap.L().Error("Parse userId error", zap.Error(err))
-		c.JSON(http.StatusOK, &user.UserInfoByIdResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("user参数错"),
+		c.JSON(http.StatusOK, user.UserInfoByIdResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 		})
 		return
 	}
@@ -111,10 +98,9 @@ func Info(ctx context.Context, c *app.RequestContext) {
 
 	if err != nil {
 		zap.L().Error("Invoke userClient getUserInfoById err:", zap.Error(err))
-		c.JSON(http.StatusOK, &user.UserInfoByIdResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Server internal error"),
-			User:       nil,
+		c.JSON(http.StatusOK, user.UserInfoByIdResponse{
+			StatusCode: resp.StatusCode,
+			StatusMsg:  common.MapErrMsg(resp.StatusCode),
 		})
 		return
 	}

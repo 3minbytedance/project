@@ -6,7 +6,6 @@ import (
 	"douyin/constant"
 	"douyin/kitex_gen/favorite"
 	"douyin/kitex_gen/favorite/favoriteservice"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
@@ -21,14 +20,6 @@ import (
 var favoriteClient favoriteservice.Client
 
 func init() {
-	// OpenTelemetry 链路跟踪 还没配置好，先注释
-	//p := provider.NewOpenTelemetryProvider(
-	//	provider.WithServiceName(config.CommentServiceName),
-	//	provider.WithExportEndpoint("localhost:4317"),
-	//	provider.WithInsecure(),
-	//)
-	//defer p.Shutdown(context.Background())
-
 	// Etcd 服务发现
 	r, err := etcd.NewEtcdResolver([]string{constant.EtcdAddr})
 	if err != nil {
@@ -55,7 +46,8 @@ func Action(ctx context.Context, c *app.RequestContext) {
 	videoId, err := strconv.Atoi(videoIdStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, favorite.FavoriteActionResponse{
-			StatusCode: 1,
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 		})
 		return
 	}
@@ -63,7 +55,8 @@ func Action(ctx context.Context, c *app.RequestContext) {
 	actionType, err := strconv.Atoi(actionTypeStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, favorite.FavoriteActionResponse{
-			StatusCode: 1,
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 		})
 		return
 	}
@@ -90,7 +83,8 @@ func List(ctx context.Context, c *app.RequestContext) {
 	toUserId, err := strconv.Atoi(toUserIdStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, favorite.FavoriteListResponse{
-			StatusCode: 1,
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 		})
 	}
 
@@ -103,8 +97,8 @@ func List(ctx context.Context, c *app.RequestContext) {
 	if err != nil {
 		zap.L().Error("GetFavoriteList err.", zap.Error(err))
 		c.JSON(http.StatusOK, favorite.FavoriteListResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("GetFavoriteList error."),
+			StatusCode: resp.StatusCode,
+			StatusMsg:  common.MapErrMsg(resp.StatusCode),
 		})
 		return
 	}

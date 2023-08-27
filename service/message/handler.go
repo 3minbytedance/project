@@ -11,7 +11,7 @@ import (
 	"douyin/kitex_gen/relation/relationservice"
 	"douyin/mw/kafka"
 	"douyin/service/message/pack"
-	"github.com/apache/thrift/lib/go/thrift"
+	"errors"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -52,17 +52,17 @@ func (s *MessageServiceImpl) MessageChat(ctx context.Context, request *message.M
 	if err != nil {
 		zap.L().Error("relationClient.IsFriend error", zap.Error(err))
 		return &message.MessageChatResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Internal server error"),
+			StatusCode: common.CodeServerBusy,
+			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 		}, err
 	}
 	// 不是好友关系
 	if !isFriend {
 		zap.L().Info("Not a friend, cannot see chat list")
 		return &message.MessageChatResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("The user is not your friend"),
-		}, nil
+			StatusCode: common.CodeNotFriend,
+			StatusMsg:  common.MapErrMsg(common.CodeNotFriend),
+		}, errors.New(*common.MapErrMsg(common.CodeNotFriend))
 	}
 	// 获取聊天记录
 	msgList, err := mongo.GetMessageList(
@@ -72,15 +72,15 @@ func (s *MessageServiceImpl) MessageChat(ctx context.Context, request *message.M
 	if err != nil {
 		zap.L().Error("mongo.GetMessageList error", zap.Error(err))
 		return &message.MessageChatResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Internal server error"),
+			StatusCode: common.CodeServerBusy,
+			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 		}, err
 	}
 	// 封装数据
 	packedMsgList := pack.Messages(msgList)
 	return &message.MessageChatResponse{
-		StatusCode:  0,
-		StatusMsg:   thrift.StringPtr("success"),
+		StatusCode:  common.CodeSuccess,
+		StatusMsg:   common.MapErrMsg(common.CodeSuccess),
 		MessageList: packedMsgList,
 	}, nil
 }
@@ -95,17 +95,18 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 	if err != nil {
 		zap.L().Error("relationClient.IsFriend error", zap.Error(err))
 		return &message.MessageActionResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("Internal server error"),
+			StatusCode: common.CodeServerBusy,
+			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 		}, err
+
 	}
 	// 不是好友关系
 	if !isFriend {
 		zap.L().Info("Not a friend, cannot see chat list")
 		return &message.MessageActionResponse{
-			StatusCode: 1,
-			StatusMsg:  thrift.StringPtr("The user is not your friend"),
-		}, nil
+			StatusCode: common.CodeNotFriend,
+			StatusMsg:  common.MapErrMsg(common.CodeNotFriend),
+		}, errors.New(*common.MapErrMsg(common.CodeNotFriend))
 	}
 
 	messageData := &model.Message{
@@ -119,15 +120,8 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 	// 聊天记录发向kafka
 	go kafka.MessageMQInstance.Produce(messageData)
 
-	////往mongo发送聊天记录
-	//err = mongo.SendMessage(messageData)
-	//if err != nil {
-	//	log.Println("mongo.SendMessage err:", err)
-	//	return
-	//}
-
 	return &message.MessageActionResponse{
-		StatusCode: 0,
-		StatusMsg:  thrift.StringPtr("Success"),
+		StatusCode: common.CodeSuccess,
+		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 	}, nil
 }

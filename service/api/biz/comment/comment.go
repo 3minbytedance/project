@@ -21,13 +21,6 @@ import (
 var commentClient commentservice.Client
 
 func init() {
-	// OpenTelemetry 链路跟踪 还没配置好，先注释
-	//p := provider.NewOpenTelemetryProvider(
-	//	provider.WithServiceName(config.CommentServiceName),
-	//	provider.WithExportEndpoint("localhost:4317"),
-	//	provider.WithInsecure(),
-	//)
-	//defer p.Shutdown(context.Background())
 
 	// Etcd 服务发现
 	r, err := etcd.NewEtcdResolver([]string{constant.EtcdAddr})
@@ -52,7 +45,10 @@ func Action(ctx context.Context, c *app.RequestContext) {
 	// not logged in
 	if err != nil {
 		zap.L().Error("Get user id from ctx", zap.Error(err))
-		c.JSON(http.StatusOK, "Unauthorized operation.")
+		c.JSON(http.StatusOK, comment.CommentActionResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+		})
 		return
 	}
 	videoIdStr, videoIdExists := c.GetQuery("video_id")
@@ -62,7 +58,10 @@ func Action(ctx context.Context, c *app.RequestContext) {
 
 	// miss param, return
 	if !videoIdExists || !actionTypeExists {
-		c.JSON(http.StatusOK, "Invalid Params.")
+		c.JSON(http.StatusOK, comment.CommentActionResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+		})
 		return
 	}
 
@@ -70,14 +69,20 @@ func Action(ctx context.Context, c *app.RequestContext) {
 	videoId, err := strconv.ParseInt(videoIdStr, 10, 64)
 	actionType, err := strconv.ParseUint(actionTypeStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusOK, "Invalid Params.")
+		c.JSON(http.StatusOK, comment.CommentActionResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+		})
 		return
 	}
 
 	switch actionType {
 	case 1: // create comment
 		if !commentTextExists {
-			c.JSON(http.StatusOK, "Invalid Params.")
+			c.JSON(http.StatusOK, comment.CommentActionResponse{
+				StatusCode: common.CodeInvalidParam,
+				StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+			})
 			return
 		}
 		req := &comment.CommentActionRequest{
@@ -88,25 +93,29 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		}
 		resp, err := commentClient.CommentAction(ctx, req)
 		if err != nil {
-			c.JSON(http.StatusOK, err.Error())
+			c.JSON(http.StatusInternalServerError, comment.CommentActionResponse{
+				StatusCode: resp.StatusCode,
+				StatusMsg:  common.MapErrMsg(resp.StatusCode),
+			})
 			return
 		}
 		c.JSON(http.StatusOK, resp)
 		return
 	case 2: // delete comment
 		if !commentIdExists {
-			c.JSON(http.StatusOK, &comment.CommentActionResponse{
-				StatusCode: 1,
-				StatusMsg:  proto.String("Invalid param."),
+			c.JSON(http.StatusOK, comment.CommentActionResponse{
+				StatusCode: common.CodeInvalidParam,
+				StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 			})
 			return
 		}
 		commentId, err := strconv.ParseInt(commentIdStr, 10, 64)
 		if err != nil {
-			c.JSON(http.StatusOK, &comment.CommentActionResponse{
-				StatusCode: 1,
-				StatusMsg:  proto.String("Invalid comment ID."),
+			c.JSON(http.StatusOK, comment.CommentActionResponse{
+				StatusCode: common.CodeInvalidParam,
+				StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 			})
+			return
 		}
 		req := &comment.CommentActionRequest{
 			UserId:     int64(userId),
@@ -117,18 +126,18 @@ func Action(ctx context.Context, c *app.RequestContext) {
 
 		resp, err := commentClient.CommentAction(ctx, req)
 		if err != nil {
-			c.JSON(http.StatusOK, &comment.CommentActionResponse{
-				StatusCode: 1,
-				StatusMsg:  proto.String("Server internal error."),
+			c.JSON(http.StatusInternalServerError, comment.CommentActionResponse{
+				StatusCode: resp.StatusCode,
+				StatusMsg:  common.MapErrMsg(resp.StatusCode),
 			})
 			return
 		}
 		c.JSON(http.StatusOK, resp)
 		return
 	default: // wrong action_type
-		c.JSON(http.StatusOK, &comment.CommentActionResponse{
-			StatusCode: 1,
-			StatusMsg:  proto.String("Invalid param."),
+		c.JSON(http.StatusOK, comment.CommentActionResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 		})
 		return
 	}
@@ -144,7 +153,10 @@ func List(ctx context.Context, c *app.RequestContext) {
 	videoId, err := strconv.ParseInt(videoIdStr, 10, 64)
 	if err != nil {
 		zap.L().Error("Parse videoIdStr err:", zap.Error(err))
-		c.JSON(http.StatusOK, err.Error())
+		c.JSON(http.StatusOK, comment.CommentListResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+		})
 		return
 	}
 
@@ -157,9 +169,8 @@ func List(ctx context.Context, c *app.RequestContext) {
 	if err != nil {
 		zap.L().Error("Get comment list from comment client err.", zap.Error(err))
 		c.JSON(http.StatusOK, comment.CommentListResponse{
-			StatusCode:  1,
-			StatusMsg:   proto.String("Server internal error."),
-			CommentList: nil,
+			StatusCode: resp.StatusCode,
+			StatusMsg:  common.MapErrMsg(resp.StatusCode),
 		})
 		return
 	}

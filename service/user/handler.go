@@ -13,7 +13,6 @@ import (
 	"douyin/kitex_gen/video/videoservice"
 	"douyin/mw/redis"
 	"douyin/service/user/pack"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -69,9 +68,9 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	resp = new(user.UserRegisterResponse)
 	statusCode, statusMsg := CheckUserRegisterInfo(request.Username, request.Password)
 	resp.StatusCode = statusCode
-	resp.StatusMsg = thrift.StringPtr(statusMsg)
+	resp.StatusMsg = statusMsg
 
-	if statusCode != 0 {
+	if statusCode != common.CodeSuccess {
 		return
 	}
 
@@ -90,8 +89,8 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	userId, err := mysql.CreateUser(&userData)
 	if err != nil {
 		zap.L().Error("Create user err:", zap.Error(err))
-		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("Server internal error.")
+		resp.StatusCode = common.CodeServerBusy
+		resp.StatusMsg = common.MapErrMsg(common.CodeServerBusy)
 		return
 	}
 
@@ -113,8 +112,8 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	// 用户名不存在
 	if !exist {
 		zap.L().Info("Check user exists info:", zap.Bool("exist", exist))
-		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("Username not exist")
+		resp.StatusCode = common.CodeUsernameNotFound
+		resp.StatusMsg = common.MapErrMsg(common.CodeUsernameNotFound)
 		return
 	}
 
@@ -122,21 +121,21 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	userModel, _, err := mysql.FindUserByName(request.Username)
 	if err != nil {
 		zap.L().Info("Find user by name err:", zap.Error(err))
-		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("Server Internal error")
+		resp.StatusCode = common.CodeServerBusy
+		resp.StatusMsg = common.MapErrMsg(common.CodeServerBusy)
 		return
 	}
 	// 检查密码
 	match := common.CheckPassword(request.Password, userModel.Password)
 	if !match {
 		zap.L().Info("User password wrong.")
-		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("Wrong password.")
+		resp.StatusCode = common.CodeWrongLoginCredentials
+		resp.StatusMsg = common.MapErrMsg(common.CodeWrongLoginCredentials)
 		return
 	}
 	token := common.GenerateToken(userModel.ID, userModel.Name)
-	resp.StatusCode = 0
-	resp.StatusMsg = thrift.StringPtr("success")
+	resp.StatusCode = common.CodeSuccess
+	resp.StatusMsg = common.MapErrMsg(common.CodeWrongLoginCredentials)
 	resp.Token = token
 	resp.UserId = int64(userModel.ID)
 	// 将token存入redis
@@ -154,15 +153,15 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	}
 	userId := request.GetUserId()
 	if userId == 0 {
-		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("User ID not exist")
+		resp.StatusCode = common.CodeInvalidParam
+		resp.StatusMsg = common.MapErrMsg(common.CodeInvalidParam)
 		return
 	}
 	name, exist := GetName(uint(userId))
 	// 用户名不存在
 	if !exist {
-		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr("User ID not exist")
+		resp.StatusCode = common.CodeUserNotFound
+		resp.StatusMsg = common.MapErrMsg(common.CodeUserNotFound)
 		return
 	}
 
@@ -170,8 +169,8 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	followCount, _ := relationClient.GetFollowListCount(ctx, userId)
 	followerCount, _ := relationClient.GetFollowerListCount(ctx, userId)
 
-	resp.StatusCode = 0
-	resp.StatusMsg = thrift.StringPtr("success")
+	resp.StatusCode = common.CodeSuccess
+	resp.StatusMsg = common.MapErrMsg(common.CodeSuccess)
 	// 作品数
 	workCount, _ := videoClient.GetWorkCount(ctx, userId)
 	// 喜欢数
@@ -190,8 +189,8 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 		})
 		if err != nil {
 			zap.L().Error("relationClient err:", zap.Error(err))
-			resp.StatusCode = 1
-			resp.StatusMsg = thrift.StringPtr("Server Internal error")
+			resp.StatusCode = common.CodeServerBusy
+			resp.StatusMsg = common.MapErrMsg(common.CodeServerBusy)
 			return
 		}
 	}
@@ -245,26 +244,26 @@ func GetName(userId uint) (string, bool) {
 	return userModel.Name, true
 }
 
-func CheckUserRegisterInfo(username string, password string) (int32, string) {
+func CheckUserRegisterInfo(username string, password string) (int32, *string) {
 
 	if len(username) == 0 || len(username) > 32 {
-		return 1, "username is illegal."
+		return common.CodeInvalidRegisterUsername, common.MapErrMsg(common.CodeInvalidRegisterUsername)
 	}
 
 	if len(password) < 6 || len(password) > 32 {
-		return 2, "password is illegal"
+		return common.CodeInvalidRegisterPassword, common.MapErrMsg(common.CodeInvalidRegisterPassword)
 	}
 
 	_, exist, err := mysql.FindUserByName(username)
 	if err != nil {
 		zap.L().Error("Find user by name:", zap.Error(err))
-		return 1, "Server internal error."
+		return common.CodeDBError, common.MapErrMsg(common.CodeDBError)
+
 	}
 	// 检查用户名是否存在
 	if exist {
 		zap.L().Info("User already exists")
-		return 1, "User already exists."
+		return common.CodeUsernameAlreadyExists, common.MapErrMsg(common.CodeUsernameAlreadyExists)
 	}
-
-	return 0, "success"
+	return common.CodeSuccess, common.MapErrMsg(common.CodeSuccess)
 }

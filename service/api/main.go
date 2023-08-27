@@ -12,14 +12,6 @@ import (
 )
 
 func main() {
-	// OpenTelemetry 链路跟踪
-	//p := provider.NewOpenTelemetryProvider(
-	//	provider.WithServiceName(config.CommentServiceName),
-	//	provider.WithExportEndpoint("localhost:4317"),
-	//	provider.WithInsecure(),
-	//)
-	//defer p.Shutdown(context.Background())
-
 	// 加载配置
 	if err := config.Init(); err != nil {
 		zap.L().Error("Load config failed, err:%v\n", zap.Error(err))
