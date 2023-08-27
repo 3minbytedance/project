@@ -4,7 +4,9 @@ import (
 	"fmt"
 	_ "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+	"math/rand"
 	"strconv"
+	"time"
 )
 
 // GetFollowCountById 根据userId查找关注数
@@ -88,6 +90,9 @@ func SetFollowListByUserId(userId uint, ids []uint) error {
 	}
 	zap.L().Info("Follow_LIST", zap.Any("List", ids))
 	_, err := pipe.Exec(Ctx)
+	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	expiration := time.Duration(randomSeconds) * time.Second
+	Rdb.Expire(Ctx, key, expiration)
 	return err
 }
 
@@ -104,6 +109,9 @@ func SetFollowerListByUserId(userId uint, ids []uint) error {
 	}
 	zap.L().Info("Follower_LIST", zap.Any("List", ids))
 	_, err := pipe.Exec(Ctx)
+	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	expiration := time.Duration(randomSeconds) * time.Second
+	Rdb.Expire(Ctx, key, expiration)
 	return err
 }
 

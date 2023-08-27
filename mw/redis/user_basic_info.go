@@ -2,7 +2,9 @@ package redis
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
+	"time"
 )
 
 func GetWorkCountByUserId(userId uint) (int64, error) {
@@ -28,11 +30,17 @@ func IncrementWorkCountByUserId(userId uint) error {
 func SetWorkCountByUserId(userId uint, workCount int64) error {
 	key := fmt.Sprintf("%s:%d", UserKey, userId)
 	err := Rdb.HSet(Ctx, key, WorkCountField, workCount).Err()
+	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	expiration := time.Duration(randomSeconds) * time.Second
+	Rdb.Expire(Ctx, key, expiration)
 	return err
 }
 
 func SetNameByUserId(userId uint, name string) error {
 	key := fmt.Sprintf("%s:%d", UserKey, userId)
 	err := Rdb.HSet(Ctx, key, NameField, name).Err()
+	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	expiration := time.Duration(randomSeconds) * time.Second
+	Rdb.Expire(Ctx, key, expiration)
 	return err
 }
