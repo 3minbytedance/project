@@ -14,7 +14,6 @@ func Messages(messageModels []*model.Message) []*message.Message {
 		messages = append(messages, Message(msg))
 	}
 	return messages
-
 }
 
 func Message(messageModel *model.Message) *message.Message {
@@ -22,9 +21,10 @@ func Message(messageModel *model.Message) *message.Message {
 		return nil
 	}
 	return &message.Message{
+		Id:         messageModel.ID,
 		ToUserId:   int64(messageModel.ToUserId),
 		FromUserId: int64(messageModel.FromUserId),
 		Content:    messageModel.Content,
-		CreateTime: &messageModel.CreateTime,
+		CreateTime: messageModel.CreateTime,
 	}
 }

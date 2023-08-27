@@ -1,7 +1,5 @@
 package common
 
-import "github.com/apache/thrift/lib/go/thrift"
-
 const (
 	CodeSuccess int32 = iota
 	CodeServerBusy
@@ -48,11 +46,11 @@ func init() {
 
 }
 
-func MapErrMsg(errCode int32) *string {
+func MapErrMsg(errCode int32) string {
 	if msg, ok := message[errCode]; ok {
-		return &msg
+		return msg
 	} else {
-		return thrift.StringPtr("服务器开小差啦,稍后再来试一试")
+		return "服务器开小差啦,稍后再来试一试"
 	}
 }
 

@@ -293,8 +293,8 @@ func (p *FavoriteActionRequest) Field3DeepEqual(src int32) bool {
 }
 
 type FavoriteActionResponse struct {
-	StatusCode int32   `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
-	StatusMsg  *string `thrift:"status_msg,2,optional" frugal:"2,optional,string" json:"status_msg,omitempty"`
+	StatusCode int32  `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
+	StatusMsg  string `thrift:"status_msg,2" frugal:"2,default,string" json:"status_msg"`
 }
 
 func NewFavoriteActionResponse() *FavoriteActionResponse {
@@ -309,28 +309,19 @@ func (p *FavoriteActionResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
-var FavoriteActionResponse_StatusMsg_DEFAULT string
-
 func (p *FavoriteActionResponse) GetStatusMsg() (v string) {
-	if !p.IsSetStatusMsg() {
-		return FavoriteActionResponse_StatusMsg_DEFAULT
-	}
-	return *p.StatusMsg
+	return p.StatusMsg
 }
 func (p *FavoriteActionResponse) SetStatusCode(val int32) {
 	p.StatusCode = val
 }
-func (p *FavoriteActionResponse) SetStatusMsg(val *string) {
+func (p *FavoriteActionResponse) SetStatusMsg(val string) {
 	p.StatusMsg = val
 }
 
 var fieldIDToName_FavoriteActionResponse = map[int16]string{
 	1: "status_code",
 	2: "status_msg",
-}
-
-func (p *FavoriteActionResponse) IsSetStatusMsg() bool {
-	return p.StatusMsg != nil
 }
 
 func (p *FavoriteActionResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -415,7 +406,7 @@ func (p *FavoriteActionResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = &v
+		p.StatusMsg = v
 	}
 	return nil
 }
@@ -471,16 +462,14 @@ WriteFieldEndError:
 }
 
 func (p *FavoriteActionResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetStatusMsg() {
-		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.StatusMsg); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.StatusMsg); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -518,14 +507,9 @@ func (p *FavoriteActionResponse) Field1DeepEqual(src int32) bool {
 	}
 	return true
 }
-func (p *FavoriteActionResponse) Field2DeepEqual(src *string) bool {
+func (p *FavoriteActionResponse) Field2DeepEqual(src string) bool {
 
-	if p.StatusMsg == src {
-		return true
-	} else if p.StatusMsg == nil || src == nil {
-		return false
-	}
-	if strings.Compare(*p.StatusMsg, *src) != 0 {
+	if strings.Compare(p.StatusMsg, src) != 0 {
 		return false
 	}
 	return true
@@ -756,7 +740,7 @@ func (p *FavoriteListRequest) Field2DeepEqual(src int64) bool {
 
 type FavoriteListResponse struct {
 	StatusCode int32          `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
-	StatusMsg  *string        `thrift:"status_msg,2,optional" frugal:"2,optional,string" json:"status_msg,omitempty"`
+	StatusMsg  string         `thrift:"status_msg,2" frugal:"2,default,string" json:"status_msg"`
 	VideoList  []*video.Video `thrift:"video_list,3" frugal:"3,default,list<video.Video>" json:"video_list"`
 }
 
@@ -772,13 +756,8 @@ func (p *FavoriteListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
-var FavoriteListResponse_StatusMsg_DEFAULT string
-
 func (p *FavoriteListResponse) GetStatusMsg() (v string) {
-	if !p.IsSetStatusMsg() {
-		return FavoriteListResponse_StatusMsg_DEFAULT
-	}
-	return *p.StatusMsg
+	return p.StatusMsg
 }
 
 func (p *FavoriteListResponse) GetVideoList() (v []*video.Video) {
@@ -787,7 +766,7 @@ func (p *FavoriteListResponse) GetVideoList() (v []*video.Video) {
 func (p *FavoriteListResponse) SetStatusCode(val int32) {
 	p.StatusCode = val
 }
-func (p *FavoriteListResponse) SetStatusMsg(val *string) {
+func (p *FavoriteListResponse) SetStatusMsg(val string) {
 	p.StatusMsg = val
 }
 func (p *FavoriteListResponse) SetVideoList(val []*video.Video) {
@@ -798,10 +777,6 @@ var fieldIDToName_FavoriteListResponse = map[int16]string{
 	1: "status_code",
 	2: "status_msg",
 	3: "video_list",
-}
-
-func (p *FavoriteListResponse) IsSetStatusMsg() bool {
-	return p.StatusMsg != nil
 }
 
 func (p *FavoriteListResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -896,7 +871,7 @@ func (p *FavoriteListResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = &v
+		p.StatusMsg = v
 	}
 	return nil
 }
@@ -976,16 +951,14 @@ WriteFieldEndError:
 }
 
 func (p *FavoriteListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetStatusMsg() {
-		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.StatusMsg); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.StatusMsg); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -1051,14 +1024,9 @@ func (p *FavoriteListResponse) Field1DeepEqual(src int32) bool {
 	}
 	return true
 }
-func (p *FavoriteListResponse) Field2DeepEqual(src *string) bool {
+func (p *FavoriteListResponse) Field2DeepEqual(src string) bool {
 
-	if p.StatusMsg == src {
-		return true
-	} else if p.StatusMsg == nil || src == nil {
-		return false
-	}
-	if strings.Compare(*p.StatusMsg, *src) != 0 {
+	if strings.Compare(p.StatusMsg, src) != 0 {
 		return false
 	}
 	return true

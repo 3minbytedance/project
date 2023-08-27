@@ -14,7 +14,7 @@ func User(userId int64) *user.User {
 		Avatar:          "",
 		BackgroundImage: "",
 		Signature:       "",
-		TotalFavorited:  0,
+		TotalFavorited:  "0",
 		WorkCount:       0,
 		FavoriteCount:   0,
 	}

@@ -1,4 +1,4 @@
-package utils
+package common
 
 import (
 	"context"
@@ -6,10 +6,24 @@ import (
 	"github.com/google/uuid"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"github.com/tencentyun/cos-go-sdk-v5/debug"
+	"go.uber.org/zap"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
+
+func CreateDirectoryIfNotExist() error {
+	if _, err := os.Stat(biz.FileLocalPath); os.IsNotExist(err) {
+		// 创建文件夹
+		err = os.MkdirAll(biz.FileLocalPath, 0777)
+		if err != nil {
+			zap.Error(err)
+			return err
+		}
+	}
+	return nil
+}
 
 func UploadToOSS(localPath string, remotePath string) error {
 	c := getClient()

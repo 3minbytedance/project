@@ -73,7 +73,6 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	c.JSON(http.StatusOK, resp)
-
 }
 
 // List all users have same favorite video list
@@ -86,6 +85,7 @@ func List(ctx context.Context, c *app.RequestContext) {
 			StatusCode: common.CodeInvalidParam,
 			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 		})
+		return
 	}
 
 	req := &favorite.FavoriteListRequest{

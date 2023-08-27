@@ -5,7 +5,7 @@ struct Message {
     2: i64 to_user_id, // 该消息接收者的id
     3: i64 from_user_id, // 该消息发送者的id
     4: string content, // 消息内容
-    5: optional i64 create_time, // 消息创建时间
+    5: i64 create_time, // 消息创建时间
 }
 
 struct MessageChatRequest {
@@ -16,7 +16,7 @@ struct MessageChatRequest {
 
 struct MessageChatResponse {
     1: i32 status_code, // 状态码，0-成功，其他值-失败
-    2: optional string status_msg, // 返回状态描述
+    2: string status_msg, // 返回状态描述
     3: list<Message> message_list, // 消息列表
 }
 
@@ -29,7 +29,7 @@ struct MessageActionRequest {
 
 struct MessageActionResponse {
     1: i32 status_code, // 状态码，0-成功，其他值-失败
-    2: optional string status_msg, // 返回状态描述
+    2: string status_msg, // 返回状态描述
 }
 
 service MessageService {

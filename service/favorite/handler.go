@@ -12,7 +12,6 @@ import (
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	"douyin/kitex_gen/video"
-	"douyin/mw/kafka"
 	mwRedis "douyin/mw/redis"
 	"errors"
 	"fmt"
@@ -23,6 +22,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"sync"
+	"sync/atomic"
 )
 
 var (
@@ -67,7 +67,6 @@ func (s *FavoriteServiceImpl) FavoriteAction(ctx context.Context, request *favor
 	userId := uint(request.UserId)
 	videoId := uint(request.VideoId)
 	actionType := int(request.ActionType)
-
 	err = favoriteActions(userId, videoId, actionType)
 	if err != nil {
 		return &favorite.FavoriteActionResponse{
@@ -127,6 +126,7 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 }
 
 // GetVideoFavoriteCount implements the FavoriteServiceImpl interface.
+// 获取视频的点赞数
 func (s *FavoriteServiceImpl) GetVideoFavoriteCount(ctx context.Context, videoId int64) (resp int32, err error) {
 	count, err := getFavoritesVideoCount(uint(videoId))
 	if err != nil {
@@ -138,11 +138,16 @@ func (s *FavoriteServiceImpl) GetVideoFavoriteCount(ctx context.Context, videoId
 // GetUserFavoriteCount implements the FavoriteServiceImpl interface.
 // 获取用户喜欢的视频列表数
 func (s *FavoriteServiceImpl) GetUserFavoriteCount(ctx context.Context, userId int64) (resp int32, err error) {
-	favoritesByUserId, err := getFavoritesByUserId(uint(userId))
-	if err != nil {
-		return 0, err
+	res := checkAndSetUserFavoriteListKey(uint(userId), mwRedis.FavoriteList)
+	// redis和mysql中没有对应的数据
+	if res == 2 {
+		return 0, nil
 	}
-	return int32(len(favoritesByUserId)), nil
+	count, err := mwRedis.GetUserFavoriteVideoCountById(uint(userId))
+	if err != nil {
+		return 0, nil
+	}
+	return int32(count), nil
 }
 
 // GetUserTotalFavoritedCount implements the FavoriteServiceImpl interface.
@@ -164,191 +169,119 @@ func (s *FavoriteServiceImpl) IsUserFavorite(ctx context.Context, request *favor
 
 // favoriteActions 点赞，取消赞的操作过程
 func favoriteActions(userId uint, videoId uint, actionType int) error {
-	var m sync.RWMutex
-	_, b := dalMySQL.FindVideoByVideoId(videoId)
-	if b == false {
+	videoModel, found := dalMySQL.FindVideoByVideoId(videoId)
+	if !found {
 		return errors.New("video id not exist")
 	}
-	// 判断是否在redis中，如果没有的话，一起加载到redis中
-	_, err := getFavoritesByUserId(userId)
-	if err != nil {
-		return err
-	}
-	_, err = getFavoritesVideoCount(videoId)
-	if err != nil {
-		return err
-	}
-	_, err = getUserTotalFavoritedCount(userId)
-	videoModel, _ := dalMySQL.FindVideoByVideoId(videoId)
-	// 如果err不为空，那么一定存在数据库中了
+	// 判断是否在redis中，防止对空key操作
+	checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
+	checkAndSetVideoFavoriteCountKey(videoId, mwRedis.VideoFavoritedCountField)
+	checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId, mwRedis.TotalFavoriteField)
 	switch actionType {
 	case 1:
 		// 点赞
 		// 判断重复点赞
-		if mwRedis.IsInUserFavoriteList(userId, videoId) {
+		var m sync.Mutex
+		if isUserFavorite(userId, videoId) {
 			return nil
 		}
 		m.Lock()
 		defer m.Unlock()
-		if mwRedis.IsInUserFavoriteList(userId, videoId) {
+		if isUserFavorite(userId, videoId) {
 			return nil
 		}
-		// 更新用户喜欢的视频列表
-		err = mwRedis.AddFavoriteVideoToList(userId, videoId)
+		err := mwRedis.ActionLike(userId, videoId, videoModel.AuthorId)
 		if err != nil {
-			zap.L().Error("更新用户喜欢的视频列表", zap.Error(err))
 			return err
 		}
-		// 更新用户喜欢的视频数量，这个不用，直接从set中获取
-		// 更新视频被喜欢的数量
-		err = mwRedis.IncrementFavoritedCountByVideoId(videoId)
-		if err != nil {
-			zap.L().Error("更新视频被喜欢的数量", zap.Error(err))
-			return err
-		}
-		// 更新视频作者的被点赞量
-		//getUserTotalFavoritedCount(videoModel.AuthorId)
-		err = mwRedis.IncrementTotalFavoritedByUserId(videoModel.AuthorId)
-		if err != nil {
-			zap.L().Error("更新视频作者的被点赞量", zap.Error(err))
-			return err
-		}
-		// dalMySQL.AddUserFavorite(userId, videoId)
 		go func() {
-			err := kafka.FavoriteMQInstance.ProduceAddFavoriteMsg(userId, videoId)
-			if err != nil {
-				zap.L().Error("更新视频作者的被点赞量", zap.Error(err))
-				return
-			}
+			dalMySQL.AddUserFavorite(userId, videoId)
+			fmt.Println("添加mysql")
 		}()
-		return err
+		//go func() {
+		//	err := kafka.FavoriteMQInstance.ProduceAddFavoriteMsg(userId, videoId)
+		//	if err != nil {
+		//		zap.L().Error("更新MySQL点赞表err", zap.Error(err))
+		//		return
+		//	}
+		//}()
+		return nil
 	case 2:
 		// 取消赞
-		if !mwRedis.IsInUserFavoriteList(userId, videoId) {
-			return errors.New("该视频未点赞")
+		var m sync.Mutex
+		if !isUserFavorite(userId, videoId) {
+			return nil
 		}
 		m.Lock()
 		defer m.Unlock()
-		// double check
-		// 取消赞
-		if !mwRedis.IsInUserFavoriteList(userId, videoId) {
-			return errors.New("该视频未点赞")
+		if !isUserFavorite(userId, videoId) {
+			return nil
 		}
-		// 更新视频被喜欢的用户列表
-		err = mwRedis.DeleteFavoriteVideoFromList(userId, videoId)
+		err := mwRedis.ActionCancelLike(userId, videoId, videoModel.AuthorId)
 		if err != nil {
-			zap.L().Error("更新视频被喜欢的用户列表", zap.Error(err))
 			return err
 		}
-		// 更新视频被喜欢的数量
-		err = mwRedis.DecrementFavoritedCountByVideoId(videoId)
-		if err != nil {
-			zap.L().Error("更新视频被喜欢的数量", zap.Error(err))
-			return err
-		}
-		_, err = getUserTotalFavoritedCount(videoModel.AuthorId)
-		// 更新视频作者的被点赞量
-		err = mwRedis.DecrementTotalFavoritedByUserId(videoModel.AuthorId)
-		if err != nil {
-			zap.L().Error("更新视频作者的被点赞量", zap.Error(err))
-			return err
-		}
-		// err = dalMySQL.DeleteUserFavorite(userId, videoId)
 		go func() {
-			err = kafka.FavoriteMQInstance.ProduceDelFavoriteMsg(userId, videoId)
+			err = dalMySQL.DeleteUserFavorite(userId, videoId)
 		}()
+		//go func() {
+		//	err = kafka.FavoriteMQInstance.ProduceDelFavoriteMsg(userId, videoId)
+		//	if err != nil {
+		//		zap.L().Error("更新MySQL点赞表err", zap.Error(err))
+		//		return
+		//	}
+		//}()
+		return nil
+	default:
+		return errors.New("参数不合法")
 	}
-	return nil
 }
 
 // GetUserTotalFavoritedCount 获取用户发布视频的总的被点赞数量
 func getUserTotalFavoritedCount(userId uint) (int64, error) {
-	exits := mwRedis.IsExistUserField(userId, mwRedis.TotalFavoriteField)
-	if exits {
-		// redis中存在对应的数据
-		count, err := mwRedis.GetTotalFavoritedByUserId(userId)
-		if err != nil {
-			fmt.Println(err)
-		}
-		return count, nil
-	}
-	//redis 不存在
-	var total int64
-	// 获取用户发布的视频列表
-	videosByAuthorId, exist := dalMySQL.FindVideosByAuthorId(userId)
-	if !exist {
+	res := checkAndSetTotalFavoriteFieldKey(userId, mwRedis.TotalFavoriteField)
+	if res == 2 {
 		return 0, nil
 	}
-	for _, videoModel := range videosByAuthorId {
-		count, _ := getFavoritesVideoCount(videoModel.ID)
-		total += count
-	}
-	err := mwRedis.SetTotalFavoritedByUserId(userId, total)
+	count, err := mwRedis.GetTotalFavoritedByUserId(userId)
 	if err != nil {
-		zap.L().Error("SetTotalFavoriteByUserId失败", zap.Error(err))
 		return 0, err
 	}
-	return total, err
+	return count, nil
 }
 
 // GetFavoritesVideoCount 根据视频id，返回该视频的点赞数
 func getFavoritesVideoCount(videoId uint) (int64, error) {
 	// 判断redis中是否存在对应的video数据
-	exits := mwRedis.IsExistVideoField(videoId, mwRedis.VideoFavoritedCountField)
-	if exits {
-		// redis中存在对应的数据
-		count, err := mwRedis.GetFavoritedCountByVideoId(videoId)
-		if err != nil {
-			zap.L().Error("GetFavoritedCountByVideoId失败", zap.Error(err))
-		}
-		return count, err
-	}
-	// redis中不存在，从数据库中读取
-	_, num, err := dalMySQL.GetFavoritesByIdFromMysql(videoId, dalMySQL.IdTypeVideo)
-	if err != nil {
-		zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
-		return 0, err
-	}
-	if num == 0 {
+	res := checkAndSetVideoFavoriteCountKey(videoId, mwRedis.VideoFavoritedCountField)
+	// redis和mysql中没有对应的数据
+	if res == 2 {
 		return 0, nil
 	}
-	err = mwRedis.SetVideoFavoritedCountByVideoId(videoId, int64(num)) // 加载视频被点赞数量
+	count, err := mwRedis.GetFavoritedCountByVideoId(videoId)
 	if err != nil {
-		zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
+		zap.L().Error("GetFavoritedCountByVideoId失败", zap.Error(err))
+		return 0, err
 	}
-	return int64(num), err
-
+	return count, nil
 }
 
-// getFavoritesByUserId 获取当前user_id的点赞的视频id列表
+// getFavoritesByUserId
+// 获取当前user_id的点赞的视频id列表
 func getFavoritesByUserId(userId uint) ([]uint, error) {
-	// 查看redis是否存在对应的user数据
-	exist := mwRedis.IsExistUserSetField(userId, mwRedis.FavoriteList)
-	if exist {
-		// redis存在
-		favoritesVideoIdList, err := mwRedis.GetFavoriteListByUserId(userId)
-		if err != nil {
-			zap.L().Error("GetFavoriteListByUserId", zap.Error(err))
-		}
-		return favoritesVideoIdList, err
-	}
-
-	// redis中没有对应的数据，从MYSQL数据库中获取数据
-	favorites, favoriteLength, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
-	if err != nil {
-		zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
-	}
-	if favoriteLength == 0 {
+	res := checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
+	// redis和mysql中没有对应的数据
+	if res == 2 {
 		return []uint{}, nil
 	}
-	//removeNilValue(userId)
-	idList := getIdListFromFavoriteSlice(favorites, dalMySQL.IdTypeUser)
-	// key 不存在需要同步到redis
-	err = mwRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
+
+	// redis存在
+	favoritesVideoIdList, err := mwRedis.GetFavoriteListByUserId(userId)
 	if err != nil {
-		zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
+		zap.L().Error("GetFavoriteListByUserId", zap.Error(err))
+		return []uint{}, err
 	}
-	return idList, nil
+	return favoritesVideoIdList, nil
 }
 
 // getIdListFromFavoriteSlice 从Favorite的slice中获取id的列表
@@ -367,24 +300,121 @@ func getIdListFromFavoriteSlice(favorites []model.Favorite, idType int) []uint {
 
 // IsUserFavorite 判断是否点赞
 func isUserFavorite(userId, videoId uint) bool {
-	exist := mwRedis.IsExistUserSetField(userId, mwRedis.FavoriteList)
-	if !exist {
-		// redis中没有对应的数据，从MYSQL数据库中获取数据
+	res := checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
+	// redis和mysql中没有对应的数据
+	if res == 2 {
+		return false
+	}
+	return mwRedis.IsInUserFavoriteList(userId, videoId)
+}
+
+// checkAndSetUserFavoriteListKey
+// 返回0表示这个key存在，未设置
+// 返回1表示，这个key不存在,已更新
+// 返回2表示，这个key在数据库和redis中都不存在，即缓存穿透
+func checkAndSetUserFavoriteListKey(userId uint, key string) int {
+	var m sync.RWMutex
+	if mwRedis.IsExistUserSetField(userId, key) {
+		return 0
+	}
+	//key不存在 double check
+	m.Lock()
+	defer m.Unlock()
+	if mwRedis.IsExistUserSetField(userId, key) {
+		return 0
+	}
+	switch key {
+	case mwRedis.FavoriteList:
 		favorites, favoriteLength, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
 		if err != nil {
 			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
-			return false
+			return 2
 		}
 		//点赞数为0
 		if favoriteLength == 0 {
-			return false
+			return 2
 		}
 		idList := getIdListFromFavoriteSlice(favorites, dalMySQL.IdTypeUser)
 		// key 不存在需要同步到redis
 		err = mwRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
 		if err != nil {
 			zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
+			return 2
 		}
+		return 1
+	default:
+		return 2
 	}
-	return mwRedis.IsInUserFavoriteList(userId, videoId)
+}
+
+// checkAndSetVideoFavoriteCountKey
+// 返回0表示这个key存在，未设置
+// 返回1表示，这个key不存在,已更新
+// 返回2表示，这个key在数据库和redis中都不存在，即缓存穿透
+func checkAndSetVideoFavoriteCountKey(videoId uint, key string) int {
+	var m sync.RWMutex
+	if mwRedis.IsExistVideoField(videoId, key) {
+		return 0
+	}
+	//key不存在 double check
+	m.Lock()
+	defer m.Unlock()
+	if mwRedis.IsExistVideoField(videoId, key) {
+		return 0
+	}
+	switch key {
+	case mwRedis.VideoFavoritedCountField:
+		// redis中不存在，从数据库中读取
+		_, num, err := dalMySQL.GetFavoritesByIdFromMysql(videoId, dalMySQL.IdTypeVideo)
+		if err != nil {
+			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
+			return 2
+		}
+		if num == 0 {
+			return 2
+		}
+		err = mwRedis.SetVideoFavoritedCountByVideoId(videoId, int64(num)) // 加载视频被点赞数量
+		if err != nil {
+			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
+			return 2
+		}
+		return 1
+	default:
+		return 2
+	}
+}
+
+func checkAndSetTotalFavoriteFieldKey(userId uint, key string) int {
+	var m sync.RWMutex
+	if mwRedis.IsExistUserField(userId, key) {
+		return 0
+	}
+	//key不存在 double check
+	m.Lock()
+	defer m.Unlock()
+	if mwRedis.IsExistUserField(userId, key) {
+		return 0
+	}
+	switch key {
+	case mwRedis.TotalFavoriteField:
+		//redis 不存在
+		var total int64
+		// 获取用户发布的视频列表
+		videosByAuthorId, exist := dalMySQL.FindVideosByAuthorId(userId)
+		if !exist {
+			return 2
+		}
+		for _, videoModel := range videosByAuthorId {
+			count, _ := getFavoritesVideoCount(videoModel.ID)
+			atomic.AddInt64(&total, count)
+		}
+		err := mwRedis.SetTotalFavoritedByUserId(userId, total)
+		if err != nil {
+			zap.L().Error("SetTotalFavoriteByUserId失败", zap.Error(err))
+			return 2
+		}
+		return 1
+	default:
+		return 2
+	}
 }

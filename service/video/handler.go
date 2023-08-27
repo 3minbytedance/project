@@ -106,7 +106,7 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 		StatusCode: common.CodeSuccess,
 		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		VideoList:  videoList,
-		NextTime:   &nextTime,
+		NextTime:   nextTime,
 	}, nil
 }
 

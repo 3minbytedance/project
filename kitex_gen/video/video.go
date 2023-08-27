@@ -837,9 +837,9 @@ func (p *VideoFeedRequest) Field2DeepEqual(src int64) bool {
 
 type VideoFeedResponse struct {
 	StatusCode int32    `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
-	StatusMsg  *string  `thrift:"status_msg,2,optional" frugal:"2,optional,string" json:"status_msg,omitempty"`
+	StatusMsg  string   `thrift:"status_msg,2" frugal:"2,default,string" json:"status_msg"`
 	VideoList  []*Video `thrift:"video_list,3" frugal:"3,default,list<Video>" json:"video_list"`
-	NextTime   *int64   `thrift:"next_time,4,optional" frugal:"4,optional,i64" json:"next_time,omitempty"`
+	NextTime   int64    `thrift:"next_time,4" frugal:"4,default,i64" json:"next_time"`
 }
 
 func NewVideoFeedResponse() *VideoFeedResponse {
@@ -854,37 +854,27 @@ func (p *VideoFeedResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
-var VideoFeedResponse_StatusMsg_DEFAULT string
-
 func (p *VideoFeedResponse) GetStatusMsg() (v string) {
-	if !p.IsSetStatusMsg() {
-		return VideoFeedResponse_StatusMsg_DEFAULT
-	}
-	return *p.StatusMsg
+	return p.StatusMsg
 }
 
 func (p *VideoFeedResponse) GetVideoList() (v []*Video) {
 	return p.VideoList
 }
 
-var VideoFeedResponse_NextTime_DEFAULT int64
-
 func (p *VideoFeedResponse) GetNextTime() (v int64) {
-	if !p.IsSetNextTime() {
-		return VideoFeedResponse_NextTime_DEFAULT
-	}
-	return *p.NextTime
+	return p.NextTime
 }
 func (p *VideoFeedResponse) SetStatusCode(val int32) {
 	p.StatusCode = val
 }
-func (p *VideoFeedResponse) SetStatusMsg(val *string) {
+func (p *VideoFeedResponse) SetStatusMsg(val string) {
 	p.StatusMsg = val
 }
 func (p *VideoFeedResponse) SetVideoList(val []*Video) {
 	p.VideoList = val
 }
-func (p *VideoFeedResponse) SetNextTime(val *int64) {
+func (p *VideoFeedResponse) SetNextTime(val int64) {
 	p.NextTime = val
 }
 
@@ -893,14 +883,6 @@ var fieldIDToName_VideoFeedResponse = map[int16]string{
 	2: "status_msg",
 	3: "video_list",
 	4: "next_time",
-}
-
-func (p *VideoFeedResponse) IsSetStatusMsg() bool {
-	return p.StatusMsg != nil
-}
-
-func (p *VideoFeedResponse) IsSetNextTime() bool {
-	return p.NextTime != nil
 }
 
 func (p *VideoFeedResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -1005,7 +987,7 @@ func (p *VideoFeedResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = &v
+		p.StatusMsg = v
 	}
 	return nil
 }
@@ -1034,7 +1016,7 @@ func (p *VideoFeedResponse) ReadField4(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
-		p.NextTime = &v
+		p.NextTime = v
 	}
 	return nil
 }
@@ -1098,16 +1080,14 @@ WriteFieldEndError:
 }
 
 func (p *VideoFeedResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetStatusMsg() {
-		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.StatusMsg); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.StatusMsg); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -1142,16 +1122,14 @@ WriteFieldEndError:
 }
 
 func (p *VideoFeedResponse) writeField4(oprot thrift.TProtocol) (err error) {
-	if p.IsSetNextTime() {
-		if err = oprot.WriteFieldBegin("next_time", thrift.I64, 4); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteI64(*p.NextTime); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("next_time", thrift.I64, 4); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteI64(p.NextTime); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -1195,14 +1173,9 @@ func (p *VideoFeedResponse) Field1DeepEqual(src int32) bool {
 	}
 	return true
 }
-func (p *VideoFeedResponse) Field2DeepEqual(src *string) bool {
+func (p *VideoFeedResponse) Field2DeepEqual(src string) bool {
 
-	if p.StatusMsg == src {
-		return true
-	} else if p.StatusMsg == nil || src == nil {
-		return false
-	}
-	if strings.Compare(*p.StatusMsg, *src) != 0 {
+	if strings.Compare(p.StatusMsg, src) != 0 {
 		return false
 	}
 	return true
@@ -1220,14 +1193,9 @@ func (p *VideoFeedResponse) Field3DeepEqual(src []*Video) bool {
 	}
 	return true
 }
-func (p *VideoFeedResponse) Field4DeepEqual(src *int64) bool {
+func (p *VideoFeedResponse) Field4DeepEqual(src int64) bool {
 
-	if p.NextTime == src {
-		return true
-	} else if p.NextTime == nil || src == nil {
-		return false
-	}
-	if *p.NextTime != *src {
+	if p.NextTime != src {
 		return false
 	}
 	return true
@@ -1516,8 +1484,8 @@ func (p *PublishVideoRequest) Field3DeepEqual(src string) bool {
 }
 
 type PublishVideoResponse struct {
-	StatusCode int32   `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
-	StatusMsg  *string `thrift:"status_msg,2,optional" frugal:"2,optional,string" json:"status_msg,omitempty"`
+	StatusCode int32  `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
+	StatusMsg  string `thrift:"status_msg,2" frugal:"2,default,string" json:"status_msg"`
 }
 
 func NewPublishVideoResponse() *PublishVideoResponse {
@@ -1532,28 +1500,19 @@ func (p *PublishVideoResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
-var PublishVideoResponse_StatusMsg_DEFAULT string
-
 func (p *PublishVideoResponse) GetStatusMsg() (v string) {
-	if !p.IsSetStatusMsg() {
-		return PublishVideoResponse_StatusMsg_DEFAULT
-	}
-	return *p.StatusMsg
+	return p.StatusMsg
 }
 func (p *PublishVideoResponse) SetStatusCode(val int32) {
 	p.StatusCode = val
 }
-func (p *PublishVideoResponse) SetStatusMsg(val *string) {
+func (p *PublishVideoResponse) SetStatusMsg(val string) {
 	p.StatusMsg = val
 }
 
 var fieldIDToName_PublishVideoResponse = map[int16]string{
 	1: "status_code",
 	2: "status_msg",
-}
-
-func (p *PublishVideoResponse) IsSetStatusMsg() bool {
-	return p.StatusMsg != nil
 }
 
 func (p *PublishVideoResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -1638,7 +1597,7 @@ func (p *PublishVideoResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = &v
+		p.StatusMsg = v
 	}
 	return nil
 }
@@ -1694,16 +1653,14 @@ WriteFieldEndError:
 }
 
 func (p *PublishVideoResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetStatusMsg() {
-		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.StatusMsg); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.StatusMsg); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -1741,14 +1698,9 @@ func (p *PublishVideoResponse) Field1DeepEqual(src int32) bool {
 	}
 	return true
 }
-func (p *PublishVideoResponse) Field2DeepEqual(src *string) bool {
+func (p *PublishVideoResponse) Field2DeepEqual(src string) bool {
 
-	if p.StatusMsg == src {
-		return true
-	} else if p.StatusMsg == nil || src == nil {
-		return false
-	}
-	if strings.Compare(*p.StatusMsg, *src) != 0 {
+	if strings.Compare(p.StatusMsg, src) != 0 {
 		return false
 	}
 	return true
@@ -1979,7 +1931,7 @@ func (p *PublishVideoListRequest) Field2DeepEqual(src int64) bool {
 
 type PublishVideoListResponse struct {
 	StatusCode int32    `thrift:"status_code,1" frugal:"1,default,i32" json:"status_code"`
-	StatusMsg  *string  `thrift:"status_msg,2,optional" frugal:"2,optional,string" json:"status_msg,omitempty"`
+	StatusMsg  string   `thrift:"status_msg,2" frugal:"2,default,string" json:"status_msg"`
 	VideoList  []*Video `thrift:"video_list,3" frugal:"3,default,list<Video>" json:"video_list"`
 }
 
@@ -1995,13 +1947,8 @@ func (p *PublishVideoListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
-var PublishVideoListResponse_StatusMsg_DEFAULT string
-
 func (p *PublishVideoListResponse) GetStatusMsg() (v string) {
-	if !p.IsSetStatusMsg() {
-		return PublishVideoListResponse_StatusMsg_DEFAULT
-	}
-	return *p.StatusMsg
+	return p.StatusMsg
 }
 
 func (p *PublishVideoListResponse) GetVideoList() (v []*Video) {
@@ -2010,7 +1957,7 @@ func (p *PublishVideoListResponse) GetVideoList() (v []*Video) {
 func (p *PublishVideoListResponse) SetStatusCode(val int32) {
 	p.StatusCode = val
 }
-func (p *PublishVideoListResponse) SetStatusMsg(val *string) {
+func (p *PublishVideoListResponse) SetStatusMsg(val string) {
 	p.StatusMsg = val
 }
 func (p *PublishVideoListResponse) SetVideoList(val []*Video) {
@@ -2021,10 +1968,6 @@ var fieldIDToName_PublishVideoListResponse = map[int16]string{
 	1: "status_code",
 	2: "status_msg",
 	3: "video_list",
-}
-
-func (p *PublishVideoListResponse) IsSetStatusMsg() bool {
-	return p.StatusMsg != nil
 }
 
 func (p *PublishVideoListResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -2119,7 +2062,7 @@ func (p *PublishVideoListResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = &v
+		p.StatusMsg = v
 	}
 	return nil
 }
@@ -2199,16 +2142,14 @@ WriteFieldEndError:
 }
 
 func (p *PublishVideoListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetStatusMsg() {
-		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.StatusMsg); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.StatusMsg); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -2274,14 +2215,9 @@ func (p *PublishVideoListResponse) Field1DeepEqual(src int32) bool {
 	}
 	return true
 }
-func (p *PublishVideoListResponse) Field2DeepEqual(src *string) bool {
+func (p *PublishVideoListResponse) Field2DeepEqual(src string) bool {
 
-	if p.StatusMsg == src {
-		return true
-	} else if p.StatusMsg == nil || src == nil {
-		return false
-	}
-	if strings.Compare(*p.StatusMsg, *src) != 0 {
+	if strings.Compare(p.StatusMsg, src) != 0 {
 		return false
 	}
 	return true

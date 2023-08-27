@@ -13,7 +13,6 @@ import (
 	"douyin/mw/redis"
 	"douyin/service/comment/pack"
 	"errors"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -21,6 +20,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"sync"
+	"time"
 )
 
 var userClient userservice.Client
@@ -62,16 +62,17 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 	})
 	if userResp.GetUser() == nil || err != nil {
 		resp.StatusCode = 1
-		resp.StatusMsg = thrift.StringPtr(err.Error())
+		resp.StatusMsg = err.Error()
 		return resp, err
 	}
 
 	switch request.GetActionType() {
 	case 1: // 新增评论
 		commentData := model.Comment{
-			UserId:  uint(request.GetUserId()),
-			VideoId: uint(request.GetVideoId()),
-			Content: common.ReplaceWord(request.GetCommentText()),
+			UserId:    uint(request.GetUserId()),
+			VideoId:   uint(request.GetVideoId()),
+			Content:   common.ReplaceWord(request.GetCommentText()),
+			CreatedAt: time.Now(),
 		}
 		// _, err = mysql.AddComment(&commentData)
 		err = kafka.CommentMQInstance.ProduceAddCommentMsg(&commentData)
@@ -135,7 +136,7 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		return &comment.CommentActionResponse{
 			StatusCode: common.CodeInvalidParam,
 			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
-		}, errors.New(*common.MapErrMsg(common.CodeInvalidParam))
+		}, errors.New(common.MapErrMsg(common.CodeInvalidParam))
 	}
 }
 

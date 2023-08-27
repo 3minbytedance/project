@@ -19,6 +19,7 @@ import (
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
+	"strconv"
 	"sync"
 )
 
@@ -136,6 +137,7 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 	token := common.GenerateToken(userModel.ID, userModel.Name)
 	resp.StatusCode = common.CodeSuccess
 	resp.StatusMsg = common.MapErrMsg(common.CodeWrongLoginCredentials)
+
 	resp.Token = token
 	resp.UserId = int64(userModel.ID)
 	// 将token存入redis
@@ -202,7 +204,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	resp.User.SetIsFollow(isFollow)
 	resp.User.SetWorkCount(workCount)
 	resp.User.SetFavoriteCount(favoriteCount)
-	resp.User.SetTotalFavorited(totalFavoriteCount)
+	resp.User.SetTotalFavorited(strconv.Itoa(int(totalFavoriteCount)))
 	return
 }
 
@@ -244,7 +246,7 @@ func GetName(userId uint) (string, bool) {
 	return userModel.Name, true
 }
 
-func CheckUserRegisterInfo(username string, password string) (int32, *string) {
+func CheckUserRegisterInfo(username string, password string) (int32, string) {
 
 	if len(username) == 0 || len(username) > 32 {
 		return common.CodeInvalidRegisterUsername, common.MapErrMsg(common.CodeInvalidRegisterUsername)

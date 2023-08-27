@@ -4,26 +4,28 @@ import (
 	"fmt"
 	_ "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+	"math/rand"
 	"strconv"
+	"time"
 )
 
 // GetFollowCountById 根据userId查找关注数
 func GetFollowCountById(userId uint) (int, error) {
-	key := fmt.Sprintf("%s_%d", FollowList, userId)
+	key := fmt.Sprintf("%s:%d", FollowList, userId)
 	size, err := Rdb.SCard(Ctx, key).Result()
 	return int(size), err
 }
 
 // GetFollowerCountById 根据userId查找粉丝数
 func GetFollowerCountById(userId uint) (int, error) {
-	key := fmt.Sprintf("%s_%d", FollowerList, userId)
+	key := fmt.Sprintf("%s:%d", FollowerList, userId)
 	size, err := Rdb.SCard(Ctx, key).Result()
 	return int(size), err
 }
 
 // GetFollowListById 根据userId查找关注list
 func GetFollowListById(userId uint) ([]uint, error) {
-	key := fmt.Sprintf("%s_%d", FollowList, userId)
+	key := fmt.Sprintf("%s:%d", FollowList, userId)
 	list, err := Rdb.SMembers(Ctx, key).Result()
 	result := make([]uint, 0)
 	if err != nil {
@@ -41,7 +43,7 @@ func GetFollowListById(userId uint) ([]uint, error) {
 
 // GetFollowerListById 根据userId查找粉丝list
 func GetFollowerListById(userId uint) ([]uint, error) {
-	key := fmt.Sprintf("%s_%d", FollowerList, userId)
+	key := fmt.Sprintf("%s:%d", FollowerList, userId)
 	list, err := Rdb.SMembers(Ctx, key).Result()
 	result := make([]uint, 0)
 	if err != nil {
@@ -59,8 +61,8 @@ func GetFollowerListById(userId uint) ([]uint, error) {
 
 // GetFriendListById 根据userId查找好友list
 func GetFriendListById(userId uint) ([]uint, error) {
-	key1 := fmt.Sprintf("%s_%d", FollowerList, userId)
-	key2 := fmt.Sprintf("%s_%d", FollowList, userId)
+	key1 := fmt.Sprintf("%s:%d", FollowerList, userId)
+	key2 := fmt.Sprintf("%s:%d", FollowList, userId)
 	friend, err := Rdb.SInter(Ctx, key2, key1).Result()
 	result := make([]uint, 0, len(friend))
 	if err != nil {
@@ -78,7 +80,7 @@ func GetFriendListById(userId uint) ([]uint, error) {
 
 // SetFollowListByUserId 设置关注列表
 func SetFollowListByUserId(userId uint, ids []uint) error {
-	key := fmt.Sprintf("%s_%d", FollowList, userId)
+	key := fmt.Sprintf("%s:%d", FollowList, userId)
 	pipe := Rdb.Pipeline()
 	for _, value := range ids {
 		err := pipe.SAdd(Ctx, key, value).Err()
@@ -88,12 +90,15 @@ func SetFollowListByUserId(userId uint, ids []uint) error {
 	}
 	zap.L().Info("Follow_LIST", zap.Any("List", ids))
 	_, err := pipe.Exec(Ctx)
+	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	expiration := time.Duration(randomSeconds) * time.Second
+	Rdb.Expire(Ctx, key, expiration)
 	return err
 }
 
 // SetFollowerListByUserId 设置粉丝列表
 func SetFollowerListByUserId(userId uint, ids []uint) error {
-	key := fmt.Sprintf("%s_%d", FollowerList, userId)
+	key := fmt.Sprintf("%s:%d", FollowerList, userId)
 	pipe := Rdb.Pipeline()
 	// 转换为[]interface{}
 	for _, value := range ids {
@@ -104,47 +109,50 @@ func SetFollowerListByUserId(userId uint, ids []uint) error {
 	}
 	zap.L().Info("Follower_LIST", zap.Any("List", ids))
 	_, err := pipe.Exec(Ctx)
+	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	expiration := time.Duration(randomSeconds) * time.Second
+	Rdb.Expire(Ctx, key, expiration)
 	return err
 }
 
 // IncreaseFollowCountByUserId 给Id对应的关注set加上 id
 func IncreaseFollowCountByUserId(userId uint, id uint) error {
-	key := fmt.Sprintf("%s_%d", FollowList, userId)
+	key := fmt.Sprintf("%s:%d", FollowList, userId)
 	err := Rdb.SAdd(Ctx, key, id).Err()
 	return err
 }
 
 // DecreaseFollowCountByUserId userId 关注列表取关 followId
 func DecreaseFollowCountByUserId(userId uint, followId uint) error {
-	key := fmt.Sprintf("%s_%d", FollowList, userId)
+	key := fmt.Sprintf("%s:%d", FollowList, userId)
 	err := Rdb.SRem(Ctx, key, followId).Err()
 	return err
 }
 
 // IncreaseFollowerCountByUserId 给userId粉丝列表加上 followid
 func IncreaseFollowerCountByUserId(userId uint, followId uint) error {
-	key := fmt.Sprintf("%s_%d", FollowerList, userId)
+	key := fmt.Sprintf("%s:%d", FollowerList, userId)
 	err := Rdb.SAdd(Ctx, key, followId).Err()
 	return err
 }
 
 // DecreaseFollowerCountByUserId 给userId对应的粉丝列表减去id
 func DecreaseFollowerCountByUserId(userId uint, id uint) error {
-	key := fmt.Sprintf("%s_%d", FollowerList, userId)
+	key := fmt.Sprintf("%s:%d", FollowerList, userId)
 	err := Rdb.SRem(Ctx, key, id).Err()
 	return err
 }
 
 // IsInMyFollowList userid的follow list是否存在id
 func IsInMyFollowList(userId uint, id uint) (bool, error) {
-	key := fmt.Sprintf("%s_%d", FollowList, userId)
+	key := fmt.Sprintf("%s:%d", FollowList, userId)
 	found, err := Rdb.SIsMember(Ctx, key, id).Result()
 	return found, err
 }
 
 // IsInMyFollowerList userid的follower list是否存在id
 func IsInMyFollowerList(userId uint, id uint) (bool, error) {
-	key := fmt.Sprintf("%s_%d", FollowerList, userId)
+	key := fmt.Sprintf("%s:%d", FollowerList, userId)
 	found, err := Rdb.SIsMember(Ctx, key, id).Result()
 	return found, err
 }

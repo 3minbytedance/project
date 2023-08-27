@@ -62,7 +62,7 @@ func (s *MessageServiceImpl) MessageChat(ctx context.Context, request *message.M
 		return &message.MessageChatResponse{
 			StatusCode: common.CodeNotFriend,
 			StatusMsg:  common.MapErrMsg(common.CodeNotFriend),
-		}, errors.New(*common.MapErrMsg(common.CodeNotFriend))
+		}, errors.New(common.MapErrMsg(common.CodeNotFriend))
 	}
 	// 获取聊天记录
 	msgList, err := mongo.GetMessageList(
@@ -76,6 +76,15 @@ func (s *MessageServiceImpl) MessageChat(ctx context.Context, request *message.M
 			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 		}, err
 	}
+	//防止将自己的消息返回给自己
+	if request.GetPreMsgTime() != 0 {
+		for i, msg := range msgList {
+			if msg.FromUserId == uint(request.GetFromUserId()) {
+				msgList = append(msgList[:i], msgList[i+1:]...)
+			}
+		}
+	}
+
 	// 封装数据
 	packedMsgList := pack.Messages(msgList)
 	return &message.MessageChatResponse{
@@ -106,7 +115,7 @@ func (s *MessageServiceImpl) MessageAction(ctx context.Context, request *message
 		return &message.MessageActionResponse{
 			StatusCode: common.CodeNotFriend,
 			StatusMsg:  common.MapErrMsg(common.CodeNotFriend),
-		}, errors.New(*common.MapErrMsg(common.CodeNotFriend))
+		}, errors.New(common.MapErrMsg(common.CodeNotFriend))
 	}
 
 	messageData := &model.Message{

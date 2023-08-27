@@ -115,7 +115,7 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		return &relation.RelationActionResponse{
 			StatusCode: common.CodeInvalidParam,
 			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
-		}, errors.New(*common.MapErrMsg(common.CodeInvalidParam))
+		}, errors.New(common.MapErrMsg(common.CodeInvalidParam))
 	}
 }
 
@@ -151,7 +151,8 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 			return &relation.FollowListResponse{
 				StatusCode: common.CodeServerBusy,
 				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
-				UserList:   nil,
+
+				UserList: nil,
 			}, err
 		}
 		followList = append(followList, userResp.GetUser())
@@ -289,7 +290,6 @@ func (s *RelationServiceImpl) IsFollowing(ctx context.Context, request *relation
 
 	found, err := redis.IsInMyFollowList(uint(actionId), uint(toUserId))
 	return found, err
-
 }
 
 // IsFriend 判断二者是不是friend
@@ -318,7 +318,8 @@ func (s *RelationServiceImpl) IsFriend(ctx context.Context, request *relation.Is
 	return result2 && result1, err
 }
 
-// CheckAndSetRedisRelationKey 返回0表示这个key存在，返回1表示，这个key不存在，已更新。返回2表示，这个key不存在，这个用户没有所对应的值
+// CheckAndSetRedisRelationKey
+// 返回0表示这个key存在，返回1表示，这个key不存在，已更新。返回2表示，这个key不存在，这个用户没有所对应的值
 func CheckAndSetRedisRelationKey(userId uint, key string) int {
 	var m sync.RWMutex
 	if redis.IsExistUserSetField(userId, key) {
@@ -330,32 +331,40 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 	if redis.IsExistUserSetField(userId, key) {
 		return 0
 	}
-	if key == redis.FollowList {
+	switch key {
+	case redis.FollowList:
 		id, err := mysql.GetFollowList(userId)
 		if err != nil {
 			zap.L().Error("mysql获取FollowList失败", zap.Error(err))
+			return 2
 		}
 		if len(id) == 0 {
-			zap.L().Info("mysql获取FollowList为空，不更新redis")
+			zap.L().Info("mysql没有该FollowList")
 			return 2
 		}
 		err = redis.SetFollowListByUserId(userId, id)
 		if err != nil {
 			zap.L().Error("redis更新FollowList失败", zap.Error(err))
+			return 2
 		}
-	} else {
+		return 1
+	case redis.FollowerList:
 		id, err := mysql.GetFollowerList(userId)
 		if err != nil {
 			zap.L().Error("mysql获取FollowerList失败", zap.Error(err))
+			return 2
 		}
 		if len(id) == 0 {
-			zap.L().Info("mysql获取FollowerList为空，不更新redis")
+			zap.L().Info("mysql没有该FollowerList")
 			return 2
 		}
 		err = redis.SetFollowerListByUserId(userId, id)
 		if err != nil {
 			zap.L().Error("redis更新FollowerList失败", zap.Error(err))
+			return 2
 		}
+		return 1
+	default:
+		return 2
 	}
-	return 1
 }
