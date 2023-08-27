@@ -3,7 +3,9 @@ package redis
 import (
 	"fmt"
 	"go.uber.org/zap"
+	"math/rand"
 	"strconv"
+	"time"
 )
 
 // GetTotalFavoritedByUserId 获取用户发布视频的所有获赞量
@@ -57,6 +59,9 @@ func DecrementFavoritedCountByVideoId(videoId uint) error {
 func SetTotalFavoritedByUserId(userId uint, totalFavorite int64) error {
 	key := fmt.Sprintf("%s:%d", UserKey, userId)
 	err := Rdb.HSet(Ctx, key, TotalFavoriteField, totalFavorite).Err()
+	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	expiration := time.Duration(randomSeconds) * time.Second
+	Rdb.Expire(Ctx, key, expiration)
 	return err
 }
 
@@ -64,6 +69,9 @@ func SetTotalFavoritedByUserId(userId uint, totalFavorite int64) error {
 func SetVideoFavoritedCountByVideoId(videoId uint, totalFavorited int64) error {
 	key := fmt.Sprintf("%s:%d", VideoKey, videoId)
 	err := Rdb.HSet(Ctx, key, VideoFavoritedCountField, totalFavorited).Err()
+	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	expiration := time.Duration(randomSeconds) * time.Second
+	Rdb.Expire(Ctx, key, expiration)
 	return err
 }
 
@@ -94,6 +102,9 @@ func SetFavoriteListByUserId(userId uint, id []uint) error {
 	}
 	zap.L().Info("Favorite_LIST", zap.Any("List", id))
 	_, err := pipe.Exec(Ctx)
+	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	expiration := time.Duration(randomSeconds) * time.Second
+	Rdb.Expire(Ctx, key, expiration)
 	return err
 }
 

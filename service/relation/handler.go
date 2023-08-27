@@ -287,7 +287,6 @@ func (s *RelationServiceImpl) IsFollowing(ctx context.Context, request *relation
 
 	found, err := redis.IsInMyFollowList(uint(actionId), uint(toUserId))
 	return found, err
-
 }
 
 // IsFriend 判断二者是不是friend
