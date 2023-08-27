@@ -38,9 +38,9 @@ func Init(appConfig *config.AppConfig) (err error) {
 			Colorful:      true,
 		})
 
-	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: mysqlLog})
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: mysqlLog, PrepareStmt: true})
 	if err != nil {
-		fmt.Println(dsn)
+		log.Println(dsn)
 		log.Fatal("connect to mysql failed:", err)
 	}
 	//err = DB.AutoMigrate(&models.User{})
