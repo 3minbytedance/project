@@ -42,7 +42,7 @@ func init() {
 	message[CodeUserNotFound] = "用户不存在"
 	message[CodeInvalidRegisterUsername] = "用户名不合规"
 	message[CodeInvalidRegisterPassword] = "密码不合规"
-	message[CodeUsernameAlreadyExists] = "用户名一存在"
+	message[CodeUsernameAlreadyExists] = "用户名已存在"
 
 }
 

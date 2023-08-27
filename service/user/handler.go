@@ -95,7 +95,6 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 		return
 	}
 
-	// todo int32？
 	resp.UserId = int64(userId)
 	resp.Token = common.GenerateToken(userId, request.Username)
 
