@@ -23,6 +23,7 @@ import (
 	"log"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 var (
@@ -347,8 +348,9 @@ func checkAndSetUserFavoriteListKey(userId uint, key string) int {
 			return mwRedis.KeyNotExistsInBoth
 		}
 	}
-	fmt.Println("test checkAndSetUserFavoriteListKey ")
-	return mwRedis.KeyNotExistsInBoth
+	// 重试
+	time.Sleep(100 * time.Millisecond)
+	return checkAndSetTotalFavoriteFieldKey(userId, key)
 }
 
 // checkAndSetVideoFavoriteCountKey
@@ -387,8 +389,8 @@ func checkAndSetVideoFavoriteCountKey(videoId uint, key string) int {
 			return mwRedis.KeyNotExistsInBoth
 		}
 	}
-	fmt.Println("test checkAndSetVideoFavoriteCountKey ")
-	return mwRedis.KeyNotExistsInBoth
+	time.Sleep(100 * time.Millisecond)
+	return checkAndSetTotalFavoriteFieldKey(videoId, key)
 }
 
 // checkAndSetTotalFavoriteFieldKey
@@ -429,6 +431,6 @@ func checkAndSetTotalFavoriteFieldKey(userId uint, key string) int {
 			return 2
 		}
 	}
-	fmt.Println("test checkAndSetTotalFavoriteFieldKey ")
-	return mwRedis.KeyNotExistsInBoth
+	time.Sleep(100 * time.Millisecond)
+	return checkAndSetTotalFavoriteFieldKey(userId, key)
 }

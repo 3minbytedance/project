@@ -11,7 +11,6 @@ import (
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"errors"
-	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -323,11 +322,9 @@ func (s *RelationServiceImpl) IsFriend(ctx context.Context, request *relation.Is
 // 返回1 KeyUpdated	表示，这个key不存在,已更新
 // 返回2 KeyNotExistsInBoth 表示，这个key在数据库和redis中都不存在，即缓存穿透
 func CheckAndSetRedisRelationKey(userId uint, key string) int {
-
 	if redis.IsExistUserSetField(userId, key) {
 		return redis.KeyExistsAndNotSet
 	}
-
 	switch key {
 	case redis.FollowList:
 		if redis.AcquireRelationLock(userId, key) {
@@ -352,8 +349,6 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 			}
 			return redis.KeyUpdated
 		}
-		fmt.Println("test redis.FollowList")
-		return redis.KeyNotExistsInBoth
 	case redis.FollowerList:
 		if redis.AcquireRelationLock(userId, key) {
 			defer redis.ReleaseRelationLock(userId, key)
@@ -377,9 +372,10 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 			}
 			return redis.KeyUpdated
 		}
-		fmt.Println("test redis.FollowerList")
-		return redis.KeyNotExistsInBoth
 	default:
 		return redis.KeyNotExistsInBoth
 	}
+	// 重试
+	time.Sleep(100 * time.Millisecond)
+	return CheckAndSetRedisRelationKey(userId, key)
 }
