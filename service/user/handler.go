@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"strconv"
+	"time"
 )
 
 var relationClient relationservice.Client
@@ -242,7 +243,9 @@ func GetName(userId uint) (string, bool) {
 		}
 		return userModel.Name, true
 	}
-	return "", false
+	// 重试
+	time.Sleep(100 * time.Millisecond)
+	return GetName(userId)
 }
 
 func CheckUserRegisterInfo(username string, password string) (int32, string) {

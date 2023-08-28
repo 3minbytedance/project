@@ -13,6 +13,7 @@ import (
 	"douyin/mw/redis"
 	"douyin/service/comment/pack"
 	"errors"
+	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -82,13 +83,11 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		}
 		// 增加redis
 		go func() {
-			// todo
 			// 如果video不存在于redis，查询数据库并插入redis评论数
 			isSetKey, _ := checkAndSetRedisCommentKey(uint(videoId))
 			if isSetKey {
 				return
 			}
-
 			// 如果video存在于redis，更新commentCount
 			err = redis.IncrementCommentCountByVideoId(uint(videoId))
 			if err != nil {
@@ -217,5 +216,8 @@ func checkAndSetRedisCommentKey(videoId uint) (isSet bool, count int64) {
 		}
 		return true, cnt
 	}
-	return false, 0
+	fmt.Println("重试checkAndSetRedisCommentKey")
+	// 重试
+	time.Sleep(100 * time.Millisecond)
+	return checkAndSetRedisCommentKey(videoId)
 }

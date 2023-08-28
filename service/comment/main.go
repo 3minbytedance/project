@@ -72,6 +72,7 @@ func main() {
 		server.WithRegistry(r),
 	)
 	err = svr.Run()
+
 	if err != nil {
 		log.Fatal(err)
 	}
