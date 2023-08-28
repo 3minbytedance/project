@@ -82,8 +82,6 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	common.AddToBloom(request.Username)
 
 	// 将信息存储到数据库中
-	//salt := fmt.Sprintf("%06d", rand.Int())
-	//userData.Salt = salt
 	userData.Password, _ = common.MakePassword(request.Password)
 
 	// 数据入库
@@ -220,8 +218,8 @@ func GetName(userId uint) (string, bool) {
 		return name, true
 	}
 	//缓存不存在，尝试从数据库中取
-	if redis.AcquireUserLock(userId,redis.NameField) {
-		defer redis.ReleaseUserLock(userId,redis.NameField)
+	if redis.AcquireUserLock(userId, redis.NameField) {
+		defer redis.ReleaseUserLock(userId, redis.NameField)
 		//double check
 		if redis.IsExistUserField(userId, redis.NameField) {
 			name, err := redis.GetNameByUserId(userId)
@@ -258,16 +256,5 @@ func CheckUserRegisterInfo(username string, password string) (int32, string) {
 		return common.CodeInvalidRegisterPassword, common.MapErrMsg(common.CodeInvalidRegisterPassword)
 	}
 
-	_, exist, err := mysql.FindUserByName(username)
-	if err != nil {
-		zap.L().Error("Find user by name:", zap.Error(err))
-		return common.CodeDBError, common.MapErrMsg(common.CodeDBError)
-
-	}
-	// 检查用户名是否存在
-	if exist {
-		zap.L().Info("User already exists")
-		return common.CodeUsernameAlreadyExists, common.MapErrMsg(common.CodeUsernameAlreadyExists)
-	}
 	return common.CodeSuccess, common.MapErrMsg(common.CodeSuccess)
 }

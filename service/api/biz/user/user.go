@@ -81,8 +81,8 @@ func Info(ctx context.Context, c *app.RequestContext) {
 	actorId, _ := c.Get(common.ContextUserIDKey)
 	zap.L().Info("Info", zap.Uint("actorID", actorId.(uint)))
 	userId := c.Query("user_id")
-	userIdInt64, err := strconv.ParseInt(userId, 10, 64)
-	if err != nil || userIdInt64 < 0 {
+	userIdUint, err := strconv.ParseUint(userId, 10, 64)
+	if err != nil {
 		zap.L().Error("Parse userId error", zap.Error(err))
 		c.JSON(http.StatusOK, user.UserInfoByIdResponse{
 			StatusCode: common.CodeInvalidParam,
@@ -93,7 +93,7 @@ func Info(ctx context.Context, c *app.RequestContext) {
 
 	resp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 		ActorId: int64(actorId.(uint)),
-		UserId:  userIdInt64,
+		UserId:  int64(userIdUint),
 	})
 
 	if err != nil {
