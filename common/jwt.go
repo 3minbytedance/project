@@ -15,7 +15,7 @@ type Claims struct {
 // 签名密钥
 var jwtSecretKey = []byte("DouShenNo1")
 
-// todo 替换log
+// GenerateToken 创建token， 过期时间设置已注释
 func GenerateToken(userId uint, username string) string {
 
 	nowTime := time.Now()
