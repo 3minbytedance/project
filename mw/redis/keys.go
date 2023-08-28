@@ -2,7 +2,7 @@ package redis
 
 import (
 	"fmt"
-	"log"
+	"go.uber.org/zap"
 	"math/rand"
 	"time"
 )
@@ -34,11 +34,18 @@ const (
 
 const TokenKey = "token:"
 
+const (
+	Lock               = "lock"
+	KeyExistsAndNotSet = 0
+	KeyUpdated         = 1
+	KeyNotExistsInBoth = 2
+)
+
 func IsExistUserField(userId uint, field string) bool {
 	key := fmt.Sprintf("%s:%d", UserKey, userId)
 	exists, err := Rdb.HExists(Ctx, key, field).Result()
 	if err != nil {
-		log.Println("redis isExistUser 连接失败")
+		zap.L().Error("redis isExistVideo 连接失败")
 		return false
 	}
 	if exists {
@@ -53,7 +60,7 @@ func IsExistVideoField(videoId uint, field string) bool {
 	key := fmt.Sprintf("%s:%d", VideoKey, videoId)
 	exists, err := Rdb.HExists(Ctx, key, field).Result()
 	if err != nil {
-		log.Println("redis isExistVideo 连接失败")
+		zap.L().Error("redis isExistVideo 连接失败")
 		return false
 	}
 	if exists {
@@ -69,7 +76,7 @@ func IsExistUserSetField(userId uint, field string) bool {
 	key := fmt.Sprintf("%s:%d", field, userId)
 	exists, err := Rdb.Exists(Ctx, key).Result()
 	if err != nil {
-		log.Println("redis isExistUser 连接失败")
+		zap.L().Error("redis isExistVideo 连接失败")
 		return false
 	}
 	if exists != 0 {
@@ -83,5 +90,117 @@ func IsExistUserSetField(userId uint, field string) bool {
 // DelKey 根据参数合成并删除key
 func DelKey(userId uint, field string) {
 	key := fmt.Sprintf("%s:%d", field, userId)
+	Rdb.Del(Ctx, key)
+}
+
+func AcquireCommentLock(videoId uint) bool {
+	key := fmt.Sprintf("%s:%d_%s", CommentCountField, videoId, Lock)
+	result, err := Rdb.SetNX(Ctx, key, 1, 30*time.Second).Result()
+	if err != nil {
+		zap.L().Error("获取锁失败", zap.Error(err))
+		return false
+	}
+	return result
+}
+
+func ReleaseCommentLock(videoId uint) {
+	key := fmt.Sprintf("%s:%d_%s", CommentCountField, videoId, Lock)
+	Rdb.Del(Ctx, key)
+}
+
+func AcquireUserLock(userId uint, field string) bool {
+	var key string
+	switch field {
+	case NameField:
+		key = fmt.Sprintf("%s:%d_%s", NameField, userId, Lock)
+	case WorkCountField:
+		key = fmt.Sprintf("%s:%d_%s", WorkCountField, userId, Lock)
+	default:
+		return false
+	}
+	result, err := Rdb.SetNX(Ctx, key, 1, 30*time.Second).Result()
+	if err != nil {
+		zap.L().Error("获取锁失败", zap.Error(err))
+		return false
+	}
+	return result
+}
+
+func ReleaseUserLock(userId uint, field string) {
+	var key string
+	switch field {
+	case NameField:
+		key = fmt.Sprintf("%s:%d_%s", NameField, userId, Lock)
+	case WorkCountField:
+		key = fmt.Sprintf("%s:%d_%s", WorkCountField, userId, Lock)
+	default:
+		return
+	}
+	Rdb.Del(Ctx, key)
+}
+
+func AcquireFavoriteLock(Id uint, field string) bool {
+	var key string
+	switch field {
+	case FavoriteList:
+		key = fmt.Sprintf("%s:%d_%s", FavoriteList, Id, Lock)
+	case VideoFavoritedCountField:
+		key = fmt.Sprintf("%s:%d_%s", VideoFavoritedCountField, Id, Lock)
+	case TotalFavoriteField:
+		key = fmt.Sprintf("%s:%d_%s", TotalFavoriteField, Id, Lock)
+	default:
+		return false
+	}
+	result, err := Rdb.SetNX(Ctx, key, 1, 30*time.Second).Result()
+	if err != nil {
+		zap.L().Error("获取锁失败", zap.Error(err))
+		return false
+	}
+	return result
+}
+
+func ReleaseFavoriteLock(Id uint, field string) {
+	var key string
+	switch field {
+	case FavoriteList:
+		key = fmt.Sprintf("%s:%d_%s", FavoriteList, Id, Lock)
+	case VideoFavoritedCountField:
+		key = fmt.Sprintf("%s:%d_%s", VideoFavoritedCountField, Id, Lock)
+	case TotalFavoriteField:
+		key = fmt.Sprintf("%s:%d_%s", TotalFavoriteField, Id, Lock)
+	default:
+		return
+	}
+	Rdb.Del(Ctx, key)
+}
+
+func AcquireRelationLock(Id uint, field string) bool {
+	var key string
+	switch field {
+	case FollowList:
+		key = fmt.Sprintf("%s:%d_%s", FollowList, Id, Lock)
+	case FollowerList:
+		key = fmt.Sprintf("%s:%d_%s", FollowerList, Id, Lock)
+	default:
+		return false
+	}
+	result, err := Rdb.SetNX(Ctx, key, 1, 30*time.Second).Result()
+	if err != nil {
+		zap.L().Error("获取锁失败", zap.Error(err))
+		return false
+	}
+	return result
+}
+
+func ReleaseRelationLock(Id uint, field string) {
+	var key string
+	switch field {
+	case FollowList:
+		key = fmt.Sprintf("%s:%d_%s", FollowList, Id, Lock)
+	case FollowerList:
+		key = fmt.Sprintf("%s:%d_%s", FollowerList, Id, Lock)
+	default:
+		return
+	}
 	Rdb.Del(Ctx, key)
 }

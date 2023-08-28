@@ -14,6 +14,7 @@ import (
 	video "douyin/kitex_gen/video"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
+	"errors"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/google/uuid"
@@ -197,18 +198,32 @@ func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, userId int64) (resp
 		workCount, err := redis.GetWorkCountByUserId(uint(userId))
 		if err != nil {
 			zap.L().Error("从redis中获取作品数失败", zap.Error(err))
+			return 0, err
 		}
 		return int32(workCount), nil
 	}
 
-	// 2. 缓存中没有数据，从数据库中获取
-	workCount := mysql.FindWorkCountsByAuthorId(uint(userId))
-	// 将作品数写入redis
-	go func() {
-		err := redis.SetWorkCountByUserId(uint(userId), workCount)
+	//缓存不存在，尝试从数据库中取
+	if redis.AcquireUserLock(uint(userId), redis.WorkCountField) {
+		defer redis.ReleaseUserLock(uint(userId), redis.WorkCountField)
+		//double check
+		if redis.IsExistUserField(uint(userId), redis.WorkCountField) {
+			workCount, err := redis.GetWorkCountByUserId(uint(userId))
+			if err != nil {
+				zap.L().Error("从redis中获取作品数失败", zap.Error(err))
+				return 0, err
+			}
+			return int32(workCount), nil
+		}
+		// 2. 从数据库中获取
+		workCount := mysql.FindWorkCountsByAuthorId(uint(userId))
+		// 将作品数写入redis
+		err = redis.SetWorkCountByUserId(uint(userId), workCount)
 		if err != nil {
 			zap.L().Error("将作品数写入redis失败", zap.Error(err))
+			return 0, err
 		}
-	}()
-	return int32(workCount), nil
+		return int32(workCount), nil
+	}
+	return 0, errors.New("redis获取workCount锁连接失败")
 }

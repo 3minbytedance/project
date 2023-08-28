@@ -19,7 +19,6 @@ import (
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
-	"sync"
 	"time"
 )
 
@@ -194,24 +193,29 @@ func (s *CommentServiceImpl) GetCommentCount(ctx context.Context, videoId int64)
 // 返回true表示不存在这个key，并设置key
 // 返回false表示已存在这个key，cnt数返回0
 func checkAndSetRedisCommentKey(videoId uint) (isSet bool, count int64) {
-	var m sync.RWMutex
 	if redis.IsExistVideoField(videoId, redis.CommentCountField) {
 		return false, 0
 	}
-	m.Lock()
-	defer m.Unlock()
-	if redis.IsExistVideoField(videoId, redis.CommentCountField) {
-		return false, 0
+	//缓存不存在，尝试从数据库中取
+	if redis.AcquireCommentLock(videoId) {
+		defer redis.ReleaseCommentLock(videoId)
+		//double check
+		if redis.IsExistVideoField(videoId, redis.CommentCountField) {
+			return false, 0
+		}
+		// 获取最新commentCount
+		cnt, err := mysql.GetCommentCnt(videoId)
+		if err != nil {
+			zap.L().Error("mysql获取评论数失败", zap.Error(err))
+			return false, 0
+		}
+		// 设置最新commentCount
+		err = redis.SetCommentCountByVideoId(videoId, cnt)
+		if err != nil {
+			zap.L().Error("redis更新评论数失败", zap.Error(err))
+			return false, 0
+		}
+		return true, cnt
 	}
-	// 获取最新commentCount
-	cnt, err := mysql.GetCommentCnt(videoId)
-	if err != nil {
-		zap.L().Error("mysql获取评论数失败", zap.Error(err))
-	}
-	// 设置最新commentCount
-	err = redis.SetCommentCountByVideoId(videoId, cnt)
-	if err != nil {
-		zap.L().Error("redis更新评论数失败", zap.Error(err))
-	}
-	return true, cnt
+	return false, 0
 }

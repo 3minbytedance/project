@@ -11,13 +11,13 @@ import (
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"errors"
+	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
-	"sync"
 	"time"
 )
 
@@ -319,52 +319,67 @@ func (s *RelationServiceImpl) IsFriend(ctx context.Context, request *relation.Is
 }
 
 // CheckAndSetRedisRelationKey
-// 返回0表示这个key存在，返回1表示，这个key不存在，已更新。返回2表示，这个key不存在，这个用户没有所对应的值
+// 返回0 KeyExistsAndNotSet 表示这个key存在，未设置
+// 返回1 KeyUpdated	表示，这个key不存在,已更新
+// 返回2 KeyNotExistsInBoth 表示，这个key在数据库和redis中都不存在，即缓存穿透
 func CheckAndSetRedisRelationKey(userId uint, key string) int {
-	var m sync.RWMutex
+
 	if redis.IsExistUserSetField(userId, key) {
-		return 0
+		return redis.KeyExistsAndNotSet
 	}
-	//key不存在 double check
-	m.Lock()
-	defer m.Unlock()
-	if redis.IsExistUserSetField(userId, key) {
-		return 0
-	}
+
 	switch key {
 	case redis.FollowList:
-		id, err := mysql.GetFollowList(userId)
-		if err != nil {
-			zap.L().Error("mysql获取FollowList失败", zap.Error(err))
-			return 2
+		if redis.AcquireRelationLock(userId, key) {
+			defer redis.ReleaseRelationLock(userId, key)
+			//double check
+			if redis.IsExistUserSetField(userId, key) {
+				return redis.KeyExistsAndNotSet
+			}
+			id, err := mysql.GetFollowList(userId)
+			if err != nil {
+				zap.L().Error("mysql获取FollowList失败", zap.Error(err))
+				return redis.KeyNotExistsInBoth
+			}
+			if len(id) == 0 {
+				zap.L().Info("mysql没有该FollowList")
+				return redis.KeyNotExistsInBoth
+			}
+			err = redis.SetFollowListByUserId(userId, id)
+			if err != nil {
+				zap.L().Error("redis更新FollowList失败", zap.Error(err))
+				return redis.KeyNotExistsInBoth
+			}
+			return redis.KeyUpdated
 		}
-		if len(id) == 0 {
-			zap.L().Info("mysql没有该FollowList")
-			return 2
-		}
-		err = redis.SetFollowListByUserId(userId, id)
-		if err != nil {
-			zap.L().Error("redis更新FollowList失败", zap.Error(err))
-			return 2
-		}
-		return 1
+		fmt.Println("test redis.FollowList")
+		return redis.KeyNotExistsInBoth
 	case redis.FollowerList:
-		id, err := mysql.GetFollowerList(userId)
-		if err != nil {
-			zap.L().Error("mysql获取FollowerList失败", zap.Error(err))
-			return 2
+		if redis.AcquireRelationLock(userId, key) {
+			defer redis.ReleaseRelationLock(userId, key)
+			//double check
+			if redis.IsExistUserSetField(userId, key) {
+				return redis.KeyExistsAndNotSet
+			}
+			id, err := mysql.GetFollowerList(userId)
+			if err != nil {
+				zap.L().Error("mysql获取FollowerList失败", zap.Error(err))
+				return redis.KeyNotExistsInBoth
+			}
+			if len(id) == 0 {
+				zap.L().Info("mysql没有该FollowerList")
+				return redis.KeyNotExistsInBoth
+			}
+			err = redis.SetFollowerListByUserId(userId, id)
+			if err != nil {
+				zap.L().Error("redis更新FollowerList失败", zap.Error(err))
+				return redis.KeyNotExistsInBoth
+			}
+			return redis.KeyUpdated
 		}
-		if len(id) == 0 {
-			zap.L().Info("mysql没有该FollowerList")
-			return 2
-		}
-		err = redis.SetFollowerListByUserId(userId, id)
-		if err != nil {
-			zap.L().Error("redis更新FollowerList失败", zap.Error(err))
-			return 2
-		}
-		return 1
+		fmt.Println("test redis.FollowerList")
+		return redis.KeyNotExistsInBoth
 	default:
-		return 2
+		return redis.KeyNotExistsInBoth
 	}
 }
