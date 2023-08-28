@@ -86,9 +86,9 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	// 数据入库
 	userId, err := mysql.CreateUser(&userData)
 	if err != nil {
-		zap.L().Error("Create user err:", zap.Error(err))
-		resp.StatusCode = common.CodeServerBusy
-		resp.StatusMsg = common.MapErrMsg(common.CodeServerBusy)
+		zap.L().Info("Create user err:", zap.Error(err))
+		resp.StatusCode = common.CodeUsernameAlreadyExists
+		resp.StatusMsg = common.MapErrMsg(common.CodeUsernameAlreadyExists)
 		err = nil
 		return
 	}
@@ -98,9 +98,10 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 
 	// 将token存入redis
 	redis.SetToken(userId, resp.Token)
-
-	// 用户名存入Bloom Filter
-	common.AddToBloom(request.Username)
+	go func() {
+		// 用户名存入Bloom Filter
+		common.AddToBloom(request.Username)
+	}()
 	return
 }
 
