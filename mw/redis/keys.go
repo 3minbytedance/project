@@ -139,15 +139,15 @@ func ReleaseUserLock(userId uint, field string) {
 	Rdb.Del(Ctx, key)
 }
 
-func AcquireFavoriteLock(Id uint, field string) bool {
+func AcquireFavoriteLock(id uint, field string) bool {
 	var key string
 	switch field {
 	case FavoriteList:
-		key = fmt.Sprintf("%s:%d_%s", FavoriteList, Id, Lock)
+		key = fmt.Sprintf("%s:%d_%s", FavoriteList, id, Lock)
 	case VideoFavoritedCountField:
-		key = fmt.Sprintf("%s:%d_%s", VideoFavoritedCountField, Id, Lock)
+		key = fmt.Sprintf("%s:%d_%s", VideoFavoritedCountField, id, Lock)
 	case TotalFavoriteField:
-		key = fmt.Sprintf("%s:%d_%s", TotalFavoriteField, Id, Lock)
+		key = fmt.Sprintf("%s:%d_%s", TotalFavoriteField, id, Lock)
 	default:
 		return false
 	}
@@ -159,28 +159,28 @@ func AcquireFavoriteLock(Id uint, field string) bool {
 	return result
 }
 
-func ReleaseFavoriteLock(Id uint, field string) {
+func ReleaseFavoriteLock(id uint, field string) {
 	var key string
 	switch field {
 	case FavoriteList:
-		key = fmt.Sprintf("%s:%d_%s", FavoriteList, Id, Lock)
+		key = fmt.Sprintf("%s:%d_%s", FavoriteList, id, Lock)
 	case VideoFavoritedCountField:
-		key = fmt.Sprintf("%s:%d_%s", VideoFavoritedCountField, Id, Lock)
+		key = fmt.Sprintf("%s:%d_%s", VideoFavoritedCountField, id, Lock)
 	case TotalFavoriteField:
-		key = fmt.Sprintf("%s:%d_%s", TotalFavoriteField, Id, Lock)
+		key = fmt.Sprintf("%s:%d_%s", TotalFavoriteField, id, Lock)
 	default:
 		return
 	}
 	Rdb.Del(Ctx, key)
 }
 
-func AcquireRelationLock(Id uint, field string) bool {
+func AcquireRelationLock(id uint, field string) bool {
 	var key string
 	switch field {
 	case FollowList:
-		key = fmt.Sprintf("%s:%d_%s", FollowList, Id, Lock)
+		key = fmt.Sprintf("%s:%d_%s", FollowList, id, Lock)
 	case FollowerList:
-		key = fmt.Sprintf("%s:%d_%s", FollowerList, Id, Lock)
+		key = fmt.Sprintf("%s:%d_%s", FollowerList, id, Lock)
 	default:
 		return false
 	}
@@ -192,13 +192,13 @@ func AcquireRelationLock(Id uint, field string) bool {
 	return result
 }
 
-func ReleaseRelationLock(Id uint, field string) {
+func ReleaseRelationLock(id uint, field string) {
 	var key string
 	switch field {
 	case FollowList:
-		key = fmt.Sprintf("%s:%d_%s", FollowList, Id, Lock)
+		key = fmt.Sprintf("%s:%d_%s", FollowList, id, Lock)
 	case FollowerList:
-		key = fmt.Sprintf("%s:%d_%s", FollowerList, Id, Lock)
+		key = fmt.Sprintf("%s:%d_%s", FollowerList, id, Lock)
 	default:
 		return
 	}
