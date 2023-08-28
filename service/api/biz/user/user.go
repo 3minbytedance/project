@@ -47,6 +47,7 @@ func Register(ctx context.Context, c *app.RequestContext) {
 		Username: username,
 		Password: password,
 	})
+
 	if err != nil {
 		zap.L().Error("Invoke userClient Register err:", zap.Error(err))
 		c.JSON(http.StatusOK, user.UserRegisterResponse{
