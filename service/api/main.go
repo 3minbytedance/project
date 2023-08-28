@@ -7,9 +7,11 @@ import (
 	"douyin/constant"
 	"douyin/logger"
 	"douyin/mw/redis"
+	"fmt"
 	"github.com/cloudwego/hertz/pkg/app/server"
-	"github.com/hertz-contrib/pprof"
 	"go.uber.org/zap"
+	"net/http"
+	_ "net/http/pprof"
 )
 
 func main() {
@@ -33,7 +35,13 @@ func main() {
 		server.WithHostPorts(constant.ApiServicePort),
 		server.WithMaxRequestBodySize(50*1024*1024),
 	)
-	pprof.Register(h)
+	//pprof.Register(h)
+	go func() {
+		ip := "0.0.0.0:8080"
+		if err := http.ListenAndServe(ip, nil); err != nil {
+			fmt.Printf("start pprof failed on %s\n", ip)
+		}
+	}()
 
 	customizedRegister(h)
 	h.Spin()

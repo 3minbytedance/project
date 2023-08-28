@@ -12,6 +12,7 @@ import (
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	"douyin/kitex_gen/video"
+	"douyin/mw/kafka"
 	mwRedis "douyin/mw/redis"
 	"errors"
 	"fmt"
@@ -196,17 +197,16 @@ func favoriteActions(userId uint, videoId uint, actionType int) error {
 		if err != nil {
 			return err
 		}
-		go func() {
-			dalMySQL.AddUserFavorite(userId, videoId)
-			fmt.Println("添加mysql")
-		}()
 		//go func() {
-		//	err := kafka.FavoriteMQInstance.ProduceAddFavoriteMsg(userId, videoId)
-		//	if err != nil {
-		//		zap.L().Error("更新MySQL点赞表err", zap.Error(err))
-		//		return
-		//	}
+		//	dalMySQL.AddUserFavorite(userId, videoId)
 		//}()
+		go func() {
+			err := kafka.FavoriteMQInstance.ProduceAddFavoriteMsg(userId, videoId)
+			if err != nil {
+				zap.L().Error("更新MySQL点赞表err", zap.Error(err))
+				return
+			}
+		}()
 		return nil
 	case 2:
 		// 取消赞
@@ -223,16 +223,16 @@ func favoriteActions(userId uint, videoId uint, actionType int) error {
 		if err != nil {
 			return err
 		}
-		go func() {
-			err = dalMySQL.DeleteUserFavorite(userId, videoId)
-		}()
 		//go func() {
-		//	err = kafka.FavoriteMQInstance.ProduceDelFavoriteMsg(userId, videoId)
-		//	if err != nil {
-		//		zap.L().Error("更新MySQL点赞表err", zap.Error(err))
-		//		return
-		//	}
+		//	err = dalMySQL.DeleteUserFavorite(userId, videoId)
 		//}()
+		go func() {
+			err = kafka.FavoriteMQInstance.ProduceDelFavoriteMsg(userId, videoId)
+			if err != nil {
+				zap.L().Error("更新MySQL点赞表err", zap.Error(err))
+				return
+			}
+		}()
 		return nil
 	default:
 		return errors.New("参数不合法")
@@ -325,29 +325,25 @@ func checkAndSetUserFavoriteListKey(userId uint, key string) int {
 		if mwRedis.IsExistUserSetField(userId, key) {
 			return mwRedis.KeyExistsAndNotSet
 		}
-		switch key {
-		case mwRedis.FavoriteList:
-			favorites, favoriteLength, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
-			if err != nil {
-				zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
-				return mwRedis.KeyNotExistsInBoth
-			}
-			//点赞数为0
-			if favoriteLength == 0 {
-				return mwRedis.KeyNotExistsInBoth
-			}
-			idList := getIdListFromFavoriteSlice(favorites, dalMySQL.IdTypeUser)
-			// key 不存在需要同步到redis
-			err = mwRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
-			if err != nil {
-				zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
-				return mwRedis.KeyNotExistsInBoth
-			}
-			return mwRedis.KeyUpdated
-		default:
+		favorites, favoriteLength, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
+		if err != nil {
+			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
 			return mwRedis.KeyNotExistsInBoth
 		}
+		//点赞数为0
+		if favoriteLength == 0 {
+			return mwRedis.KeyNotExistsInBoth
+		}
+		idList := getIdListFromFavoriteSlice(favorites, dalMySQL.IdTypeUser)
+		// key 不存在需要同步到redis
+		err = mwRedis.SetFavoriteListByUserId(userId, idList) // 加载到set中
+		if err != nil {
+			zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
+			return mwRedis.KeyNotExistsInBoth
+		}
+		return mwRedis.KeyUpdated
 	}
+	fmt.Println("checkAndSetUserFavoriteListKey")
 	// 重试
 	time.Sleep(100 * time.Millisecond)
 	return checkAndSetTotalFavoriteFieldKey(userId, key)
@@ -368,27 +364,23 @@ func checkAndSetVideoFavoriteCountKey(videoId uint, key string) int {
 		if mwRedis.IsExistVideoField(videoId, key) {
 			return mwRedis.KeyExistsAndNotSet
 		}
-		switch key {
-		case mwRedis.VideoFavoritedCountField:
-			// redis中不存在，从数据库中读取
-			_, num, err := dalMySQL.GetFavoritesByIdFromMysql(videoId, dalMySQL.IdTypeVideo)
-			if err != nil {
-				zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
-				return mwRedis.KeyNotExistsInBoth
-			}
-			if num == 0 {
-				return mwRedis.KeyNotExistsInBoth
-			}
-			err = mwRedis.SetVideoFavoritedCountByVideoId(videoId, int64(num)) // 加载视频被点赞数量
-			if err != nil {
-				zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
-				return mwRedis.KeyNotExistsInBoth
-			}
-			return mwRedis.KeyUpdated
-		default:
+		// redis中不存在，从数据库中读取
+		_, num, err := dalMySQL.GetFavoritesByIdFromMysql(videoId, dalMySQL.IdTypeVideo)
+		if err != nil {
+			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
 			return mwRedis.KeyNotExistsInBoth
 		}
+		if num == 0 {
+			return mwRedis.KeyNotExistsInBoth
+		}
+		err = mwRedis.SetVideoFavoritedCountByVideoId(videoId, int64(num)) // 加载视频被点赞数量
+		if err != nil {
+			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
+			return mwRedis.KeyNotExistsInBoth
+		}
+		return mwRedis.KeyUpdated
 	}
+	fmt.Println("checkAndSetVideoFavoriteCountKey")
 	time.Sleep(100 * time.Millisecond)
 	return checkAndSetTotalFavoriteFieldKey(videoId, key)
 }
@@ -408,29 +400,25 @@ func checkAndSetTotalFavoriteFieldKey(userId uint, key string) int {
 		if mwRedis.IsExistUserField(userId, key) {
 			return mwRedis.KeyExistsAndNotSet
 		}
-		switch key {
-		case mwRedis.TotalFavoriteField:
-			//redis 不存在
-			var total int64
-			// 获取用户发布的视频列表
-			videosByAuthorId, exist := dalMySQL.FindVideosByAuthorId(userId)
-			if !exist {
-				return mwRedis.KeyNotExistsInBoth
-			}
-			for _, videoModel := range videosByAuthorId {
-				count, _ := getFavoritesVideoCount(videoModel.ID)
-				atomic.AddInt64(&total, count)
-			}
-			err := mwRedis.SetTotalFavoritedByUserId(userId, total)
-			if err != nil {
-				zap.L().Error("SetTotalFavoriteByUserId失败", zap.Error(err))
-				return mwRedis.KeyNotExistsInBoth
-			}
-			return mwRedis.KeyUpdated
-		default:
-			return 2
+		//redis 不存在
+		var total int64
+		// 获取用户发布的视频列表
+		videosByAuthorId, exist := dalMySQL.FindVideosByAuthorId(userId)
+		if !exist {
+			return mwRedis.KeyNotExistsInBoth
 		}
+		for _, videoModel := range videosByAuthorId {
+			count, _ := getFavoritesVideoCount(videoModel.ID)
+			atomic.AddInt64(&total, count)
+		}
+		err := mwRedis.SetTotalFavoritedByUserId(userId, total)
+		if err != nil {
+			zap.L().Error("SetTotalFavoriteByUserId失败", zap.Error(err))
+			return mwRedis.KeyNotExistsInBoth
+		}
+		return mwRedis.KeyUpdated
 	}
+	fmt.Println("checkAndSetTotalFavoriteFieldKey")
 	time.Sleep(100 * time.Millisecond)
 	return checkAndSetTotalFavoriteFieldKey(userId, key)
 }
