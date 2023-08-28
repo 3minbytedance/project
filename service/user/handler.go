@@ -78,8 +78,6 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	userData := model.User{}
 	userData.Name = request.Username
 	userData.ID = common.GetUid()
-	// 用户名存入Bloom Filter
-	common.AddToBloom(request.Username)
 
 	// 将信息存储到数据库中
 	userData.Password, _ = common.MakePassword(request.Password)
@@ -98,6 +96,9 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 
 	// 将token存入redis
 	redis.SetToken(userId, resp.Token)
+
+	// 用户名存入Bloom Filter
+	common.AddToBloom(request.Username)
 	return
 }
 
