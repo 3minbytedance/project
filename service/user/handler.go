@@ -65,6 +65,7 @@ func NewUserServiceImpl() *UserServiceImpl {
 
 // Register implements the UserServiceImpl interface.
 func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegisterRequest) (resp *user.UserRegisterResponse, err error) {
+
 	// 检查注册信息是否合理
 	resp = new(user.UserRegisterResponse)
 	statusCode, statusMsg := CheckUserRegisterInfo(request.Username, request.Password)
@@ -88,6 +89,7 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 		zap.L().Error("Create user err:", zap.Error(err))
 		resp.StatusCode = common.CodeServerBusy
 		resp.StatusMsg = common.MapErrMsg(common.CodeServerBusy)
+		err = nil
 		return
 	}
 
@@ -122,6 +124,7 @@ func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequ
 		zap.L().Info("Find user by name err:", zap.Error(err))
 		resp.StatusCode = common.CodeServerBusy
 		resp.StatusMsg = common.MapErrMsg(common.CodeServerBusy)
+		err = nil
 		return
 	}
 	// 检查密码
@@ -191,6 +194,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 			zap.L().Error("relationClient err:", zap.Error(err))
 			resp.StatusCode = common.CodeServerBusy
 			resp.StatusMsg = common.MapErrMsg(common.CodeServerBusy)
+			err = nil
 			return
 		}
 	}

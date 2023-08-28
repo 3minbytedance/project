@@ -11,7 +11,6 @@ import (
 	"douyin/service/api/biz/user"
 	"douyin/service/api/biz/video"
 	"douyin/service/api/mw"
-
 	"github.com/cloudwego/hertz/pkg/app/server"
 )
 
