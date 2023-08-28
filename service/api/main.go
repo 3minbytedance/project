@@ -8,6 +8,7 @@ import (
 	"douyin/logger"
 	"douyin/mw/redis"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/hertz-contrib/pprof"
 	"go.uber.org/zap"
 )
 
@@ -32,6 +33,7 @@ func main() {
 		server.WithHostPorts(constant.ApiServicePort),
 		server.WithMaxRequestBodySize(50*1024*1024),
 	)
+	pprof.Register(h)
 
 	customizedRegister(h)
 	h.Spin()
