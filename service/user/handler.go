@@ -178,6 +178,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	workCountCh := make(chan int32)
 	favoriteCountCh := make(chan int32)
 	totalFavoriteCountCh := make(chan int32)
+	isFollowCh := make(chan bool)
 
 	defer func() {
 		close(followCountCh)
@@ -185,6 +186,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 		close(workCountCh)
 		close(favoriteCountCh)
 		close(totalFavoriteCountCh)
+		close(isFollowCh)
 	}()
 
 	// 关注数
@@ -217,11 +219,26 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 		totalFavoriteCountCh <- totalFavoriteCount
 	}()
 
+	//未登录
+	if !isLogged {
+		isFollowCh <- false
+	} else {
+		go func() {
+			isFollow, _ := relationClient.IsFollowing(ctx, &relation.IsFollowingRequest{
+				ActorId: actionId,
+				UserId:  userId,
+			})
+			isFollowCh <- isFollow
+		}()
+	}
+
 	var followCount, followerCount, workCount, favoriteCount, totalFavoriteCount int32
+	var isFollow bool
 
 	resp.SetUser(pack.User(userId))
+	resp.User.SetName(name)
 	// 从通道接收结果
-	for receivedCount := 0; receivedCount < 5; receivedCount++ {
+	for receivedCount := 0; receivedCount < 6; receivedCount++ {
 		select {
 		case followCount = <-followCountCh:
 			resp.User.SetFollowCount(followCount)
@@ -233,31 +250,16 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 			resp.User.SetFavoriteCount(favoriteCount)
 		case totalFavoriteCount = <-totalFavoriteCountCh:
 			resp.User.SetTotalFavorited(strconv.Itoa(int(totalFavoriteCount)))
-		case <-time.After(2 * time.Second):
-			zap.L().Error("2s overtime.")
+		case isFollow = <-isFollowCh:
+			resp.User.SetIsFollow(isFollow)
+		case <-time.After(3 * time.Second):
+			zap.L().Error("3s overtime.")
+			break
 		}
-	}
-
-	// 检查是否已关注
-	isFollow := false
-	//已登录
-	if isLogged {
-		isFollowCh := make(chan bool)
-		defer close(isFollowCh)
-		go func() {
-			isFollow, _ = relationClient.IsFollowing(ctx, &relation.IsFollowingRequest{
-				ActorId: actionId,
-				UserId:  userId,
-			})
-			isFollowCh <- isFollow
-		}()
-		isFollow = <-isFollowCh
 	}
 
 	resp.StatusCode = common.CodeSuccess
 	resp.StatusMsg = common.MapErrMsg(common.CodeSuccess)
-	resp.User.SetName(name)
-	resp.User.SetIsFollow(isFollow)
 	return
 }
 

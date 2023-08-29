@@ -3,7 +3,9 @@ package redis
 import (
 	"fmt"
 	_ "github.com/redis/go-redis/v9"
+	"math/rand"
 	"strconv"
+	"time"
 )
 
 // GetCommentCountByVideoId 根据videoId查找评论数
@@ -33,5 +35,8 @@ func DecrementCommentCountByVideoId(videoId uint) error {
 func SetCommentCountByVideoId(videoId uint, commentCount int64) error {
 	key := fmt.Sprintf("%s:%d", VideoKey, videoId)
 	err := Rdb.HSet(Ctx, key, CommentCountField, commentCount).Err()
+	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	expiration := time.Duration(randomSeconds) * time.Second
+	Rdb.Expire(Ctx, key, expiration)
 	return err
 }

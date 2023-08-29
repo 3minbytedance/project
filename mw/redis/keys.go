@@ -3,7 +3,6 @@ package redis
 import (
 	"fmt"
 	"go.uber.org/zap"
-	"math/rand"
 	"time"
 )
 
@@ -49,11 +48,6 @@ func IsExistUserField(userId uint, field string) bool {
 		zap.L().Error("redis isExistVideo 连接失败")
 		return false
 	}
-	if exists {
-		randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
-		expiration := time.Duration(randomSeconds) * time.Second
-		Rdb.Expire(Ctx, key, expiration)
-	}
 	return exists
 }
 
@@ -63,11 +57,6 @@ func IsExistVideoField(videoId uint, field string) bool {
 	if err != nil {
 		zap.L().Error("redis isExistVideo 连接失败")
 		return false
-	}
-	if exists {
-		randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
-		expiration := time.Duration(randomSeconds) * time.Second
-		Rdb.Expire(Ctx, key, expiration)
 	}
 	return exists
 }
@@ -80,11 +69,6 @@ func IsExistUserSetField(userId uint, field string) bool {
 		zap.L().Error("redis isExistVideo 连接失败")
 		return false
 	}
-	if exists != 0 {
-		randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
-		expiration := time.Duration(randomSeconds) * time.Second
-		Rdb.Expire(Ctx, key, expiration)
-	}
 	return exists != 0
 }
 
@@ -96,7 +80,7 @@ func DelKey(userId uint, field string) {
 
 func AcquireCommentLock(videoId uint) bool {
 	key := fmt.Sprintf("%s:%d_%s", CommentCountField, videoId, Lock)
-	result, err := Rdb.SetNX(Ctx, key, 1, 30*time.Second).Result()
+	result, err := Rdb.SetNX(Ctx, key, 1, 2*time.Second).Result()
 	if err != nil {
 		zap.L().Error("获取锁失败", zap.Error(err))
 		return false
@@ -119,7 +103,7 @@ func AcquireUserLock(userId uint, field string) bool {
 	default:
 		return false
 	}
-	result, err := Rdb.SetNX(Ctx, key, 1, 3*time.Second).Result()
+	result, err := Rdb.SetNX(Ctx, key, 1, 2*time.Second).Result()
 	if err != nil {
 		zap.L().Error("获取锁失败", zap.Error(err))
 		return false
