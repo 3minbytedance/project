@@ -83,16 +83,38 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 	// 将查询结果转换为VideoResponse类型
 	videoList := make([]*video.Video, 0, len(videos))
 	for _, v := range videos {
-		userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: currentId,
-			UserId:  int64(v.AuthorId),
-		})
-		commentCount, _ := commentClient.GetCommentCount(ctx, int64(v.ID))
-		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int64(v.ID))
-		isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
-			UserId:  currentId,
-			VideoId: int64(v.ID),
-		})
+		userRespCh := make(chan *user.UserInfoByIdResponse)
+		commentCountCh := make(chan int32)
+		favoriteCountCh := make(chan int32)
+		isFavoriteCh := make(chan bool)
+		go func() {
+			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+				ActorId: currentId,
+				UserId:  int64(v.AuthorId),
+			})
+			userRespCh <- userResp
+		}()
+		go func() {
+			commentCount, _ := commentClient.GetCommentCount(ctx, int64(v.ID))
+			commentCountCh <- commentCount
+		}()
+		go func() {
+			favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int64(v.ID))
+			favoriteCountCh <- favoriteCount
+		}()
+		//判断当前请求用户是否点赞该视频
+		go func() {
+			isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
+				UserId:  currentId,
+				VideoId: int64(v.ID),
+			})
+			isFavoriteCh <- isFavorite
+		}()
+		userResp := <-userRespCh
+		commentCount := <-commentCountCh
+		favoriteCount := <-favoriteCountCh
+		isFavorite := <-isFavoriteCh
+
 		videoResponse := video.Video{
 			Id:            int64(v.ID),
 			Author:        userResp.GetUser(),
@@ -104,6 +126,10 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 			Title:         v.Title,
 		}
 		videoList = append(videoList, &videoResponse)
+		close(commentCountCh)
+		close(favoriteCountCh)
+		close(isFavoriteCh)
+		close(userRespCh)
 	}
 	nextTime := videos[len(videos)-1].CreatedAt
 
@@ -167,13 +193,28 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 	})
 	//toUserId 发布的视频
 	for _, v := range videos {
-		commentCount, _ := commentClient.GetCommentCount(ctx, int64(v.ID))
-		favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int64(v.ID))
+		commentCountCh := make(chan int32)
+		favoriteCountCh := make(chan int32)
+		isFavoriteCh := make(chan bool)
+		go func() {
+			commentCount, _ := commentClient.GetCommentCount(ctx, int64(v.ID))
+			commentCountCh <- commentCount
+		}()
+		go func() {
+			favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int64(v.ID))
+			favoriteCountCh <- favoriteCount
+		}()
 		//判断当前请求用户是否点赞该视频
-		isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
-			UserId:  fromUserId,
-			VideoId: int64(v.ID),
-		})
+		go func() {
+			isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
+				UserId:  fromUserId,
+				VideoId: int64(v.ID),
+			})
+			isFavoriteCh <- isFavorite
+		}()
+		commentCount := <-commentCountCh
+		favoriteCount := <-favoriteCountCh
+		isFavorite := <-isFavoriteCh
 		videoResponse := video.Video{
 			Id:            int64(v.ID),
 			Author:        userResp.GetUser(),
@@ -185,6 +226,9 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 			Title:         v.Title,
 		}
 		videoList = append(videoList, &videoResponse)
+		close(commentCountCh)
+		close(favoriteCountCh)
+		close(isFavoriteCh)
 	}
 
 	return &video.PublishVideoListResponse{
