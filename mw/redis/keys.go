@@ -36,6 +36,7 @@ const TokenKey = "token:"
 
 const (
 	Lock               = "lock"
+	RetryTime          = 30 * time.Millisecond
 	KeyExistsAndNotSet = 0
 	KeyUpdated         = 1
 	KeyNotExistsInBoth = 2

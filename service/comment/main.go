@@ -70,6 +70,7 @@ func main() {
 		server.WithSuite(tracing.NewServerSuite()),
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.CommentServiceName}),
 		server.WithRegistry(r),
+		server.WithMuxTransport(),
 	)
 	err = svr.Run()
 

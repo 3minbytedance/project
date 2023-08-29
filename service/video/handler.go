@@ -43,18 +43,22 @@ func init() {
 		constant.UserServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
-		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.UserServiceName}))
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.UserServiceName}),
+		client.WithMuxConnection(1),
+	)
 	commentClient, err = commentservice.NewClient(
 		constant.CommentServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.CommentServiceName}),
+		client.WithMuxConnection(1),
 	)
 	favoriteClient, err = favoriteservice.NewClient(
 		constant.FavoriteServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.FavoriteServiceName}),
+		client.WithMuxConnection(1),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -231,6 +235,6 @@ func getWorkCount(userId uint) (int32, error) {
 		return int32(workCount), nil
 	}
 	//重试
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(redis.RetryTime)
 	return getWorkCount(userId)
 }

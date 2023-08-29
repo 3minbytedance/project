@@ -78,6 +78,7 @@ func main() {
 		server.WithSuite(tracing.NewServerSuite()),
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.MessageServiceName}),
 		server.WithRegistry(r),
+		server.WithMuxTransport(),
 	)
 	err = svr.Run()
 	if err != nil {

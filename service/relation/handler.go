@@ -33,7 +33,9 @@ func init() {
 		constant.UserServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
-		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.UserServiceName}))
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.UserServiceName}),
+		client.WithMuxConnection(1),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -378,6 +380,6 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 	}
 	fmt.Println("CheckAndSetRedisRelationKey")
 	// 重试
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(redis.RetryTime)
 	return CheckAndSetRedisRelationKey(userId, key)
 }

@@ -37,18 +37,22 @@ func init() {
 		constant.RelationServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
-		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.RelationServiceName}))
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.RelationServiceName}),
+		client.WithMuxConnection(1),
+	)
 	favoriteClient, err = favoriteservice.NewClient(
 		constant.FavoriteServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.FavoriteServiceName}),
+		client.WithMuxConnection(1),
 	)
 	videoClient, err = videoservice.NewClient(
 		constant.VideoServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.VideoServiceName}),
+		client.WithMuxConnection(1),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -169,37 +173,75 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 		return
 	}
 
-	// 关注数 粉丝数
-	followCount, _ := relationClient.GetFollowListCount(ctx, userId)
-	followerCount, _ := relationClient.GetFollowerListCount(ctx, userId)
+	followCountCh := make(chan int32)
+	followerCountCh := make(chan int32)
+	workCountCh := make(chan int32)
+	favoriteCountCh := make(chan int32)
+	totalFavoriteCountCh := make(chan int32)
 
-	resp.StatusCode = common.CodeSuccess
-	resp.StatusMsg = common.MapErrMsg(common.CodeSuccess)
+	defer func() {
+		close(followCountCh)
+		close(followerCountCh)
+		close(workCountCh)
+		close(favoriteCountCh)
+		close(totalFavoriteCountCh)
+	}()
+
+	// 关注数
+	go func() {
+		followCount, _ := relationClient.GetFollowListCount(ctx, userId)
+		followCountCh <- followCount
+	}()
+
+	// 粉丝数
+	go func() {
+		followerCount, _ := relationClient.GetFollowerListCount(ctx, userId)
+		followerCountCh <- followerCount
+	}()
+
 	// 作品数
-	workCount, _ := videoClient.GetWorkCount(ctx, userId)
-	// 喜欢数
-	favoriteCount, _ := favoriteClient.GetUserFavoriteCount(ctx, userId)
-	// 总的被点赞数
-	totalFavoriteCount, _ := favoriteClient.GetUserTotalFavoritedCount(ctx, userId)
-	// 检查是否已关注
+	go func() {
+		workCount, _ := videoClient.GetWorkCount(ctx, userId)
+		workCountCh <- workCount
+	}()
 
-	//zap.L().Info("IDS", zap.Any("actorId", actionId), zap.Any("userId", userId))
+	// 喜欢数
+	go func() {
+		favoriteCount, _ := favoriteClient.GetUserFavoriteCount(ctx, userId)
+		favoriteCountCh <- favoriteCount
+	}()
+
+	// 总的被点赞数
+	go func() {
+		totalFavoriteCount, _ := favoriteClient.GetUserTotalFavoritedCount(ctx, userId)
+		totalFavoriteCountCh <- totalFavoriteCount
+	}()
+
+	// 从通道接收结果
+	followCount := <-followCountCh
+	followerCount := <-followerCountCh
+	workCount := <-workCountCh
+	favoriteCount := <-favoriteCountCh
+	totalFavoriteCount := <-totalFavoriteCountCh
+
+	// 检查是否已关注
 	isFollow := false
 	//已登录
 	if isLogged {
-		isFollow, err = relationClient.IsFollowing(ctx, &relation.IsFollowingRequest{
-			ActorId: actionId,
-			UserId:  userId,
-		})
-		if err != nil {
-			zap.L().Error("relationClient err:", zap.Error(err))
-			resp.StatusCode = common.CodeServerBusy
-			resp.StatusMsg = common.MapErrMsg(common.CodeServerBusy)
-			err = nil
-			return
-		}
+		isFollowCh := make(chan bool)
+		defer close(isFollowCh)
+		go func() {
+			isFollow, _ = relationClient.IsFollowing(ctx, &relation.IsFollowingRequest{
+				ActorId: actionId,
+				UserId:  userId,
+			})
+			isFollowCh <- isFollow
+		}()
+		isFollow = <-isFollowCh
 	}
 
+	resp.StatusCode = common.CodeSuccess
+	resp.StatusMsg = common.MapErrMsg(common.CodeSuccess)
 	resp.SetUser(pack.User(userId))
 	resp.User.SetName(name)
 	resp.User.SetFollowCount(followCount)
@@ -248,7 +290,7 @@ func GetName(userId uint) (string, bool) {
 		return userModel.Name, true
 	}
 	// 重试
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(redis.RetryTime)
 	return GetName(userId)
 }
 

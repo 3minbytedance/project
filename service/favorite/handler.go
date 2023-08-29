@@ -42,7 +42,9 @@ func init() {
 		constant.UserServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
-		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.UserServiceName}))
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.UserServiceName}),
+		client.WithMuxConnection(1),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,7 +52,9 @@ func init() {
 		constant.CommentServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
-		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.CommentServiceName}))
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.CommentServiceName}),
+		client.WithMuxConnection(1),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -345,7 +349,7 @@ func checkAndSetUserFavoriteListKey(userId uint, key string) int {
 	}
 	fmt.Println("checkAndSetUserFavoriteListKey")
 	// 重试
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(mwRedis.RetryTime)
 	return checkAndSetTotalFavoriteFieldKey(userId, key)
 }
 
@@ -381,7 +385,7 @@ func checkAndSetVideoFavoriteCountKey(videoId uint, key string) int {
 		return mwRedis.KeyUpdated
 	}
 	fmt.Println("checkAndSetVideoFavoriteCountKey")
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(mwRedis.RetryTime)
 	return checkAndSetTotalFavoriteFieldKey(videoId, key)
 }
 
@@ -419,6 +423,6 @@ func checkAndSetTotalFavoriteFieldKey(userId uint, key string) int {
 		return mwRedis.KeyUpdated
 	}
 	fmt.Println("checkAndSetTotalFavoriteFieldKey")
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(mwRedis.RetryTime)
 	return checkAndSetTotalFavoriteFieldKey(userId, key)
 }

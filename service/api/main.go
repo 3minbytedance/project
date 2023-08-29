@@ -9,6 +9,7 @@ import (
 	"douyin/mw/redis"
 	"fmt"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/cloudwego/hertz/pkg/network/standard"
 	"go.uber.org/zap"
 	"net/http"
 	_ "net/http/pprof"
@@ -34,6 +35,8 @@ func main() {
 	h := server.Default(
 		server.WithHostPorts(constant.ApiServicePort),
 		server.WithMaxRequestBodySize(50*1024*1024),
+		server.WithStreamBody(true),
+		server.WithTransport(standard.NewTransporter),
 	)
 	//pprof.Register(h)
 	go func() {
