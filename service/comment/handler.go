@@ -20,6 +20,7 @@ import (
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -152,20 +153,31 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 		}, err
 	}
 	commentList := make([]*comment.Comment, 0, len(comments))
+	userResponses := make([]*user.UserInfoByIdResponse, len(comments))
 	actionId := request.GetUserId()
-	for _, com := range comments {
-		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: actionId,
-			UserId:  int64(com.UserId),
-		})
-		if err != nil {
-			zap.L().Error("查询评论用户信息失败", zap.Error(err))
-			return &comment.CommentListResponse{
-				StatusCode:  common.CodeDBError,
-				StatusMsg:   common.MapErrMsg(common.CodeDBError),
-				CommentList: nil,
-			}, err
-		}
+	var wg sync.WaitGroup
+	wg.Add(len(comments))
+
+	for i, com := range comments {
+		go func(index int, c model.Comment) {
+			defer wg.Done()
+			userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+				ActorId: actionId,
+				UserId:  int64(c.UserId),
+			})
+			if err != nil {
+				err = nil
+				zap.L().Error("查询评论用户信息失败", zap.Error(err))
+				return
+			}
+			userResponses[index] = userResp
+		}(i, com)
+	}
+	wg.Wait()
+
+	// 处理 userResponses
+	for i, com := range comments {
+		userResp := userResponses[i]
 		commentList = append(commentList, pack.Comment(&com, userResp.GetUser()))
 	}
 	return &comment.CommentListResponse{
