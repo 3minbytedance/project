@@ -52,3 +52,9 @@ func GetCommentCnt(videoId uint) (int64, error) {
 	// 返回评论数和是否查询成功
 	return cnt, err
 }
+
+func IsCommentBelongsToUser(commentId *int32, userId int64) (bool, error) {
+	var cnt int64
+	err := DB.Model(&model.Comment{}).Where("comment_id = ? and user_id = ?", commentId, userId).Count(&cnt).Error
+	return cnt != 0, err
+}

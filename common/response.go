@@ -21,6 +21,8 @@ const (
 	CodeInvalidRegisterUsername
 	CodeInvalidRegisterPassword
 	CodeUsernameAlreadyExists
+
+	CodeInvalidCommentAction
 )
 
 var message map[int32]string
@@ -43,6 +45,7 @@ func init() {
 	message[CodeInvalidRegisterUsername] = "用户名不合规"
 	message[CodeInvalidRegisterPassword] = "密码不合规"
 	message[CodeUsernameAlreadyExists] = "用户名已存在"
+	message[CodeInvalidCommentAction] = "这不是您的评论"
 
 }
 

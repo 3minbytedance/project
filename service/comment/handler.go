@@ -106,6 +106,22 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		}, nil
 
 	case 2:
+
+		// 查询评论id是否属于该用户
+		belongsToUser, err := mysql.IsCommentBelongsToUser(request.CommentId, request.UserId)
+		if err != nil {
+			return &comment.CommentActionResponse{
+				StatusCode: common.CodeServerBusy,
+				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
+			}, err
+		}
+		if !belongsToUser {
+			return &comment.CommentActionResponse{
+				StatusCode: common.CodeInvalidCommentAction,
+				StatusMsg:  common.MapErrMsg(common.CodeInvalidCommentAction),
+			}, nil
+		}
+
 		// 设置redis
 		go func() {
 			// todo

@@ -36,7 +36,8 @@ func FindUserByUserID(id uint) (user model.User, exist bool, err error) {
 
 func CreateUser(user *model.User) (id uint, err error) {
 	// 数据入库
-	err = DB.Create(&user).Error
+	zap.L().Debug("USER: ", zap.Any("user", user))
+	err = DB.Create(user).Error
 	id = user.ID
 	return
 }
