@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"strconv"
+	"sync/atomic"
 	"time"
 )
 
@@ -217,12 +218,26 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 		totalFavoriteCountCh <- totalFavoriteCount
 	}()
 
+	var followCount, followerCount, workCount, favoriteCount, totalFavoriteCount int32
+	var receivedCount uint32 = 0
+
 	// 从通道接收结果
-	followCount := <-followCountCh
-	followerCount := <-followerCountCh
-	workCount := <-workCountCh
-	favoriteCount := <-favoriteCountCh
-	totalFavoriteCount := <-totalFavoriteCountCh
+	for receivedCount < 5 {
+		select {
+		case followCount = <-followCountCh:
+			atomic.AddUint32(&receivedCount, 1)
+		case followerCount = <-followerCountCh:
+			atomic.AddUint32(&receivedCount, 1)
+		case workCount = <-workCountCh:
+			atomic.AddUint32(&receivedCount, 1)
+		case favoriteCount = <-favoriteCountCh:
+			atomic.AddUint32(&receivedCount, 1)
+		case totalFavoriteCount = <-totalFavoriteCountCh:
+			atomic.AddUint32(&receivedCount, 1)
+		case <-time.After(2 * time.Second):
+			zap.L().Error("2s overtime.")
+		}
+	}
 
 	// 检查是否已关注
 	isFollow := false
