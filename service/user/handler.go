@@ -219,6 +219,7 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 
 	var followCount, followerCount, workCount, favoriteCount, totalFavoriteCount int32
 
+	resp.SetUser(pack.User(userId))
 	// 从通道接收结果
 	for receivedCount := 0; receivedCount < 5; receivedCount++ {
 		select {
@@ -255,14 +256,8 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 
 	resp.StatusCode = common.CodeSuccess
 	resp.StatusMsg = common.MapErrMsg(common.CodeSuccess)
-	resp.SetUser(pack.User(userId))
 	resp.User.SetName(name)
-
-
 	resp.User.SetIsFollow(isFollow)
-
-
-
 	return
 }
 
