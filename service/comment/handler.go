@@ -182,7 +182,6 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 				UserId:  int64(c.UserId),
 			})
 			if err != nil {
-				err = nil
 				zap.L().Error("查询评论用户信息失败", zap.Error(err))
 				return
 			}
@@ -194,6 +193,9 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 	// 处理 userResponses
 	for i, com := range comments {
 		userResp := userResponses[i]
+		if userResp == nil{
+			continue
+		}
 		commentList = append(commentList, pack.Comment(&com, userResp.GetUser()))
 	}
 	return &comment.CommentListResponse{
