@@ -119,7 +119,7 @@ func AcquireUserLock(userId uint, field string) bool {
 	default:
 		return false
 	}
-	result, err := Rdb.SetNX(Ctx, key, 1, 30*time.Second).Result()
+	result, err := Rdb.SetNX(Ctx, key, 1, 3*time.Second).Result()
 	if err != nil {
 		zap.L().Error("获取锁失败", zap.Error(err))
 		return false
@@ -152,7 +152,7 @@ func AcquireFavoriteLock(id uint, field string) bool {
 	default:
 		return false
 	}
-	result, err := Rdb.SetNX(Ctx, key, 1, 30*time.Second).Result()
+	result, err := Rdb.SetNX(Ctx, key, 1, 2*time.Second).Result()
 	if err != nil {
 		zap.L().Error("获取锁失败", zap.Error(err))
 		return false
@@ -185,7 +185,7 @@ func AcquireRelationLock(id uint, field string) bool {
 	default:
 		return false
 	}
-	result, err := Rdb.SetNX(Ctx, key, 1, 30*time.Second).Result()
+	result, err := Rdb.SetNX(Ctx, key, 1, 2*time.Second).Result()
 	if err != nil {
 		zap.L().Error("获取锁失败", zap.Error(err))
 		return false

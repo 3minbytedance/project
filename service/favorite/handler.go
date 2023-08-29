@@ -8,7 +8,7 @@ import (
 	"douyin/dal/model"
 	dalMySQL "douyin/dal/mysql"
 	"douyin/kitex_gen/comment/commentservice"
-	favorite "douyin/kitex_gen/favorite"
+	"douyin/kitex_gen/favorite"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	"douyin/kitex_gen/video"

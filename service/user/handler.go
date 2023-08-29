@@ -20,7 +20,6 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"strconv"
-	"sync/atomic"
 	"time"
 )
 
@@ -219,21 +218,20 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	}()
 
 	var followCount, followerCount, workCount, favoriteCount, totalFavoriteCount int32
-	var receivedCount uint32 = 0
 
 	// 从通道接收结果
-	for receivedCount < 5 {
+	for receivedCount := 0; receivedCount < 5; receivedCount++ {
 		select {
 		case followCount = <-followCountCh:
-			atomic.AddUint32(&receivedCount, 1)
+			resp.User.SetFollowCount(followCount)
 		case followerCount = <-followerCountCh:
-			atomic.AddUint32(&receivedCount, 1)
+			resp.User.SetFollowerCount(followerCount)
 		case workCount = <-workCountCh:
-			atomic.AddUint32(&receivedCount, 1)
+			resp.User.SetWorkCount(workCount)
 		case favoriteCount = <-favoriteCountCh:
-			atomic.AddUint32(&receivedCount, 1)
+			resp.User.SetFavoriteCount(favoriteCount)
 		case totalFavoriteCount = <-totalFavoriteCountCh:
-			atomic.AddUint32(&receivedCount, 1)
+			resp.User.SetTotalFavorited(strconv.Itoa(int(totalFavoriteCount)))
 		case <-time.After(2 * time.Second):
 			zap.L().Error("2s overtime.")
 		}
@@ -259,12 +257,12 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 	resp.StatusMsg = common.MapErrMsg(common.CodeSuccess)
 	resp.SetUser(pack.User(userId))
 	resp.User.SetName(name)
-	resp.User.SetFollowCount(followCount)
-	resp.User.SetFollowerCount(followerCount)
+
+
 	resp.User.SetIsFollow(isFollow)
-	resp.User.SetWorkCount(workCount)
-	resp.User.SetFavoriteCount(favoriteCount)
-	resp.User.SetTotalFavorited(strconv.Itoa(int(totalFavoriteCount)))
+
+
+
 	return
 }
 
