@@ -157,6 +157,30 @@ func IsInMyFollowerList(userId uint, id uint) (bool, error) {
 	return found, err
 }
 
+// ActionFollow
+// 更新fromUserId关注和toUserId粉丝
+func ActionFollow(fromUserId, toUserId uint) error {
+	keyFollow := fmt.Sprintf("%s:%d", FollowList, fromUserId)
+	keyFollower := fmt.Sprintf("%s:%d", FollowerList, toUserId)
+	pipe := Rdb.TxPipeline()
+	pipe.SAdd(Ctx, keyFollow, toUserId)
+	pipe.SAdd(Ctx, keyFollower, fromUserId)
+	_, err := pipe.Exec(Ctx)
+	return err
+}
+
+// ActionCancelFollow
+// 更新fromUserId关注和toUserId粉丝
+func ActionCancelFollow(fromUserId, toUserId uint) error {
+	keyFollow := fmt.Sprintf("%s:%d", FollowList, fromUserId)
+	keyFollower := fmt.Sprintf("%s:%d", FollowerList, toUserId)
+	pipe := Rdb.TxPipeline()
+	pipe.SRem(Ctx, keyFollow, toUserId)
+	pipe.SRem(Ctx, keyFollower, fromUserId)
+	_, err := pipe.Exec(Ctx)
+	return err
+}
+
 //-------------------------------丢弃
 // 给Id对应的关注数加一
 //func IncreaseFollowCountByUserId(userId uint) error {

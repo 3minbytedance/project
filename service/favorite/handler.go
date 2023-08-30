@@ -14,7 +14,6 @@ import (
 	"douyin/kitex_gen/video"
 	"douyin/mw/kafka"
 	mwRedis "douyin/mw/redis"
-	"errors"
 	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
@@ -22,7 +21,6 @@ import (
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -73,17 +71,24 @@ func (s *FavoriteServiceImpl) FavoriteAction(ctx context.Context, request *favor
 	userId := uint(request.UserId)
 	videoId := uint(request.VideoId)
 	actionType := int(request.ActionType)
-	err = favoriteActions(userId, videoId, actionType)
-	if err != nil {
+	res := favoriteActions(userId, videoId, actionType)
+	switch res {
+	case 0:
+		return &favorite.FavoriteActionResponse{
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
+		}, nil
+	case 1:
+		return &favorite.FavoriteActionResponse{
+			StatusCode: common.CodeFavoriteRepeat,
+			StatusMsg:  common.MapErrMsg(common.CodeFavoriteRepeat),
+		}, nil
+	default:
 		return &favorite.FavoriteActionResponse{
 			StatusCode: common.CodeServerBusy,
 			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
-		}, err
+		}, nil
 	}
-	return &favorite.FavoriteActionResponse{
-		StatusCode: common.CodeSuccess,
-		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
-	}, nil
 }
 
 // GetFavoriteList implements the FavoriteServiceImpl interface.
@@ -174,72 +179,73 @@ func (s *FavoriteServiceImpl) IsUserFavorite(ctx context.Context, request *favor
 }
 
 // favoriteActions 点赞，取消赞的操作过程
-func favoriteActions(userId uint, videoId uint, actionType int) error {
+// magic number 待改 todo
+// 0 表示点赞/取消点赞成功
+// 1 表示重复点赞/取消点赞
+// 2 表示其他错误
+func favoriteActions(userId uint, videoId uint, actionType int) int {
 	videoModel, found := dalMySQL.FindVideoByVideoId(videoId)
 	if !found {
-		return errors.New("video id not exist")
+		return 2
 	}
 	// 判断是否在redis中，防止对空key操作
 	checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
 	checkAndSetVideoFavoriteCountKey(videoId, mwRedis.VideoFavoritedCountField)
 	checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId, mwRedis.TotalFavoriteField)
+
 	switch actionType {
 	case 1:
 		// 点赞
 		// 判断重复点赞
-		// todo 待改
-		var m sync.Mutex
 		if isUserFavorite(userId, videoId) {
-			return nil
+			return 1
 		}
-		m.Lock()
-		defer m.Unlock()
-		if isUserFavorite(userId, videoId) {
-			return nil
-		}
-		err := mwRedis.ActionLike(userId, videoId, videoModel.AuthorId)
-		if err != nil {
-			return err
-		}
-		//go func() {
-		//	dalMySQL.AddUserFavorite(userId, videoId)
-		//}()
-		go func() {
-			err := kafka.FavoriteMQInstance.ProduceAddFavoriteMsg(userId, videoId)
-			if err != nil {
-				zap.L().Error("更新MySQL点赞表err", zap.Error(err))
-				return
+		if mwRedis.AcquireFavoriteLock(userId, mwRedis.FavoriteAction) {
+			defer mwRedis.ReleaseFavoriteLock(userId, mwRedis.FavoriteAction)
+			if isUserFavorite(userId, videoId) {
+				return 1
 			}
-		}()
-		return nil
+			err := mwRedis.ActionLike(userId, videoId, videoModel.AuthorId)
+			if err != nil {
+				return 2
+			}
+			go func() {
+				err := kafka.FavoriteMQInstance.ProduceAddFavoriteMsg(userId, videoId)
+				if err != nil {
+					zap.L().Error("更新MySQL点赞表err", zap.Error(err))
+					return
+				}
+			}()
+			return 0
+		}
+		time.Sleep(mwRedis.RetryTime)
+		return favoriteActions(userId, videoId, actionType)
 	case 2:
-		// 取消赞
-		var m sync.Mutex
 		if !isUserFavorite(userId, videoId) {
-			return nil
+			return 1
 		}
-		m.Lock()
-		defer m.Unlock()
-		if !isUserFavorite(userId, videoId) {
-			return nil
-		}
-		err := mwRedis.ActionCancelLike(userId, videoId, videoModel.AuthorId)
-		if err != nil {
-			return err
-		}
-		//go func() {
-		//	err = dalMySQL.DeleteUserFavorite(userId, videoId)
-		//}()
-		go func() {
-			err = kafka.FavoriteMQInstance.ProduceDelFavoriteMsg(userId, videoId)
-			if err != nil {
-				zap.L().Error("更新MySQL点赞表err", zap.Error(err))
-				return
+		if mwRedis.AcquireFavoriteLock(userId, mwRedis.FavoriteAction) {
+			defer mwRedis.ReleaseFavoriteLock(userId, mwRedis.FavoriteAction)
+			if !isUserFavorite(userId, videoId) {
+				return 1
 			}
-		}()
-		return nil
+			err := mwRedis.ActionCancelLike(userId, videoId, videoModel.AuthorId)
+			if err != nil {
+				return 2
+			}
+			go func() {
+				err = kafka.FavoriteMQInstance.ProduceDelFavoriteMsg(userId, videoId)
+				if err != nil {
+					zap.L().Error("更新MySQL点赞表err", zap.Error(err))
+					return
+				}
+			}()
+			return 0
+		}
+		time.Sleep(mwRedis.RetryTime)
+		return favoriteActions(userId, videoId, actionType)
 	default:
-		return errors.New("参数不合法")
+		return 2
 	}
 }
 

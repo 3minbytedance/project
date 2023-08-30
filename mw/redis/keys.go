@@ -35,6 +35,8 @@ const TokenKey = "token:"
 
 const (
 	Lock               = "lock"
+	FavoriteAction     = "favoriteAction"
+	FollowAction       = "followAction"
 	RetryTime          = 30 * time.Millisecond
 	KeyExistsAndNotSet = 0
 	KeyUpdated         = 1
@@ -133,6 +135,8 @@ func AcquireFavoriteLock(id uint, field string) bool {
 		key = fmt.Sprintf("%s:%d_%s", VideoFavoritedCountField, id, Lock)
 	case TotalFavoriteField:
 		key = fmt.Sprintf("%s:%d_%s", TotalFavoriteField, id, Lock)
+	case FavoriteAction:
+		key = fmt.Sprintf("%s:%d_%s", FavoriteAction, id, Lock)
 	default:
 		return false
 	}
@@ -153,6 +157,8 @@ func ReleaseFavoriteLock(id uint, field string) {
 		key = fmt.Sprintf("%s:%d_%s", VideoFavoritedCountField, id, Lock)
 	case TotalFavoriteField:
 		key = fmt.Sprintf("%s:%d_%s", TotalFavoriteField, id, Lock)
+	case FavoriteAction:
+		key = fmt.Sprintf("%s:%d_%s", FavoriteAction, id, Lock)
 	default:
 		return
 	}
@@ -166,6 +172,8 @@ func AcquireRelationLock(id uint, field string) bool {
 		key = fmt.Sprintf("%s:%d_%s", FollowList, id, Lock)
 	case FollowerList:
 		key = fmt.Sprintf("%s:%d_%s", FollowerList, id, Lock)
+	case FollowAction:
+		key = fmt.Sprintf("%s:%d_%s", FollowAction, id, Lock)
 	default:
 		return false
 	}
@@ -184,6 +192,8 @@ func ReleaseRelationLock(id uint, field string) {
 		key = fmt.Sprintf("%s:%d_%s", FollowList, id, Lock)
 	case FollowerList:
 		key = fmt.Sprintf("%s:%d_%s", FollowerList, id, Lock)
+	case FollowAction:
+		key = fmt.Sprintf("%s:%d_%s", FollowAction, id, Lock)
 	default:
 		return
 	}

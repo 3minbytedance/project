@@ -52,75 +52,86 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		zap.Int32("action_type", request.ActionType),
 		zap.Int64("ToUserId", request.ToUserId),
 	)
-	fromUserId := request.GetUserId()
-	toUserId := request.GetToUserId()
+	fromUserId := uint(request.GetUserId())
+	toUserId := uint(request.GetToUserId())
 
-	CheckAndSetRedisRelationKey(uint(fromUserId), redis.FollowList)
-	CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowerList)
+	CheckAndSetRedisRelationKey(fromUserId, redis.FollowList)
+	CheckAndSetRedisRelationKey(toUserId, redis.FollowerList)
 
 	switch request.ActionType {
 	case 1: // 关注
 		//判断用户是否已经关注过了
-		res, err := redis.IsInMyFollowList(uint(fromUserId), uint(toUserId))
+		res, _ := redis.IsInMyFollowList(fromUserId, toUserId)
 		if res {
 			return &relation.RelationActionResponse{
 				StatusCode: common.CodeFollowRepeat,
 				StatusMsg:  common.MapErrMsg(common.CodeFollowRepeat),
 			}, nil
 		}
-		//延迟双删
-		redis.DelKey(uint(fromUserId), redis.FollowList)
-		redis.DelKey(uint(toUserId), redis.FollowerList)
-
-		//err = mysql.AddFollow(uint(fromUserId), uint(toUserId))
-		err = kafka.FollowMQInstance.ProduceAddFollowMsg(uint(fromUserId), uint(toUserId))
-		if err != nil {
+		if redis.AcquireRelationLock(fromUserId, redis.FollowAction) {
+			defer redis.ReleaseRelationLock(fromUserId, redis.FollowAction)
+			err = redis.ActionFollow(fromUserId, toUserId)
+			if err != nil {
+				return &relation.RelationActionResponse{
+					StatusCode: common.CodeServerBusy,
+					StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
+				}, err
+			}
+			//err = mysql.AddFollow(uint(fromUserId), uint(toUserId))
+			go func() {
+				err = kafka.FollowMQInstance.ProduceAddFollowMsg(fromUserId, toUserId)
+				if err != nil {
+					zap.L().Error("kafka 写入follow list 失败")
+					return
+				}
+			}()
 			return &relation.RelationActionResponse{
-				StatusCode: common.CodeServerBusy,
-				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
-			}, err
+				StatusCode: common.CodeSuccess,
+				StatusMsg:  common.MapErrMsg(common.CodeSuccess),
+			}, nil
 		}
-		go func() {
-			time.Sleep(1 * time.Second)
-
-			redis.DelKey(uint(fromUserId), redis.FollowList)
-			redis.DelKey(uint(toUserId), redis.FollowerList)
-		}()
-
+		// 获取锁失败
 		return &relation.RelationActionResponse{
-			StatusCode: common.CodeSuccess,
-			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
-		}, nil
+			StatusCode: common.CodeServerBusy,
+			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
+		}, err
 	case 2: // 取关
-		res, err := redis.IsInMyFollowList(uint(fromUserId), uint(toUserId))
+		res, _ := redis.IsInMyFollowList(fromUserId, toUserId)
 		if !res {
 			return &relation.RelationActionResponse{
 				StatusCode: common.CodeCancelFollowRepeat,
 				StatusMsg:  common.MapErrMsg(common.CodeCancelFollowRepeat),
 			}, nil
 		}
-		// 延迟双删
-		redis.DelKey(uint(fromUserId), redis.FollowList)
-		redis.DelKey(uint(toUserId), redis.FollowerList)
+		if redis.AcquireRelationLock(fromUserId, redis.FollowAction) {
+			defer redis.ReleaseRelationLock(fromUserId, redis.FollowAction)
 
-		//err = mysql.DeleteFollowById(uint(fromUserId), uint(toUserId))
-		err = kafka.FollowMQInstance.ProduceDelFollowMsg(uint(fromUserId), uint(toUserId))
-		if err != nil {
+			err = redis.ActionCancelFollow(fromUserId, toUserId)
+			if err != nil {
+				return &relation.RelationActionResponse{
+					StatusCode: common.CodeServerBusy,
+					StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
+				}, nil
+			}
+
+			//err = mysql.DeleteFollowById(uint(fromUserId), uint(toUserId))
+			go func() {
+				err = kafka.FollowMQInstance.ProduceDelFollowMsg(fromUserId, toUserId)
+				if err != nil {
+					zap.L().Error("kafka 上除去follow list 失败")
+					return
+				}
+			}()
+
 			return &relation.RelationActionResponse{
-				StatusCode: common.CodeServerBusy,
-				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
-			}, err
+				StatusCode: common.CodeSuccess,
+				StatusMsg:  common.MapErrMsg(common.CodeSuccess),
+			}, nil
 		}
-		go func() {
-			time.Sleep(1 * time.Second)
-
-			redis.DelKey(uint(fromUserId), redis.FollowList)
-			redis.DelKey(uint(toUserId), redis.FollowerList)
-		}()
-
+		// 获取锁失败
 		return &relation.RelationActionResponse{
-			StatusCode: common.CodeSuccess,
-			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
+			StatusCode: common.CodeServerBusy,
+			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 		}, nil
 	default:
 		return &relation.RelationActionResponse{
