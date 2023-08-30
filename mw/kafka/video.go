@@ -3,12 +3,14 @@ package kafka
 import (
 	"context"
 	"douyin/common"
+	"douyin/dal/model"
 	"douyin/dal/mysql"
 	"douyin/mw/redis"
 	"encoding/json"
 	"fmt"
 	"go.uber.org/zap"
 	"log"
+	"time"
 )
 
 type VideoMessage struct {
@@ -78,22 +80,37 @@ func (m *VideoMQ) Consume() {
 			}
 
 			// 视频信息存储到MySQL
-			mysql.InsertVideo(videoMsg.VideoFileName, imgName, videoMsg.UserID, videoMsg.Title)
-			// 更新redis中的用户作品数
-			if !redis.IsExistUserField(videoMsg.UserID, redis.WorkCountField) {
-				cnt := mysql.FindWorkCountsByAuthorId(videoMsg.UserID)
-				err := redis.SetWorkCountByUserId(videoMsg.UserID, cnt)
-				if err != nil {
-					zap.L().Error("redis更新作品数失败", zap.Error(err))
-					return
-				}
+			video := model.Video{
+				AuthorId:  videoMsg.UserID,
+				VideoUrl:  videoMsg.VideoFileName,
+				CoverUrl:  imgName,
+				Title:     videoMsg.Title,
+				CreatedAt: time.Now().Unix(),
 			}
-			err = redis.IncrementWorkCountByUserId(videoMsg.UserID)
-			if err != nil {
-				zap.L().Error("redis增加其作品数失败", zap.Error(err))
-				return
-			}
+			mysql.InsertVideo(video)
+			redis.AddVideo(video)
+			go func() {
+				AddWorkCount(videoMsg.UserID)
+			}()
 			zap.L().Info("视频消息处理成功", zap.Any("videoMsg", videoMsg))
 		}()
+	}
+}
+
+func AddWorkCount(userId uint) {
+	// 更新redis中的用户作品数
+	if !redis.IsExistUserField(userId, redis.WorkCountField) {
+		cnt := mysql.FindWorkCountsByAuthorId(userId)
+		err := redis.SetWorkCountByUserId(userId, cnt)
+		if err != nil {
+			zap.L().Error("redis更新作品数失败", zap.Error(err))
+			return
+		}
+		return
+	}
+	err := redis.IncrementWorkCountByUserId(userId)
+	if err != nil {
+		zap.L().Error("redis增加其作品数失败", zap.Error(err))
+		return
 	}
 }

@@ -2,24 +2,23 @@ package redis
 
 import (
 	"douyin/dal/model"
+	"encoding/json"
 	"fmt"
 	redisClient "github.com/redis/go-redis/v9"
-	"strconv"
-	"time"
 )
 
-func AddVideo(video model.Video) error {
-	err := Rdb.ZAdd(Ctx, "videos", redisClient.Z{
-		Score: float64(video.CreatedAt), Member: video.VideoUrl + video.CoverUrl,
-	}).Err()
-	return err
+func AddVideo(video model.Video) {
+	marshal, _ := json.Marshal(&video)
+	Rdb.ZAdd(Ctx, "videos", redisClient.Z{
+		Score: float64(video.CreatedAt), Member: marshal,
+	})
 }
 
-func GetVideos() {
+func GetVideos(time string) {
 	videos, _ := Rdb.ZRevRangeByScoreWithScores(Ctx, "videos",
 		&redisClient.ZRangeBy{
-			Min:    "-inf",
-			Max:    strconv.FormatInt(time.Now().Unix(), 10), // 根据需要的时间格式进行转换
+			Min:    "0",
+			Max:    time, // 根据需要的时间格式进行转换
 			Offset: 0,
 			Count:  30,
 		}).Result()

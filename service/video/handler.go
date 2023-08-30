@@ -70,6 +70,7 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 	zap.L().Info("VideoFeed", zap.Any("request", request))
 	latestTime := request.GetLatestTime()
 	videos := mysql.GetLatestVideos(latestTime)
+	//redis.GetVideos(latestTime)
 	if len(videos) == 0 {
 		zap.L().Info("视频列表为空")
 		return &video.VideoFeedResponse{
@@ -82,11 +83,17 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 
 	// 将查询结果转换为VideoResponse类型
 	videoList := make([]*video.Video, 0, len(videos))
+	userRespCh := make(chan *user.UserInfoByIdResponse)
+	commentCountCh := make(chan int32)
+	favoriteCountCh := make(chan int32)
+	isFavoriteCh := make(chan bool)
+	defer func() {
+		close(userRespCh)
+		close(commentCountCh)
+		close(favoriteCountCh)
+		close(isFavoriteCh)
+	}()
 	for _, v := range videos {
-		userRespCh := make(chan *user.UserInfoByIdResponse)
-		commentCountCh := make(chan int32)
-		favoriteCountCh := make(chan int32)
-		isFavoriteCh := make(chan bool)
 		go func() {
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: currentId,
@@ -110,26 +117,30 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 			})
 			isFavoriteCh <- isFavorite
 		}()
-		userResp := <-userRespCh
-		commentCount := <-commentCountCh
-		favoriteCount := <-favoriteCountCh
-		isFavorite := <-isFavoriteCh
 
 		videoResponse := video.Video{
-			Id:            int64(v.ID),
-			Author:        userResp.GetUser(),
-			PlayUrl:       biz.OSS + v.VideoUrl,
-			CoverUrl:      biz.OSS + v.CoverUrl,
-			FavoriteCount: favoriteCount,
-			CommentCount:  commentCount,
-			IsFavorite:    isFavorite,
-			Title:         v.Title,
+			Id:       int64(v.ID),
+			PlayUrl:  biz.OSS + v.VideoUrl,
+			CoverUrl: biz.OSS + v.CoverUrl,
+			Title:    v.Title,
 		}
+		for receivedCount := 0; receivedCount < 4; receivedCount++ {
+			select {
+			case userResp := <-userRespCh:
+				videoResponse.SetAuthor(userResp.GetUser())
+			case favoriteCount := <-favoriteCountCh:
+				videoResponse.SetFavoriteCount(favoriteCount)
+			case isFavorite := <-isFavoriteCh:
+				videoResponse.SetIsFavorite(isFavorite)
+			case commentCount := <-commentCountCh:
+				videoResponse.SetCommentCount(commentCount)
+			case <-time.After(3 * time.Second):
+				zap.L().Error("3s overtime.")
+				break
+			}
+		}
+
 		videoList = append(videoList, &videoResponse)
-		close(commentCountCh)
-		close(favoriteCountCh)
-		close(isFavoriteCh)
-		close(userRespCh)
 	}
 	nextTime := videos[len(videos)-1].CreatedAt
 
@@ -155,16 +166,14 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 		}, nil
 	}
 
-	go func() {
-		// 通过MQ异步处理视频的上传操作, 包括上传到OSS, 保存到MySQL, 更新redis
-		zap.L().Info("上传视频发送到消息队列", zap.String("videoPath", videoPath))
-		kafka.VideoMQInstance.Produce(&kafka.VideoMessage{
-			VideoPath:     videoPath,
-			VideoFileName: videoFileName,
-			UserID:        uint(request.GetUserId()),
-			Title:         request.GetTitle(),
-		})
-	}()
+	// 通过MQ异步处理视频的上传操作, 包括上传到OSS，截帧, 保存到MySQL, 更新redis
+	zap.L().Info("上传视频发送到消息队列", zap.String("videoPath", videoPath))
+	kafka.VideoMQInstance.Produce(&kafka.VideoMessage{
+		VideoPath:     videoPath,
+		VideoFileName: videoFileName,
+		UserID:        uint(request.GetUserId()),
+		Title:         request.GetTitle(),
+	})
 
 	return &video.PublishVideoResponse{
 		StatusCode: common.CodeSuccess,

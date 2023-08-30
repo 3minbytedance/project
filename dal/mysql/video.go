@@ -25,14 +25,7 @@ func FindWorkCountsByAuthorId(authorId uint) int64 {
 }
 
 // InsertVideo return 是否插入成功
-func InsertVideo(videoUrl string, coverUrl string, authorID uint, title string) bool {
-	video := model.Video{
-		AuthorId:  authorID,
-		VideoUrl:  videoUrl,
-		CoverUrl:  coverUrl,
-		Title:     title,
-		CreatedAt: time.Now().Unix(),
-	}
+func InsertVideo(video model.Video) bool {
 	result := DB.Model(model.Video{}).Create(&video)
 	return result.RowsAffected != 0
 }
