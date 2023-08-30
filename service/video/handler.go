@@ -80,20 +80,13 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 		}, nil
 	}
 	currentId := request.GetUserId()
-
-	// 将查询结果转换为VideoResponse类型
 	videoList := make([]*video.Video, 0, len(videos))
-	userRespCh := make(chan *user.UserInfoByIdResponse)
-	commentCountCh := make(chan int32)
-	favoriteCountCh := make(chan int32)
-	isFavoriteCh := make(chan bool)
-	defer func() {
-		close(userRespCh)
-		close(commentCountCh)
-		close(favoriteCountCh)
-		close(isFavoriteCh)
-	}()
 	for _, v := range videos {
+		// 将查询结果转换为VideoResponse类型
+		userRespCh := make(chan *user.UserInfoByIdResponse)
+		commentCountCh := make(chan int32)
+		favoriteCountCh := make(chan int32)
+		isFavoriteCh := make(chan bool)
 		go func() {
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: currentId,
@@ -110,13 +103,17 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 			favoriteCountCh <- favoriteCount
 		}()
 		//判断当前请求用户是否点赞该视频
-		go func() {
-			isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
-				UserId:  currentId,
-				VideoId: int64(v.ID),
-			})
-			isFavoriteCh <- isFavorite
-		}()
+		if currentId != 0 {
+			go func() {
+				isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
+					UserId:  currentId,
+					VideoId: int64(v.ID),
+				})
+				isFavoriteCh <- isFavorite
+			}()
+		} else {
+			isFavoriteCh <- false
+		}
 
 		videoResponse := video.Video{
 			Id:       int64(v.ID),

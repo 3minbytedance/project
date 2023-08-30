@@ -174,6 +174,9 @@ func (s *FavoriteServiceImpl) GetUserTotalFavoritedCount(ctx context.Context, us
 // IsUserFavorite implements the FavoriteServiceImpl interface.
 func (s *FavoriteServiceImpl) IsUserFavorite(ctx context.Context, request *favorite.IsUserFavoriteRequest) (resp bool, err error) {
 	userId := request.GetUserId()
+	if userId == 0 {
+		return false, nil
+	}
 	videoId := request.GetVideoId()
 	return isUserFavorite(uint(userId), uint(videoId)), nil
 }
@@ -312,6 +315,7 @@ func getIdListFromFavoriteSlice(favorites []model.Favorite, idType int) []uint {
 
 // IsUserFavorite 判断是否点赞
 func isUserFavorite(userId, videoId uint) bool {
+
 	res := checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
 	// redis和mysql中没有对应的数据
 	if res == 2 {
