@@ -55,6 +55,9 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 	fromUserId := request.GetUserId()
 	toUserId := request.GetToUserId()
 
+	CheckAndSetRedisRelationKey(uint(fromUserId), redis.FollowList)
+	CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowerList)
+
 	switch request.ActionType {
 	case 1: // 关注
 		// 判断用户是否已经关注过了
