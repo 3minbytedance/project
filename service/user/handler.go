@@ -219,18 +219,17 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 		totalFavoriteCountCh <- totalFavoriteCount
 	}()
 
-	//未登录
-	if !isLogged {
-		isFollowCh <- false
-	} else {
-		go func() {
+	go func(isLog bool) {
+		if isLog {
 			isFollow, _ := relationClient.IsFollowing(ctx, &relation.IsFollowingRequest{
 				ActorId: actionId,
 				UserId:  userId,
 			})
 			isFollowCh <- isFollow
-		}()
-	}
+			return
+		}
+		isFollowCh <- false
+	}(isLogged)
 
 	var followCount, followerCount, workCount, favoriteCount, totalFavoriteCount int32
 	var isFollow bool

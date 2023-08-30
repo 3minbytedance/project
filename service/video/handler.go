@@ -103,17 +103,17 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 			favoriteCountCh <- favoriteCount
 		}()
 		//判断当前请求用户是否点赞该视频
-		if currentId != 0 {
-			go func() {
+		go func(id int64) {
+			if id != 0 {
 				isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
-					UserId:  currentId,
+					UserId:  id,
 					VideoId: int64(v.ID),
 				})
 				isFavoriteCh <- isFavorite
-			}()
-		} else {
+				return
+			}
 			isFavoriteCh <- false
-		}
+		}(currentId)
 
 		videoResponse := video.Video{
 			Id:       int64(v.ID),
@@ -216,13 +216,17 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 			favoriteCountCh <- favoriteCount
 		}()
 		//判断当前请求用户是否点赞该视频
-		go func() {
-			isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
-				UserId:  fromUserId,
-				VideoId: int64(v.ID),
-			})
-			isFavoriteCh <- isFavorite
-		}()
+		go func(id int64) {
+			if id != 0 {
+				isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
+					UserId:  id,
+					VideoId: int64(v.ID),
+				})
+				isFavoriteCh <- isFavorite
+				return
+			}
+			isFavoriteCh <- false
+		}(fromUserId)
 		videoResponse := video.Video{
 			Id:       int64(v.ID),
 			Author:   userResp.GetUser(),
