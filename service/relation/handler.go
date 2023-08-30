@@ -72,6 +72,7 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 			defer redis.ReleaseRelationLock(fromUserId, redis.FollowAction)
 			err = redis.ActionFollow(fromUserId, toUserId)
 			if err != nil {
+				err = nil
 				return &relation.RelationActionResponse{
 					StatusCode: common.CodeServerBusy,
 					StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
@@ -108,6 +109,7 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 
 			err = redis.ActionCancelFollow(fromUserId, toUserId)
 			if err != nil {
+				err = nil
 				return &relation.RelationActionResponse{
 					StatusCode: common.CodeServerBusy,
 					StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
@@ -156,6 +158,7 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	}
 	id, err := redis.GetFollowListById(uint(toUserId))
 	if err != nil {
+		err = nil
 		return &relation.FollowListResponse{
 			StatusCode: common.CodeDBError,
 			StatusMsg:  common.MapErrMsg(common.CodeDBError),
@@ -216,6 +219,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 	}
 	id, err := redis.GetFollowerListById(uint(toUserId))
 	if err != nil {
+		err = nil
 		return &relation.FollowerListResponse{
 			StatusCode: common.CodeDBError,
 			StatusMsg:  common.MapErrMsg(common.CodeDBError),
@@ -283,6 +287,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 	}
 	id, err := redis.GetFriendListById(uint(toUserId))
 	if err != nil {
+		err = nil
 		return &relation.FriendListResponse{
 			StatusCode: common.CodeDBError,
 			StatusMsg:  common.MapErrMsg(common.CodeDBError),
