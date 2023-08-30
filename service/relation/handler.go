@@ -162,22 +162,38 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 			UserList:   nil,
 		}, err
 	}
-	followList := make([]*user.User, 0, len(id))
-	for _, com := range id {
-		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: actionId,
-			UserId:  int64(com),
-		})
-		if err != nil {
-			zap.L().Error("查询Follow用户信息失败", zap.Error(err))
-			return &relation.FollowListResponse{
-				StatusCode: common.CodeServerBusy,
-				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 
-				UserList: nil,
-			}, err
-		}
+	followList := make([]*user.User, 0, len(id))
+	userresp := make(chan *user.UserInfoByIdResponse, 10)
+	defer func() {
+		close(userresp)
+	}()
+
+	for _, com := range id {
+		go func() {
+			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+				ActorId: actionId,
+				UserId:  int64(com),
+			})
+			userresp <- userResp
+		}()
+		userResp := <-userresp
 		followList = append(followList, userResp.GetUser())
+
+		//userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+		//	ActorId: actionId,
+		//	UserId:  int64(com),
+		//})
+		//if err != nil {
+		//	zap.L().Error("查询Follow用户信息失败", zap.Error(err))
+		//	return &relation.FollowListResponse{
+		//		StatusCode: common.CodeServerBusy,
+		//		StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
+		//
+		//		UserList: nil,
+		//	}, err
+		//}
+		//followList = append(followList, userResp.GetUser())
 	}
 	return &relation.FollowListResponse{
 		StatusCode: common.CodeSuccess,
@@ -207,20 +223,36 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 		}, err
 	}
 	followerList := make([]*user.User, 0, len(id))
+	userresp := make(chan *user.UserInfoByIdResponse, 10)
+	defer func() {
+		close(userresp)
+	}()
+
 	for _, com := range id {
-		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: actionId,
-			UserId:  int64(com),
-		})
-		if err != nil {
-			zap.L().Error("查询Follower用户信息失败", zap.Error(err))
-			return &relation.FollowerListResponse{
-				StatusCode: common.CodeServerBusy,
-				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
-				UserList:   nil,
-			}, err
-		}
+
+		go func() {
+			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+				ActorId: actionId,
+				UserId:  int64(com),
+			})
+			userresp <- userResp
+		}()
+		userResp := <-userresp
 		followerList = append(followerList, userResp.GetUser())
+
+		//userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+		//	ActorId: actionId,
+		//	UserId:  int64(com),
+		//})
+		//if err != nil {
+		//	zap.L().Error("查询Follower用户信息失败", zap.Error(err))
+		//	return &relation.FollowerListResponse{
+		//		StatusCode: common.CodeServerBusy,
+		//		StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
+		//		UserList:   nil,
+		//	}, err
+		//}
+		//followerList = append(followerList, userResp.GetUser())
 	}
 	return &relation.FollowerListResponse{
 		StatusCode: common.CodeSuccess,
@@ -258,20 +290,36 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 		}, err
 	}
 	friendList := make([]*user.User, 0, len(id))
+	userresp := make(chan *user.UserInfoByIdResponse, 10)
+	defer func() {
+		close(userresp)
+	}()
+
 	for _, com := range id {
-		userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: actionId,
-			UserId:  int64(com),
-		})
-		if err != nil {
-			zap.L().Error("查询Friend用户信息失败", zap.Error(err))
-			return &relation.FriendListResponse{
-				StatusCode: common.CodeServerBusy,
-				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
-				UserList:   nil,
-			}, err
-		}
-		friendList = append(friendList, userResp.User)
+
+		go func() {
+			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+				ActorId: actionId,
+				UserId:  int64(com),
+			})
+			userresp <- userResp
+		}()
+		userResp := <-userresp
+		friendList = append(friendList, userResp.GetUser())
+
+		//userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+		//	ActorId: actionId,
+		//	UserId:  int64(com),
+		//})
+		//if err != nil {
+		//	zap.L().Error("查询Friend用户信息失败", zap.Error(err))
+		//	return &relation.FriendListResponse{
+		//		StatusCode: common.CodeServerBusy,
+		//		StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
+		//		UserList:   nil,
+		//	}, err
+		//}
+		//friendList = append(friendList, userResp.User)
 	}
 	return &relation.FriendListResponse{
 		StatusCode: common.CodeSuccess,
