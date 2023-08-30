@@ -60,15 +60,15 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 
 	switch request.ActionType {
 	case 1: // 关注
-		// 判断用户是否已经关注过了
+		//判断用户是否已经关注过了
 		res, err := redis.IsInMyFollowList(uint(fromUserId), uint(toUserId))
 		if res {
 			return &relation.RelationActionResponse{
-				StatusCode: common.CodeSuccess,
-				StatusMsg:  common.MapErrMsg(common.CodeSuccess),
+				StatusCode: common.CodeFollowRepeat,
+				StatusMsg:  common.MapErrMsg(common.CodeFollowRepeat),
 			}, nil
 		}
-		// 延迟双删
+		//延迟双删
 		redis.DelKey(uint(fromUserId), redis.FollowList)
 		redis.DelKey(uint(toUserId), redis.FollowerList)
 
@@ -92,6 +92,13 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		}, nil
 	case 2: // 取关
+		res, err := redis.IsInMyFollowList(uint(fromUserId), uint(toUserId))
+		if !res {
+			return &relation.RelationActionResponse{
+				StatusCode: common.CodeCancelFollowRepeat,
+				StatusMsg:  common.MapErrMsg(common.CodeCancelFollowRepeat),
+			}, nil
+		}
 		// 延迟双删
 		redis.DelKey(uint(fromUserId), redis.FollowList)
 		redis.DelKey(uint(toUserId), redis.FollowerList)
@@ -115,7 +122,6 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 			StatusCode: common.CodeSuccess,
 			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		}, nil
-
 	default:
 		return &relation.RelationActionResponse{
 			StatusCode: common.CodeInvalidParam,

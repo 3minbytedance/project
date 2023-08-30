@@ -201,10 +201,15 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 		UserId:  toUserId,
 	})
 	//toUserId 发布的视频
+	commentCountCh := make(chan int32)
+	favoriteCountCh := make(chan int32)
+	isFavoriteCh := make(chan bool)
+	defer func() {
+		close(commentCountCh)
+		close(favoriteCountCh)
+		close(isFavoriteCh)
+	}()
 	for _, v := range videos {
-		commentCountCh := make(chan int32)
-		favoriteCountCh := make(chan int32)
-		isFavoriteCh := make(chan bool)
 		go func() {
 			commentCount, _ := commentClient.GetCommentCount(ctx, int64(v.ID))
 			commentCountCh <- commentCount
@@ -221,23 +226,27 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 			})
 			isFavoriteCh <- isFavorite
 		}()
-		commentCount := <-commentCountCh
-		favoriteCount := <-favoriteCountCh
-		isFavorite := <-isFavoriteCh
 		videoResponse := video.Video{
-			Id:            int64(v.ID),
-			Author:        userResp.GetUser(),
-			PlayUrl:       biz.OSS + v.VideoUrl,
-			CoverUrl:      biz.OSS + v.CoverUrl,
-			FavoriteCount: favoriteCount,
-			CommentCount:  commentCount,
-			IsFavorite:    isFavorite,
-			Title:         v.Title,
+			Id:       int64(v.ID),
+			Author:   userResp.GetUser(),
+			PlayUrl:  biz.OSS + v.VideoUrl,
+			CoverUrl: biz.OSS + v.CoverUrl,
+			Title:    v.Title,
+		}
+		for receivedCount := 0; receivedCount < 3; receivedCount++ {
+			select {
+			case favoriteCount := <-favoriteCountCh:
+				videoResponse.SetFavoriteCount(favoriteCount)
+			case isFavorite := <-isFavoriteCh:
+				videoResponse.SetIsFavorite(isFavorite)
+			case commentCount := <-commentCountCh:
+				videoResponse.SetCommentCount(commentCount)
+			case <-time.After(3 * time.Second):
+				zap.L().Error("3s overtime.")
+				break
+			}
 		}
 		videoList = append(videoList, &videoResponse)
-		close(commentCountCh)
-		close(favoriteCountCh)
-		close(isFavoriteCh)
 	}
 
 	return &video.PublishVideoListResponse{

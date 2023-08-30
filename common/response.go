@@ -14,6 +14,8 @@ const (
 	CodeUploadFileError
 
 	CodeNotFriend
+	CodeFollowRepeat
+	CodeCancelFollowRepeat
 
 	CodeWrongLoginCredentials
 	CodeUsernameNotFound
@@ -35,6 +37,8 @@ func init() {
 	message[CodeInvalidToken] = "token失效，请重新登陆"
 	message[CodeDBError] = "数据库繁忙,请稍后再试"
 	message[CodeFollowMyself] = "不能关注自己哦"
+	message[CodeFollowRepeat] = "请勿重复关注"
+	message[CodeCancelFollowRepeat] = "请勿重复取关"
 	message[CodeInvalidFileType] = "无效的文件类型"
 	message[CodeInvalidFileSize] = "文件过大或过小"
 	message[CodeUploadFileError] = "文件上传失败"
