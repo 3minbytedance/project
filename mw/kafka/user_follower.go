@@ -4,7 +4,6 @@ import (
 	"context"
 	"douyin/dal/mysql"
 	"encoding/json"
-	"fmt"
 	"log"
 )
 

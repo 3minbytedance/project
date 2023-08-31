@@ -9,10 +9,13 @@ import (
 	"douyin/mw/redis"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/network/standard"
+	hertzConfig "github.com/hertz-contrib/http2/config"
+	"github.com/hertz-contrib/http2/factory"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
+	"time"
 )
 
 func main() {
@@ -37,7 +40,10 @@ func main() {
 		server.WithMaxRequestBodySize(50*1024*1024),
 		server.WithStreamBody(true),
 		server.WithTransport(standard.NewTransporter),
+		server.WithH2C(true),
 	)
+	h.AddProtocol("h2", factory.NewServerFactory(
+		hertzConfig.WithReadTimeout(time.Minute)))
 	//pprof.Register(h)
 	go func() {
 		ip := "0.0.0.0:8888"

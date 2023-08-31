@@ -11,7 +11,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/google/uuid v1.3.0
-	github.com/hertz-contrib/pprof v0.1.0
+	github.com/hertz-contrib/http2 v0.1.8
 	github.com/importcjj/sensitive v0.0.0-20200106142752-42d1c505be7b
 	github.com/kitex-contrib/obs-opentelemetry v0.2.3
 	github.com/kitex-contrib/registry-etcd v0.1.1
@@ -72,7 +72,6 @@ require (
 	github.com/oleiade/lane v1.0.1 // indirect
 	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
-	github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d // indirect
 	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/cast v1.3.0 // indirect
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
