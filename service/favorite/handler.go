@@ -105,28 +105,68 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 		}, err
 	}
 	videos := make([]*video.Video, 0, len(favoritesByUserId))
+	userRespCh := make(chan *user.UserInfoByIdResponse)
+	commentCountCh := make(chan int32)
+	favoriteCountCh := make(chan int32)
+	isFavoriteCh := make(chan bool)
+	defer func() {
+		close(commentCountCh)
+		close(favoriteCountCh)
+		close(isFavoriteCh)
+		close(userRespCh)
+	}()
 	for _, id := range favoritesByUserId {
 		videoModel, found := dalMySQL.FindVideoByVideoId(id)
 		if !found {
 			continue
 		}
-		userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-			ActorId: actionId,
-			UserId:  int64(videoModel.AuthorId),
-		})
-		commentCount, _ := commentClient.GetCommentCount(ctx, int64(id))
-		favoriteCount, _ := getFavoritesVideoCount(id)
-		vid := video.Video{
-			Id:            int64(videoModel.ID),
-			Author:        userResp.GetUser(),
-			PlayUrl:       biz.OSS + videoModel.VideoUrl,
-			CoverUrl:      biz.OSS + videoModel.CoverUrl,
-			FavoriteCount: int32(favoriteCount),
-			CommentCount:  commentCount,
+		go func() {
+			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
+				ActorId: actionId,
+				UserId:  int64(videoModel.AuthorId),
+			})
+			userRespCh <- userResp
+		}()
+
+		go func() {
+			commentCount, _ := commentClient.GetCommentCount(ctx, int64(id))
+			commentCountCh <- commentCount
+		}()
+
+		go func() {
+			favoriteCount, _ := getFavoritesVideoCount(id)
+			favoriteCountCh <- int32(favoriteCount)
+		}()
+
+		go func() {
 			//判断当前请求ID是否点赞该视频
-			IsFavorite: isUserFavorite(uint(actionId), id),
-			Title:      videoModel.Title,
+			isFavorite := isUserFavorite(uint(actionId), id)
+			isFavoriteCh <- isFavorite
+		}()
+
+		vid := video.Video{
+			Id:       int64(videoModel.ID),
+			PlayUrl:  biz.OSS + videoModel.VideoUrl,
+			CoverUrl: biz.OSS + videoModel.CoverUrl,
+			Title: videoModel.Title,
 		}
+
+		for receivedCount := 0; receivedCount < 4; receivedCount++ {
+			select {
+			case userResp := <-userRespCh:
+				vid.SetAuthor(userResp.GetUser())
+			case favoriteCount := <-favoriteCountCh:
+				vid.SetFavoriteCount(favoriteCount)
+			case isFavorite := <-isFavoriteCh:
+				vid.SetIsFavorite(isFavorite)
+			case commentCount := <-commentCountCh:
+				vid.SetCommentCount(commentCount)
+			case <-time.After(3 * time.Second):
+				zap.L().Error("3s overtime.")
+				break
+			}
+		}
+
 		videos = append(videos, &vid)
 	}
 	return &favorite.FavoriteListResponse{
@@ -190,10 +230,6 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 	if !found {
 		return biz.FavoriteActionError
 	}
-	// 判断是否在redis中，防止对空key操作
-	checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
-	checkAndSetVideoFavoriteCountKey(videoId, mwRedis.VideoFavoritedCountField)
-	checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId, mwRedis.TotalFavoriteField)
 
 	switch actionType {
 	case 1:
@@ -207,6 +243,11 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 			if isUserFavorite(userId, videoId) {
 				return biz.FavoriteActionRepeat
 			}
+			// 判断是否在redis中，防止对空key操作
+			checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
+			checkAndSetVideoFavoriteCountKey(videoId, mwRedis.VideoFavoritedCountField)
+			checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId, mwRedis.TotalFavoriteField)
+
 			err := mwRedis.ActionLike(userId, videoId, videoModel.AuthorId)
 			if err != nil {
 				return biz.FavoriteActionError
@@ -235,6 +276,12 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 			if !isUserFavorite(userId, videoId) {
 				return biz.FavoriteActionRepeat
 			}
+
+			// 判断是否在redis中，防止对空key操作
+			checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
+			checkAndSetVideoFavoriteCountKey(videoId, mwRedis.VideoFavoritedCountField)
+			checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId, mwRedis.TotalFavoriteField)
+
 			err := mwRedis.ActionCancelLike(userId, videoId, videoModel.AuthorId)
 			if err != nil {
 				return biz.FavoriteActionError
