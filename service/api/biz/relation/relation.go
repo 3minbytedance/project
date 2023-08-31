@@ -32,7 +32,7 @@ func init() {
 		client.WithSuite(tracing.NewClientSuite()),
 		// Please keep the same as provider.WithServiceName
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.RelationServiceName}),
-		client.WithMuxConnection(1),
+		client.WithMuxConnection(2),
 	)
 	if err != nil {
 		log.Fatal(err)

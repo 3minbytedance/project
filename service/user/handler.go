@@ -38,21 +38,21 @@ func init() {
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.RelationServiceName}),
-		client.WithMuxConnection(1),
+		client.WithMuxConnection(2),
 	)
 	favoriteClient, err = favoriteservice.NewClient(
 		constant.FavoriteServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.FavoriteServiceName}),
-		client.WithMuxConnection(1),
+		client.WithMuxConnection(2),
 	)
 	videoClient, err = videoservice.NewClient(
 		constant.VideoServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.VideoServiceName}),
-		client.WithMuxConnection(1),
+		client.WithMuxConnection(2),
 	)
 	if err != nil {
 		log.Fatal(err)

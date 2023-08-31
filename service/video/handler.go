@@ -45,21 +45,21 @@ func init() {
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.UserServiceName}),
-		client.WithMuxConnection(1),
+		client.WithMuxConnection(2),
 	)
 	commentClient, err = commentservice.NewClient(
 		constant.CommentServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.CommentServiceName}),
-		client.WithMuxConnection(1),
+		client.WithMuxConnection(2),
 	)
 	favoriteClient, err = favoriteservice.NewClient(
 		constant.FavoriteServiceName,
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.FavoriteServiceName}),
-		client.WithMuxConnection(1),
+		client.WithMuxConnection(2),
 	)
 	if err != nil {
 		log.Fatal(err)

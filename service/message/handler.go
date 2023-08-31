@@ -34,7 +34,7 @@ func init() {
 		client.WithResolver(r),
 		client.WithSuite(tracing.NewClientSuite()),
 		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constant.RelationServiceName}),
-		client.WithMuxConnection(1),
+		client.WithMuxConnection(2),
 	)
 	if err != nil {
 		log.Fatal(err)
