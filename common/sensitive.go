@@ -18,7 +18,7 @@ func InitSensitiveFilter() (err error) {
 }
 
 func ReplaceWord(word string) string {
-	print(sensitiveFilter.Replace(word, '*'))
+	//print(sensitiveFilter.Replace(word, '*'))
 	return sensitiveFilter.Replace(word, '*')
 
 }

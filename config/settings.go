@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
+	"log"
 )
 
 var (
@@ -90,15 +91,15 @@ func Init() (err error) {
 
 	// 读取到的配置信息 反序列化到 Conf 里面
 	if err := viper.Unmarshal(Conf); err != nil {
-		fmt.Printf("Viper unmarshal failed: %v\n", err)
+		log.Printf("Viper unmarshal failed: %v\n", err)
 	}
 
 	// 监控配置文件变化, 实时更新Conf
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
-		fmt.Println("配置发生变化了...")
+		log.Println("配置发生变化了...")
 		if err := viper.Unmarshal(Conf); err != nil {
-			fmt.Printf("Viper unmarshal failed, err: %v\n", err)
+			log.Printf("Viper unmarshal failed, err: %v\n", err)
 		}
 	})
 

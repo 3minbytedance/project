@@ -14,7 +14,6 @@ import (
 	"douyin/kitex_gen/video"
 	"douyin/mw/kafka"
 	mwRedis "douyin/mw/redis"
-	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -357,7 +356,6 @@ func checkAndSetUserFavoriteListKey(userId uint, key string) int {
 		}
 		return mwRedis.KeyUpdated
 	}
-	fmt.Println("checkAndSetUserFavoriteListKey")
 	// 重试
 	time.Sleep(mwRedis.RetryTime)
 	return checkAndSetTotalFavoriteFieldKey(userId, key)
@@ -394,7 +392,6 @@ func checkAndSetVideoFavoriteCountKey(videoId uint, key string) int {
 		}
 		return mwRedis.KeyUpdated
 	}
-	fmt.Println("checkAndSetVideoFavoriteCountKey")
 	time.Sleep(mwRedis.RetryTime)
 	return checkAndSetTotalFavoriteFieldKey(videoId, key)
 }
@@ -432,7 +429,6 @@ func checkAndSetTotalFavoriteFieldKey(userId uint, key string) int {
 		}
 		return mwRedis.KeyUpdated
 	}
-	fmt.Println("checkAndSetTotalFavoriteFieldKey")
 	time.Sleep(mwRedis.RetryTime)
 	return checkAndSetTotalFavoriteFieldKey(userId, key)
 }

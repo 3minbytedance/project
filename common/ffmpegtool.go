@@ -1,7 +1,7 @@
 package common
 
 import (
-	"log"
+	"go.uber.org/zap"
 	"os/exec"
 )
 
@@ -15,7 +15,7 @@ const (
 //GetVideoFrames ffmpeg 实现，现弃用，改为使用oss的功能
 func GetVideoFrames(videoPath string, outputPath string) {
 	if videoPath == "" || outputPath == "" {
-		log.Println("路径未指定")
+		zap.L().Error("路径未指定")
 		return
 	}
 
@@ -40,7 +40,7 @@ func Transcoding(src string, dst string, overwrite bool) {
 
 	// 运行 ffmpeg 命令
 	if err := cmd.Run(); err != nil {
-		log.Println(err)
+		zap.L().Error("ffmpeg出错",zap.Error(err))
 		return
 	}
 }

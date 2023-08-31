@@ -60,6 +60,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// 初始化Bloom Filter
+	common.InitWorkCountFilter()
+	common.LoadWorkCountToBloomFilter()
+
 	addr, err := net.ResolveTCPAddr("tcp", constant.VideoServicePort)
 	if err != nil {
 		panic(err)

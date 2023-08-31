@@ -74,10 +74,16 @@ func IsExistUserSetField(userId uint, field string) bool {
 	return exists != 0
 }
 
-// DelKey 根据参数合成并删除key
-func DelKey(userId uint, field string) {
-	key := fmt.Sprintf("%s:%d", field, userId)
-	Rdb.Del(Ctx, key)
+// DelVideoHashField 根据参数删除video Hash field
+func DelVideoHashField(videoId uint, field string) {
+	key := fmt.Sprintf("%s:%d", VideoKey, videoId)
+	Rdb.HDel(Ctx, key, field)
+}
+
+// DelUserHashField 根据参数删除user Hash field
+func DelUserHashField(userId uint, field string) {
+	key := fmt.Sprintf("%s:%d", UserKey, userId)
+	Rdb.HDel(Ctx, key, field)
 }
 
 func AcquireCommentLock(videoId uint) bool {

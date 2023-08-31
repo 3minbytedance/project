@@ -59,6 +59,10 @@ func main() {
 		zap.L().Error("Init sensitive filter error", zap.Error(err))
 	}
 
+	// 初始化Bloom Filter
+	common.InitCommentBloomFilter()
+	common.LoadCommentVideoIdToBloomFilter()
+
 	addr, err := net.ResolveTCPAddr("tcp", constant.CommentServicePort)
 	if err != nil {
 		panic(err)

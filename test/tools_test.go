@@ -18,16 +18,16 @@ import (
 )
 
 func TestBloom(t *testing.T) {
-	common.InitBloomFilter()
-	common.AddToBloom("user1")
-	common.AddToBloom("user2")
-	common.AddToBloom("user3")
-	common.AddToBloom("user4")
-	common.AddToBloom("use1")
-	common.AddToBloom("use2")
+	common.InitUserBloomFilter()
+	common.AddToUserBloom("user1")
+	common.AddToUserBloom("user2")
+	common.AddToUserBloom("user3")
+	common.AddToUserBloom("user4")
+	common.AddToUserBloom("use1")
+	common.AddToUserBloom("use2")
 
-	assert.True(t, common.TestBloom("usera1"))
-	assert.False(t, common.TestBloom("user5"))
+	assert.True(t, common.TestUserBloom("usera1"))
+	assert.False(t, common.TestUserBloom("user5"))
 }
 
 func TestSensitiveFilter(t *testing.T) {

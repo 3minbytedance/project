@@ -8,19 +8,31 @@ import (
 	"log"
 )
 
-var bloomFilter *bloom.BloomFilter
+var bloomUserFilter *bloom.BloomFilter
+var bloomCommentFilter *bloom.BloomFilter
+var bloomWorkCountFilter *bloom.BloomFilter
 
-func InitBloomFilter() {
+func InitUserBloomFilter() {
 	// 初始化布隆过滤器
-	bloomFilter = bloom.NewWithEstimates(10000000, 0.05) // 假设预期元素数量为 10000000，误判率为 0.05
+	bloomUserFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
 }
 
-func AddToBloom(data string) {
-	bloomFilter.Add([]byte(data))
+func InitCommentBloomFilter() {
+	// 初始化布隆过滤器
+	bloomCommentFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
 }
 
-func TestBloom(data string) bool {
-	return bloomFilter.Test([]byte(data))
+func InitWorkCountFilter() {
+	// 初始化布隆过滤器
+	bloomWorkCountFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
+}
+
+func AddToUserBloom(data string) {
+	bloomUserFilter.Add([]byte(data))
+}
+
+func TestUserBloom(data string) bool {
+	return bloomUserFilter.Test([]byte(data))
 }
 
 func LoadUsernamesToBloomFilter() {
@@ -31,8 +43,42 @@ func LoadUsernamesToBloomFilter() {
 	}
 
 	for _, username := range usernames {
-		AddToBloom(username)
+		AddToUserBloom(username)
 	}
 
 	zap.L().Info("Loaded %d usernames to the bloom filter.\n", zap.Int("size", len(usernames)))
+}
+
+func AddToCommentBloom(data string) {
+	bloomCommentFilter.Add([]byte(data))
+}
+
+func TestCommentBloom(data string) bool {
+	return bloomCommentFilter.Test([]byte(data))
+}
+
+func LoadCommentVideoIdToBloomFilter() {
+	var videoIdList []string
+	mysql.DB.Model(&model.Comment{}).Distinct().Pluck("video_id", &videoIdList)
+	for _, videoId := range videoIdList {
+		AddToCommentBloom(videoId)
+	}
+	zap.L().Info("Loaded %d comments to the bloom filter.\n", zap.Int("size", len(videoIdList)))
+}
+
+func AddToWorkCountBloom(data string) {
+	bloomWorkCountFilter.Add([]byte(data))
+}
+
+func TestWorkCountBloom(data string) bool {
+	return bloomWorkCountFilter.Test([]byte(data))
+}
+
+func LoadWorkCountToBloomFilter() {
+	var authorIdList []string
+	mysql.DB.Model(&model.Video{}).Distinct().Pluck("author_id", &authorIdList)
+	for _, authorId := range authorIdList {
+		AddToWorkCountBloom(authorId)
+	}
+	zap.L().Info("Loaded %d authors from video to the bloom filter.\n", zap.Int("size", len(authorIdList)))
 }

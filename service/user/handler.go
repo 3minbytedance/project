@@ -104,7 +104,7 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	redis.SetToken(userId, resp.Token)
 	go func() {
 		// 用户名存入Bloom Filter
-		common.AddToBloom(request.Username)
+		common.AddToUserBloom(request.Username)
 	}()
 	return
 }
@@ -113,7 +113,7 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 func (s *UserServiceImpl) Login(ctx context.Context, request *user.UserLoginRequest) (resp *user.UserLoginResponse, err error) {
 	resp = new(user.UserLoginResponse)
 
-	exist := common.TestBloom(request.Username)
+	exist := common.TestUserBloom(request.Username)
 
 	// 用户名不存在
 	if !exist {
@@ -266,26 +266,12 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 func GetName(userId uint) (string, bool) {
 	// 从redis中获取用户名
 	// 1. 缓存中有数据, 直接返回
-	if redis.IsExistUserField(userId, redis.NameField) {
-		name, err := redis.GetNameByUserId(userId)
-		if err != nil {
-			zap.L().Error("从redis中获取用户名失败：", zap.Error(err))
-			return "", false
-		}
+	if name, err := redis.GetNameByUserId(userId); err == nil {
 		return name, true
 	}
 	//缓存不存在，尝试从数据库中取
 	if redis.AcquireUserLock(userId, redis.NameField) {
 		defer redis.ReleaseUserLock(userId, redis.NameField)
-		//double check
-		if redis.IsExistUserField(userId, redis.NameField) {
-			name, err := redis.GetNameByUserId(userId)
-			if err != nil {
-				zap.L().Error("从redis中获取用户名失败：", zap.Error(err))
-				return "", false
-			}
-			return name, true
-		}
 		// 2. 缓存中没有数据，从数据库中获取
 		userModel, exist, _ := mysql.FindUserByUserID(userId)
 		if !exist {
@@ -294,7 +280,7 @@ func GetName(userId uint) (string, bool) {
 		// 将用户名写入redis
 		err := redis.SetNameByUserId(userId, userModel.Name)
 		if err != nil {
-			log.Println("将用户名写入redis失败：", err)
+			zap.L().Error("将用户名写入redis失败：", zap.Error(err))
 		}
 		return userModel.Name, true
 	}

@@ -66,13 +66,13 @@ func (m *VideoMQ) Consume() {
 		}
 		go func() {
 			zap.L().Info("开始处理视频消息", zap.Any("videoMsg", videoMsg))
-			//视频存储到oss
+			// 视频存储到oss
 			if err = common.UploadToOSS(videoMsg.VideoPath, videoMsg.VideoFileName); err != nil {
 				zap.L().Error("上传视频到OSS失败", zap.Error(err))
 				return
 			}
 
-			//利用oss功能获取封面图
+			// 利用oss功能获取封面图
 			imgName, err := common.GetVideoCover(videoMsg.VideoFileName)
 			if err != nil {
 				zap.L().Error("图片截帧失败", zap.Error(err))
@@ -89,9 +89,10 @@ func (m *VideoMQ) Consume() {
 			}
 			mysql.InsertVideo(video)
 			redis.AddVideo(video)
-			go func() {
-				AddWorkCount(videoMsg.UserID)
-			}()
+			// cache aside
+			redis.DelVideoHashField(videoMsg.UserID, redis.WorkCountField)
+			// 添加到布隆过滤器
+			common.AddToWorkCountBloom(fmt.Sprintf("%d", videoMsg.UserID))
 			zap.L().Info("视频消息处理成功", zap.Any("videoMsg", videoMsg))
 		}()
 	}

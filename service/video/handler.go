@@ -14,6 +14,7 @@ import (
 	video "douyin/kitex_gen/video"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
+	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/google/uuid"
@@ -81,12 +82,17 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 	}
 	currentId := request.GetUserId()
 	videoList := make([]*video.Video, 0, len(videos))
+	userRespCh := make(chan *user.UserInfoByIdResponse)
+	commentCountCh := make(chan int32)
+	favoriteCountCh := make(chan int32)
+	isFavoriteCh := make(chan bool)
+	defer func() {
+		close(userRespCh)
+		close(commentCountCh)
+		close(favoriteCountCh)
+		close(isFavoriteCh)
+	}()
 	for _, v := range videos {
-		// 将查询结果转换为VideoResponse类型
-		userRespCh := make(chan *user.UserInfoByIdResponse)
-		commentCountCh := make(chan int32)
-		favoriteCountCh := make(chan int32)
-		isFavoriteCh := make(chan bool)
 		go func() {
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: currentId,
@@ -115,6 +121,7 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 			isFavoriteCh <- false
 		}(currentId)
 
+		// 将查询结果转换为VideoResponse类型
 		videoResponse := video.Video{
 			Id:       int64(v.ID),
 			PlayUrl:  biz.OSS + v.VideoUrl,
@@ -266,26 +273,24 @@ func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, userId int64) (resp
 func getWorkCount(userId uint) (int32, error) {
 	// 从redis中获取作品数
 	// 1. 缓存中有数据, 直接返回
-	if redis.IsExistUserField(userId, redis.WorkCountField) {
-		workCount, err := redis.GetWorkCountByUserId(uint(userId))
-		if err != nil {
-			zap.L().Error("从redis中获取作品数失败", zap.Error(err))
-			return 0, err
-		}
+	if workCount, err := redis.GetWorkCountByUserId(userId); err == nil {
 		return int32(workCount), nil
 	}
 
 	//缓存不存在，尝试从数据库中取
 	if redis.AcquireUserLock(userId, redis.WorkCountField) {
 		defer redis.ReleaseUserLock(userId, redis.WorkCountField)
-		//double check
-		if redis.IsExistUserField(userId, redis.WorkCountField) {
-			workCount, err := redis.GetWorkCountByUserId(uint(userId))
+
+		exist := common.TestWorkCountBloom(fmt.Sprintf("%d", userId))
+
+		// 不存在
+		if !exist {
+			err := redis.SetCommentCountByVideoId(userId, 0)
 			if err != nil {
-				zap.L().Error("从redis中获取作品数失败", zap.Error(err))
+				zap.L().Error("redis更新作品数失败", zap.Error(err))
 				return 0, err
 			}
-			return int32(workCount), nil
+			return 0, nil
 		}
 		// 2. 从数据库中获取
 		workCount := mysql.FindWorkCountsByAuthorId(userId)

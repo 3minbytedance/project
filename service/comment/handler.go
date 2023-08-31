@@ -57,11 +57,12 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		zap.Int32("comment_id", request.GetCommentId()),
 		zap.String("comment_text", request.GetCommentText()),
 	)
-	videoId := request.GetVideoId()
+	videoId := uint(request.GetVideoId())
+	userId := request.GetUserId()
 	// 查询user是否存在，并在新增评论后返回该用户信息
 	userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-		ActorId: request.GetUserId(),
-		UserId:  request.GetUserId(),
+		ActorId: userId,
+		UserId:  userId,
 	})
 	if userResp.GetUser() == nil || err != nil {
 		resp.StatusCode = 1
@@ -72,8 +73,8 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 	switch request.GetActionType() {
 	case 1: // 新增评论
 		commentData := model.Comment{
-			UserId:    uint(request.GetUserId()),
-			VideoId:   uint(request.GetVideoId()),
+			UserId:    uint(userId),
+			VideoId:   videoId,
 			Content:   common.ReplaceWord(request.GetCommentText()),
 			CreatedAt: time.Now(),
 		}
@@ -84,19 +85,13 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 			resp.StatusMsg = common.MapErrMsg(common.CodeDBError)
 			return
 		}
-		// 增加redis
+
 		go func() {
-			// 如果video不存在于redis，查询数据库并插入redis评论数
-			isSetKey, _ := checkAndSetRedisCommentKey(uint(videoId))
-			if isSetKey {
-				return
-			}
-			// 如果video存在于redis，更新commentCount
-			err = redis.IncrementCommentCountByVideoId(uint(videoId))
-			if err != nil {
-				zap.L().Error("更新videoId的评论数失败", zap.Error(err))
-			}
+			common.AddToCommentBloom(fmt.Sprintf("%d", videoId))
 		}()
+		// cache aside
+		redis.DelVideoHashField(videoId, redis.CommentCountField)
+
 		// 封装返回数据
 		//comment := pack.Comment(&commentData, user.User)
 		return &comment.CommentActionResponse{
@@ -122,20 +117,6 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 			}, nil
 		}
 
-		// 设置redis
-		go func() {
-			// todo
-			isSetKey, _ := checkAndSetRedisCommentKey(uint(videoId))
-			if isSetKey {
-				return
-			}
-			err = redis.DecrementCommentCountByVideoId(uint(videoId))
-			if err != nil {
-				zap.L().Error("DecrementCommentCountByVideoId error", zap.Error(err))
-				return
-			}
-		}()
-
 		// err = mysql.DeleteCommentById(uint(request.GetCommentId()))
 		err = kafka.CommentMQInstance.ProduceDelCommentMsg(uint(request.GetCommentId()))
 		if err != nil {
@@ -145,6 +126,9 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 			}, err
 		}
+
+		// cache aside
+		redis.DelVideoHashField(videoId, redis.CommentCountField)
 		return &comment.CommentActionResponse{
 			StatusCode: common.CodeSuccess,
 			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
@@ -193,7 +177,7 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 	// 处理 userResponses
 	for i, com := range comments {
 		userResp := userResponses[i]
-		if userResp == nil{
+		if userResp == nil {
 			continue
 		}
 		commentList = append(commentList, pack.Comment(&com, userResp.GetUser()))
@@ -207,32 +191,32 @@ func (s *CommentServiceImpl) GetCommentList(ctx context.Context, request *commen
 
 // GetCommentCount implements the CommentServiceImpl interface.
 func (s *CommentServiceImpl) GetCommentCount(ctx context.Context, videoId int64) (resp int32, err error) {
-	isSetKey, count := checkAndSetRedisCommentKey(uint(videoId))
-	if isSetKey {
-		return int32(count), nil
-	}
-	// 从redis中获取评论数
-	count, err = redis.GetCommentCountByVideoId(uint(videoId))
-	if err != nil {
-		zap.L().Error("redis获取评论数失败", zap.Error(err))
-		return 0, err
-	}
+	_, count := checkAndSetRedisCommentKey(uint(videoId))
 	return int32(count), nil
 }
 
 // checkAndSetRedisCommentKey
-// 返回true表示不存在这个key，并设置key
-// 返回false表示已存在这个key，cnt数返回0
-func checkAndSetRedisCommentKey(videoId uint) (isSet bool, count int64) {
-	if redis.IsExistVideoField(videoId, redis.CommentCountField) {
-		return false, 0
+// 返回true表示不存在这个key，并更新key，并返回评论数
+// 返回false表示已存在这个key，未更新，并返回评论数
+func checkAndSetRedisCommentKey(videoId uint) (isSet bool, commentCount int64) {
+	//缓存中有数据
+	if count, err := redis.GetCommentCountByVideoId(videoId); err == nil {
+		return false, count
 	}
 	//缓存不存在，尝试从数据库中取
 	if redis.AcquireCommentLock(videoId) {
 		defer redis.ReleaseCommentLock(videoId)
-		//double check
-		if redis.IsExistVideoField(videoId, redis.CommentCountField) {
-			return false, 0
+
+		exist := common.TestCommentBloom(fmt.Sprintf("%d", videoId))
+
+		// 不存在
+		if !exist {
+			err := redis.SetCommentCountByVideoId(videoId, 0)
+			if err != nil {
+				zap.L().Error("redis更新评论数失败", zap.Error(err))
+				return false, 0
+			}
+			return true, 0
 		}
 		// 获取最新commentCount
 		cnt, err := mysql.GetCommentCnt(videoId)
@@ -248,7 +232,6 @@ func checkAndSetRedisCommentKey(videoId uint) (isSet bool, count int64) {
 		}
 		return true, cnt
 	}
-	fmt.Println("重试checkAndSetRedisCommentKey")
 	// 重试
 	time.Sleep(redis.RetryTime)
 	return checkAndSetRedisCommentKey(videoId)

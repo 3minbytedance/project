@@ -11,7 +11,6 @@ import (
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"errors"
-	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -451,7 +450,6 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 	default:
 		return redis.KeyNotExistsInBoth
 	}
-	fmt.Println("CheckAndSetRedisRelationKey")
 	// 重试
 	time.Sleep(redis.RetryTime)
 	return CheckAndSetRedisRelationKey(userId, key)

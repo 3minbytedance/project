@@ -7,10 +7,10 @@ import (
 	"douyin/constant"
 	"douyin/logger"
 	"douyin/mw/redis"
-	"fmt"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/network/standard"
 	"go.uber.org/zap"
+	"log"
 	"net/http"
 	_ "net/http/pprof"
 )
@@ -42,7 +42,7 @@ func main() {
 	go func() {
 		ip := "0.0.0.0:8888"
 		if err := http.ListenAndServe(ip, nil); err != nil {
-			fmt.Printf("start pprof failed on %s\n", ip)
+			log.Printf("start pprof failed on %s\n", ip)
 		}
 	}()
 

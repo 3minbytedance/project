@@ -59,7 +59,7 @@ func main() {
 	kafka.InitUserKafka()
 
 	// 初始化Bloom Filter
-	common.InitBloomFilter()
+	common.InitUserBloomFilter()
 	common.LoadUsernamesToBloomFilter()
 
 	nodeNum, err := strconv.ParseInt(config.Conf.Node, 10, 64)
