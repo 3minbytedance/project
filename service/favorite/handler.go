@@ -191,7 +191,7 @@ func (s *FavoriteServiceImpl) GetVideoFavoriteCount(ctx context.Context, videoId
 func (s *FavoriteServiceImpl) GetUserFavoriteCount(ctx context.Context, userId int64) (resp int32, err error) {
 	res := checkAndSetUserFavoriteListKey(uint(userId), mwRedis.FavoriteList)
 	// redis和mysql中没有对应的数据
-	if res == 2 {
+	if res == mwRedis.KeyNotExistsInBoth {
 		return 0, nil
 	}
 	count, err := mwRedis.GetUserFavoriteVideoCountById(uint(userId))
@@ -320,7 +320,7 @@ func getFavoritesVideoCount(videoId uint) (int64, error) {
 func getFavoritesByUserId(userId uint) ([]uint, error) {
 	res := checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
 	// redis和mysql中没有对应的数据
-	if res == 2 {
+	if res == mwRedis.KeyNotExistsInBoth {
 		return []uint{}, nil
 	}
 
@@ -351,16 +351,16 @@ func getIdListFromFavoriteSlice(favorites []model.Favorite, idType int) []uint {
 func isUserFavorite(userId, videoId uint) bool {
 	res := checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
 	// redis和mysql中没有对应的数据
-	if res == 2 {
+	if res == mwRedis.KeyNotExistsInBoth {
 		return false
 	}
 	return mwRedis.IsInUserFavoriteList(userId, videoId)
 }
 
 // checkAndSetUserFavoriteListKey
-// 返回0 mwRedis.KeyExistsAndNotSet 表示这个key存在，未设置
-// 返回1 mwRedis.KeyUpdated 表示，这个key不存在,已更新
-// 返回2 mwRedis.KeyNotExistsInBoth 表示，这个key在数据库和redis中都不存在，即缓存穿透
+// 返回mwRedis.KeyExistsAndNotSet 表示这个key存在，未设置
+// 返回mwRedis.KeyUpdated 表示，这个key不存在,已更新
+// 返回mwRedis.KeyNotExistsInBoth 表示，这个key在数据库和redis中都不存在，即缓存穿透
 func checkAndSetUserFavoriteListKey(userId uint, key string) int {
 	if mwRedis.IsExistUserSetField(userId, key) {
 		return mwRedis.KeyExistsAndNotSet
@@ -403,9 +403,9 @@ func checkAndSetUserFavoriteListKey(userId uint, key string) int {
 }
 
 // checkAndSetVideoFavoriteCountKey
-// 返回0 mwRedis.KeyExistsAndNotSet 表示这个key存在，未设置
-// 返回1 mwRedis.KeyUpdated 表示，这个key不存在,已更新
-// 返回2 mwRedis.KeyNotExistsInBoth 表示，这个key在数据库和redis中都不存在，即缓存穿透
+// 返回mwRedis.KeyExistsAndNotSet 表示这个key存在，未设置
+// 返回mwRedis.KeyUpdated 表示，这个key不存在,已更新
+// 返回mwRedis.KeyNotExistsInBoth 表示，这个key在数据库和redis中都不存在，即缓存穿透
 func checkAndSetVideoFavoriteCountKey(videoId uint, key string) (videoFavoriteCount int64, status int) {
 	if count, err := mwRedis.GetFavoritedCountByVideoId(videoId); err == nil {
 		return count, mwRedis.KeyExistsAndNotSet
@@ -442,7 +442,7 @@ func checkAndSetVideoFavoriteCountKey(videoId uint, key string) (videoFavoriteCo
 }
 
 // checkAndSetTotalFavoriteFieldKey
-// 获取userId 发布的视频总的被点赞数量
+// 获取userId发布的视频的总的获赞数量
 // 返回mwRedis.KeyExistsAndNotSet 表示这个key存在，未设置
 // 返回mwRedis.KeyUpdated 表示，这个key不存在,已更新
 // 返回mwRedis.KeyNotExistsInBoth 表示，这个key在数据库和redis中都不存在，即缓存穿透

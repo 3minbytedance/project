@@ -291,7 +291,7 @@ func getWorkCount(userId uint) (int32, error) {
 
 		// 不存在
 		if !exist {
-			err := redis.SetCommentCountByVideoId(userId, 0)
+			err := redis.SetWorkCountByUserId(userId, 0)
 			if err != nil {
 				zap.L().Error("redis更新作品数失败", zap.Error(err))
 			}

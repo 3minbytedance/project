@@ -175,7 +175,7 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	toUserId := request.GetToUserId()
 
 	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowList)
-	if res == 2 {
+	if res == redis.KeyNotExistsInBoth {
 		return &relation.FollowListResponse{
 			StatusCode: common.CodeSuccess,
 			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
@@ -208,21 +208,6 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 		}()
 		userResp := <-userRespCh
 		followList = append(followList, userResp.GetUser())
-
-		//userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-		//	ActorId: actionId,
-		//	UserId:  int64(com),
-		//})
-		//if err != nil {
-		//	zap.L().Error("查询Follow用户信息失败", zap.Error(err))
-		//	return &relation.FollowListResponse{
-		//		StatusCode: common.CodeServerBusy,
-		//		StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
-		//
-		//		UserList: nil,
-		//	}, err
-		//}
-		//followList = append(followList, userResp.GetUser())
 	}
 	return &relation.FollowListResponse{
 		StatusCode: common.CodeSuccess,
@@ -236,7 +221,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 	actionId := request.GetUserId()
 	toUserId := request.GetToUserId()
 	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowerList)
-	if res == 2 {
+	if res == redis.KeyNotExistsInBoth {
 		return &relation.FollowerListResponse{
 			StatusCode: common.CodeSuccess,
 			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
@@ -250,7 +235,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 			StatusCode: common.CodeDBError,
 			StatusMsg:  common.MapErrMsg(common.CodeDBError),
 			UserList:   nil,
-		}, err
+		}, nil
 	}
 	followerList := make([]*user.User, 0, len(id))
 	userRespCh := make(chan *user.UserInfoByIdResponse, 10)
@@ -296,7 +281,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 	actionId := request.GetUserId()
 	toUserId := request.GetToUserId()
 	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowList)
-	if res == 2 {
+	if res == redis.KeyNotExistsInBoth {
 		return &relation.FriendListResponse{
 			StatusCode: common.CodeSuccess,
 			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
@@ -304,7 +289,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 		}, nil
 	}
 	res = CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowerList)
-	if res == 2 {
+	if res == redis.KeyNotExistsInBoth {
 		return &relation.FriendListResponse{
 			StatusCode: common.CodeSuccess,
 			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
@@ -318,16 +303,13 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 			StatusCode: common.CodeDBError,
 			StatusMsg:  common.MapErrMsg(common.CodeDBError),
 			UserList:   nil,
-		}, err
+		}, nil
 	}
 	friendList := make([]*user.User, 0, len(id))
 	userRespCh := make(chan *user.UserInfoByIdResponse, 10)
-	defer func() {
-		close(userRespCh)
-	}()
+	defer close(userRespCh)
 
 	for _, com := range id {
-
 		go func() {
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: actionId,
@@ -337,20 +319,6 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 		}()
 		userResp := <-userRespCh
 		friendList = append(friendList, userResp.GetUser())
-
-		//userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-		//	ActorId: actionId,
-		//	UserId:  int64(com),
-		//})
-		//if err != nil {
-		//	zap.L().Error("查询Friend用户信息失败", zap.Error(err))
-		//	return &relation.FriendListResponse{
-		//		StatusCode: common.CodeServerBusy,
-		//		StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
-		//		UserList:   nil,
-		//	}, err
-		//}
-		//friendList = append(friendList, userResp.User)
 	}
 	return &relation.FriendListResponse{
 		StatusCode: common.CodeSuccess,
@@ -362,7 +330,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 // GetFollowListCount implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, userId int64) (resp int32, err error) {
 	res := CheckAndSetRedisRelationKey(uint(userId), redis.FollowList)
-	if res == 2 {
+	if res == redis.KeyNotExistsInBoth {
 		return 0, nil
 	}
 	count, _ := redis.GetFollowCountById(uint(userId))
@@ -372,7 +340,7 @@ func (s *RelationServiceImpl) GetFollowListCount(ctx context.Context, userId int
 // GetFollowerListCount implements the RelationServiceImpl interface.
 func (s *RelationServiceImpl) GetFollowerListCount(ctx context.Context, userId int64) (resp int32, err error) {
 	res := CheckAndSetRedisRelationKey(uint(userId), redis.FollowerList)
-	if res == 2 {
+	if res == redis.KeyNotExistsInBoth {
 		return 0, nil
 	}
 	count, _ := redis.GetFollowerCountById(uint(userId))
@@ -385,7 +353,7 @@ func (s *RelationServiceImpl) IsFollowing(ctx context.Context, request *relation
 	toUserId := request.GetUserId()
 
 	res := CheckAndSetRedisRelationKey(uint(actionId), redis.FollowList)
-	if res == 2 {
+	if res == redis.KeyNotExistsInBoth {
 		return false, nil
 	}
 
