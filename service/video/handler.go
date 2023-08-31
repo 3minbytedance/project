@@ -204,6 +204,12 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 		ActorId: fromUserId,
 		UserId:  toUserId,
 	})
+	if userResp == nil {
+		return &video.PublishVideoListResponse{
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+		}, nil
+	}
 	//toUserId 发布的视频
 	commentCountCh := make(chan int32)
 	favoriteCountCh := make(chan int32)
@@ -288,7 +294,6 @@ func getWorkCount(userId uint) (int32, error) {
 			err := redis.SetCommentCountByVideoId(userId, 0)
 			if err != nil {
 				zap.L().Error("redis更新作品数失败", zap.Error(err))
-				return 0, err
 			}
 			return 0, nil
 		}
@@ -298,7 +303,6 @@ func getWorkCount(userId uint) (int32, error) {
 		err := redis.SetWorkCountByUserId(userId, workCount)
 		if err != nil {
 			zap.L().Error("将作品数写入redis失败", zap.Error(err))
-			return 0, err
 		}
 		return int32(workCount), nil
 	}

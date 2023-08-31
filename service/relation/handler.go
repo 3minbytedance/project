@@ -11,6 +11,7 @@ import (
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"errors"
+	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -54,9 +55,6 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 	fromUserId := uint(request.GetUserId())
 	toUserId := uint(request.GetToUserId())
 
-	CheckAndSetRedisRelationKey(fromUserId, redis.FollowList)
-	CheckAndSetRedisRelationKey(toUserId, redis.FollowerList)
-
 	switch request.ActionType {
 	case 1: // 关注
 		//判断用户是否已经关注过了
@@ -69,6 +67,18 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		}
 		if redis.AcquireRelationLock(fromUserId, redis.FollowAction) {
 			defer redis.ReleaseRelationLock(fromUserId, redis.FollowAction)
+			// 防止对空Key操作
+			CheckAndSetRedisRelationKey(fromUserId, redis.FollowList)
+			CheckAndSetRedisRelationKey(toUserId, redis.FollowerList)
+			//double check
+			res, _ = redis.IsInMyFollowList(fromUserId, toUserId)
+			if res {
+				return &relation.RelationActionResponse{
+					StatusCode: common.CodeFollowRepeat,
+					StatusMsg:  common.MapErrMsg(common.CodeFollowRepeat),
+				}, nil
+			}
+
 			err = redis.ActionFollow(fromUserId, toUserId)
 			if err != nil {
 				err = nil
@@ -84,6 +94,11 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 					zap.L().Error("kafka 写入follow list 失败")
 					return
 				}
+			}()
+			//添加到布隆过滤器
+			go func() {
+				common.AddToRelationFollowIdBloom(fmt.Sprintf("%d", fromUserId))
+				common.AddToRelationFollowerIdBloom(fmt.Sprintf("%d", toUserId))
 			}()
 			return &relation.RelationActionResponse{
 				StatusCode: common.CodeSuccess,
@@ -105,6 +120,18 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 		}
 		if redis.AcquireRelationLock(fromUserId, redis.FollowAction) {
 			defer redis.ReleaseRelationLock(fromUserId, redis.FollowAction)
+			// 防止对空Key操作
+			CheckAndSetRedisRelationKey(fromUserId, redis.FollowList)
+			CheckAndSetRedisRelationKey(toUserId, redis.FollowerList)
+
+			//double check
+			res, _ = redis.IsInMyFollowList(fromUserId, toUserId)
+			if !res {
+				return &relation.RelationActionResponse{
+					StatusCode: common.CodeFollowRepeat,
+					StatusMsg:  common.MapErrMsg(common.CodeFollowRepeat),
+				}, nil
+			}
 
 			err = redis.ActionCancelFollow(fromUserId, toUserId)
 			if err != nil {
@@ -166,9 +193,9 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	}
 
 	followList := make([]*user.User, 0, len(id))
-	userresp := make(chan *user.UserInfoByIdResponse, 10)
+	userRespCh := make(chan *user.UserInfoByIdResponse, 10)
 	defer func() {
-		close(userresp)
+		close(userRespCh)
 	}()
 
 	for _, com := range id {
@@ -177,9 +204,9 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 				ActorId: actionId,
 				UserId:  int64(com),
 			})
-			userresp <- userResp
+			userRespCh <- userResp
 		}()
-		userResp := <-userresp
+		userResp := <-userRespCh
 		followList = append(followList, userResp.GetUser())
 
 		//userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
@@ -226,9 +253,9 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 		}, err
 	}
 	followerList := make([]*user.User, 0, len(id))
-	userresp := make(chan *user.UserInfoByIdResponse, 10)
+	userRespCh := make(chan *user.UserInfoByIdResponse, 10)
 	defer func() {
-		close(userresp)
+		close(userRespCh)
 	}()
 
 	for _, com := range id {
@@ -238,9 +265,9 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 				ActorId: actionId,
 				UserId:  int64(com),
 			})
-			userresp <- userResp
+			userRespCh <- userResp
 		}()
-		userResp := <-userresp
+		userResp := <-userRespCh
 		followerList = append(followerList, userResp.GetUser())
 
 		//userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
@@ -294,9 +321,9 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 		}, err
 	}
 	friendList := make([]*user.User, 0, len(id))
-	userresp := make(chan *user.UserInfoByIdResponse, 10)
+	userRespCh := make(chan *user.UserInfoByIdResponse, 10)
 	defer func() {
-		close(userresp)
+		close(userRespCh)
 	}()
 
 	for _, com := range id {
@@ -306,9 +333,9 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 				ActorId: actionId,
 				UserId:  int64(com),
 			})
-			userresp <- userResp
+			userRespCh <- userResp
 		}()
-		userResp := <-userresp
+		userResp := <-userRespCh
 		friendList = append(friendList, userResp.GetUser())
 
 		//userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
@@ -408,6 +435,14 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 			if redis.IsExistUserSetField(userId, key) {
 				return redis.KeyExistsAndNotSet
 			}
+
+			exist := common.TestRelationFollowIdBloom(fmt.Sprintf("%d", userId))
+
+			// 不存在
+			if !exist {
+				return redis.KeyNotExistsInBoth
+			}
+
 			id, err := mysql.GetFollowList(userId)
 			if err != nil {
 				zap.L().Error("mysql获取FollowList失败", zap.Error(err))
@@ -431,6 +466,14 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 			if redis.IsExistUserSetField(userId, key) {
 				return redis.KeyExistsAndNotSet
 			}
+
+			exist := common.TestRelationFollowerIdBloom(fmt.Sprintf("%d", userId))
+
+			// 不存在
+			if !exist {
+				return redis.KeyNotExistsInBoth
+			}
+
 			id, err := mysql.GetFollowerList(userId)
 			if err != nil {
 				zap.L().Error("mysql获取FollowerList失败", zap.Error(err))

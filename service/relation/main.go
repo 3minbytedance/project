@@ -1,6 +1,7 @@
 package main
 
 import (
+	"douyin/common"
 	"douyin/config"
 	"douyin/constant"
 	"douyin/dal/mysql"
@@ -52,6 +53,12 @@ func main() {
 	}
 	// 初始化关注模块的kafka
 	kafka.InitFollowKafka()
+
+	// 初始化Bloom Filter
+	common.InitRelationFollowIdFilter()
+	common.LoadRelationFollowIdToBloomFilter()
+	common.InitRelationFollowerIdFilter()
+	common.LoadRelationFollowerIdToBloomFilter()
 
 	addr, err := net.ResolveTCPAddr("tcp", constant.RelationServicePort)
 	if err != nil {

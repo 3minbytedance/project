@@ -13,30 +13,42 @@ var bloomCommentFilter *bloom.BloomFilter
 var bloomWorkCountFilter *bloom.BloomFilter
 var bloomFavoriteUserIdFilter *bloom.BloomFilter
 var bloomFavoriteVideoIdFilter *bloom.BloomFilter
+var bloomRelationFollowIdFilter *bloom.BloomFilter
+var bloomRelationFollowerIdFilter *bloom.BloomFilter
 
 func InitUserBloomFilter() {
-	// 初始化布隆过滤器
+	// 初始化用户名布隆过滤器
 	bloomUserFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
 }
 
 func InitCommentBloomFilter() {
-	// 初始化布隆过滤器
+	// 初始化评论布隆过滤器
 	bloomCommentFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
 }
 
 func InitWorkCountFilter() {
-	// 初始化布隆过滤器
+	// 初始化作品数布隆过滤器
 	bloomWorkCountFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
 }
 
 func InitFavoriteUserIdFilter() {
-	// 初始化布隆过滤器
+	// 初始化用户点赞数布隆过滤器
 	bloomFavoriteUserIdFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
 }
 
 func InitFavoriteVideoIdFilter() {
-	// 初始化布隆过滤器
+	// 初始化视频点赞数布隆过滤器
 	bloomFavoriteVideoIdFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
+}
+
+func InitRelationFollowIdFilter() {
+	// 初始化关注布隆过滤器
+	bloomRelationFollowIdFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
+}
+
+func InitRelationFollowerIdFilter() {
+	// 初始化粉丝布隆过滤器
+	bloomRelationFollowerIdFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
 }
 
 func AddToUserBloom(data string) {
@@ -127,4 +139,38 @@ func LoadFavoriteVideoIdToBloomFilter() {
 		AddToFavoriteVideoIdBloom(videoId)
 	}
 	zap.L().Info("Loaded %d video from favorite to the bloom filter.\n", zap.Int("size", len(videoIdList)))
+}
+
+func AddToRelationFollowIdBloom(data string) {
+	bloomRelationFollowIdFilter.Add([]byte(data))
+}
+
+func TestRelationFollowIdBloom(data string) bool {
+	return bloomRelationFollowIdFilter.Test([]byte(data))
+}
+
+func LoadRelationFollowIdToBloomFilter() {
+	var followIdList []string
+	mysql.DB.Model(&model.UserFollow{}).Distinct().Pluck("user_id", &followIdList)
+	for _, followId := range followIdList {
+		AddToRelationFollowIdBloom(followId)
+	}
+	zap.L().Info("Loaded %d followId from follow to the bloom filter.\n", zap.Int("size", len(followIdList)))
+}
+
+func AddToRelationFollowerIdBloom(data string) {
+	bloomRelationFollowerIdFilter.Add([]byte(data))
+}
+
+func TestRelationFollowerIdBloom(data string) bool {
+	return bloomRelationFollowerIdFilter.Test([]byte(data))
+}
+
+func LoadRelationFollowerIdToBloomFilter() {
+	var followerIdList []string
+	mysql.DB.Model(&model.UserFollow{}).Distinct().Pluck("follow_id", &followerIdList)
+	for _, followerId := range followerIdList {
+		AddToRelationFollowerIdBloom(followerId)
+	}
+	zap.L().Info("Loaded %d follower from follow to the bloom filter.\n", zap.Int("size", len(followerIdList)))
 }
