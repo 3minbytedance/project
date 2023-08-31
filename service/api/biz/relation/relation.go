@@ -84,7 +84,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		ToUserId:   toUserId,
 		ActionType: int32(actionType),
 	}
-	// TODO: judge userId
+
 	zap.L().Debug("ACTIONTYPE", zap.Int("AT", int(actionType)))
 
 	switch actionType {

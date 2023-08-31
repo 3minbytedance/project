@@ -90,7 +90,7 @@ func (m *VideoMQ) Consume() {
 			mysql.InsertVideo(video)
 			redis.AddVideo(video)
 			// cache aside
-			redis.DelVideoHashField(videoMsg.UserID, redis.WorkCountField)
+			redis.DelUserHashField(videoMsg.UserID, redis.WorkCountField)
 			// 添加到布隆过滤器
 			common.AddToWorkCountBloom(fmt.Sprintf("%d", videoMsg.UserID))
 			zap.L().Info("视频消息处理成功", zap.Any("videoMsg", videoMsg))

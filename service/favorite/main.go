@@ -1,6 +1,7 @@
 package main
 
 import (
+	"douyin/common"
 	"douyin/config"
 	"douyin/constant"
 	"douyin/dal/mysql"
@@ -52,6 +53,12 @@ func main() {
 	}
 	// 初始化点赞模块的kafka
 	kafka.InitFavoriteKafka()
+
+	// 初始化Bloom Filter
+	common.InitFavoriteUserIdFilter()
+	common.LoadFavoriteUserIdToBloomFilter()
+	common.InitFavoriteVideoIdFilter()
+	common.LoadFavoriteVideoIdToBloomFilter()
 
 	addr, err := net.ResolveTCPAddr("tcp", constant.FavoriteServicePort)
 	if err != nil {
