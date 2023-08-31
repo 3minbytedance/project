@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -87,12 +88,25 @@ func (m *VideoMQ) Consume() {
 				Title:     videoMsg.Title,
 				CreatedAt: time.Now().Unix(),
 			}
-			mysql.InsertVideo(video)
 			redis.AddVideo(video)
-			// cache aside
-			redis.DelUserHashField(videoMsg.UserID, redis.WorkCountField)
-			// 添加到布隆过滤器
-			common.AddToWorkCountBloom(fmt.Sprintf("%d", videoMsg.UserID))
+			var wg sync.WaitGroup
+			wg.Add(3)
+			go func() {
+				defer wg.Done()
+				mysql.InsertVideo(video)
+			}()
+			go func() {
+				defer wg.Done()
+				// cache aside
+				redis.DelUserHashField(videoMsg.UserID, redis.WorkCountField)
+			}()
+			go func() {
+				defer wg.Done()
+				// 添加到布隆过滤器
+				common.AddToWorkCountBloom(fmt.Sprintf("%d", videoMsg.UserID))
+			}()
+			wg.Wait()
+
 			zap.L().Info("视频消息处理成功", zap.Any("videoMsg", videoMsg))
 		}()
 	}

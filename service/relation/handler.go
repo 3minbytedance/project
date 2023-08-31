@@ -116,8 +116,7 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 			// 防止对空Key操作
 			CheckAndSetRedisRelationKey(fromUserId, redis.FollowList)
 			CheckAndSetRedisRelationKey(toUserId, redis.FollowerList)
-
-			
+			//重复取关
 			res, _ := redis.IsInMyFollowList(fromUserId, toUserId)
 			if !res {
 				return &relation.RelationActionResponse{

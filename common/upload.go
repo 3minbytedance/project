@@ -28,7 +28,7 @@ func CreateDirectoryIfNotExist() error {
 func UploadToOSS(localPath string, remotePath string) error {
 	c := getClient()
 
-	_, _, err := c.Object.Upload(context.Background(), remotePath, localPath, nil)
+	_, err := c.Object.PutFromFile(context.Background(), remotePath, localPath, nil)
 	if err != nil {
 		return err
 	}
