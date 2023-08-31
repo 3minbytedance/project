@@ -111,21 +111,14 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
 		}, err
 	case 2: // 取关
-		res, _ := redis.IsInMyFollowList(fromUserId, toUserId)
-		if !res {
-			return &relation.RelationActionResponse{
-				StatusCode: common.CodeCancelFollowRepeat,
-				StatusMsg:  common.MapErrMsg(common.CodeCancelFollowRepeat),
-			}, nil
-		}
 		if redis.AcquireRelationLock(fromUserId, redis.FollowAction) {
 			defer redis.ReleaseRelationLock(fromUserId, redis.FollowAction)
 			// 防止对空Key操作
 			CheckAndSetRedisRelationKey(fromUserId, redis.FollowList)
 			CheckAndSetRedisRelationKey(toUserId, redis.FollowerList)
 
-			//double check
-			res, _ = redis.IsInMyFollowList(fromUserId, toUserId)
+			
+			res, _ := redis.IsInMyFollowList(fromUserId, toUserId)
 			if !res {
 				return &relation.RelationActionResponse{
 					StatusCode: common.CodeFollowRepeat,
