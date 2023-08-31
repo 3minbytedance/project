@@ -128,8 +128,8 @@ func Action(ctx context.Context, c *app.RequestContext) {
 		resp, err := commentClient.CommentAction(ctx, req)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, comment.CommentActionResponse{
-				StatusCode: resp.StatusCode,
-				StatusMsg:  common.MapErrMsg(resp.StatusCode),
+				StatusCode: common.CodeInvalidParam,
+				StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 			})
 			return
 		}
@@ -170,8 +170,8 @@ func List(ctx context.Context, c *app.RequestContext) {
 	if err != nil {
 		zap.L().Error("Get comment list from comment client err.", zap.Error(err))
 		c.JSON(http.StatusOK, comment.CommentListResponse{
-			StatusCode: resp.StatusCode,
-			StatusMsg:  common.MapErrMsg(resp.StatusCode),
+			StatusCode: common.CodeInvalidParam,
+			StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 		})
 		return
 	}

@@ -55,6 +55,6 @@ func GetCommentCnt(videoId uint) (int64, error) {
 
 func IsCommentBelongsToUser(commentId *int32, userId int64) (bool, error) {
 	var cnt int64
-	err := DB.Model(&model.Comment{}).Where("comment_id = ? and user_id = ?", commentId, userId).Count(&cnt).Error
+	err := DB.Model(&model.Comment{}).Where("id = ? and user_id = ?", commentId, userId).Count(&cnt).Error
 	return cnt != 0, err
 }
