@@ -3,36 +3,44 @@ package redis
 import (
 	"douyin/dal/model"
 	"encoding/json"
-	"fmt"
-	redisClient "github.com/redis/go-redis/v9"
+	red "github.com/redis/go-redis/v9"
 )
+
+func AddVideos(videos []model.Video) {
+	for _, video := range videos {
+		marshal, _ := json.Marshal(&video)
+		Rdb.ZAdd(Ctx, "videos", red.Z{
+			Score: float64(video.CreatedAt), Member: marshal,
+		})
+	}
+}
 
 func AddVideo(video model.Video) {
 	marshal, _ := json.Marshal(&video)
-	Rdb.ZAdd(Ctx, "videos", redisClient.Z{
+	Rdb.ZAdd(Ctx, "videos", red.Z{
 		Score: float64(video.CreatedAt), Member: marshal,
 	})
 }
 
 func GetVideos(time string) []model.Video {
-	videos, _ := Rdb.ZRevRangeByScore(Ctx, "videos",
-		&redisClient.ZRangeBy{
-			Min:    "0",
-			Max:    time, // 根据需要的时间格式进行转换
-			Offset: 0,
-			Count:  30,
-		}).Result()
-	video := make([]model.Video, 0, 30)
+	videos, _ := Rdb.ZRangeArgs(Ctx, red.ZRangeArgs{
+		Key:     VideoList,
+		ByScore: true,
+		Rev:     true,
+		Start:   0,
+		Stop:    "(" + time, //(0,time)
+		Offset:  0,
+		Count:   30,
+	}).Result()
+
+	videoList := make([]model.Video, 0, 30)
 	var v model.Video
-	fmt.Println("redis get video")
 	for _, val := range videos {
-		fmt.Println(val)
 		err := json.Unmarshal([]byte(val), &v)
 		if err != nil {
-			fmt.Println(err)
 			continue
 		}
-		video = append(video, v)
+		videoList = append(videoList, v)
 	}
-	return video
+	return videoList
 }

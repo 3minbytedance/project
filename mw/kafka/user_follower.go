@@ -5,6 +5,7 @@ import (
 	"douyin/dal/mysql"
 	"encoding/json"
 	"fmt"
+	"log"
 )
 
 type FollowMessage struct {
@@ -45,7 +46,7 @@ func (m *FollowMQ) ProduceAddFollowMsg(userId, followId uint) error {
 	}
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
-		fmt.Println("kafka发送添加关注的消息失败：", err)
+		log.Println("kafka发送添加关注的消息失败：", err)
 		return err
 	}
 	return nil
@@ -60,7 +61,7 @@ func (m *FollowMQ) ProduceDelFollowMsg(userId, followId uint) error {
 	}
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
-		fmt.Println("kafka发送删除关注的消息失败：", err)
+		log.Println("kafka发送删除关注的消息失败：", err)
 		return err
 	}
 	return nil
@@ -71,14 +72,14 @@ func (m *FollowMQ) Consume() {
 	for {
 		msg, err := m.Consumer.ReadMessage(context.Background())
 		if err != nil {
-			fmt.Println("[FollowMQ]从消息队列中读取消息失败:", err)
+			log.Println("[FollowMQ]从消息队列中读取消息失败:", err)
 		}
 
 		// 解析消息
 		var message FollowMessage
 		err = json.Unmarshal(msg.Value, &message)
 		if err != nil {
-			fmt.Println("[FollowMQ]解析消息失败:", err)
+			log.Println("[FollowMQ]解析消息失败:", err)
 			continue
 		}
 
@@ -88,14 +89,14 @@ func (m *FollowMQ) Consume() {
 			// 添加点赞
 			err = mysql.AddFollow(message.UserId, message.FollowId)
 			if err != nil {
-				fmt.Println("[FollowMQ]添加点赞失败:", err)
+				log.Println("[FollowMQ]添加点赞失败:", err)
 				continue
 			}
 		case 1:
 			// 删除点赞
 			err = mysql.DeleteFollowById(message.UserId, message.FollowId)
 			if err != nil {
-				fmt.Println("[FollowMQ]删除点赞失败:", err)
+				log.Println("[FollowMQ]删除点赞失败:", err)
 				continue
 			}
 		}

@@ -48,7 +48,7 @@ func InitVideoKafka() {
 func (m *VideoMQ) Produce(message *VideoMessage) {
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
-		fmt.Println("kafka发送添加视频的消息失败：", err)
+		log.Println("kafka发送添加视频的消息失败：", err)
 		return
 	}
 }
@@ -63,7 +63,7 @@ func (m *VideoMQ) Consume() {
 		videoMsg := new(VideoMessage)
 		err = json.Unmarshal(msg.Value, videoMsg)
 		if err != nil {
-			fmt.Println("[VideoMQ]解析消息失败:", err)
+			log.Println("[VideoMQ]解析消息失败:", err)
 		}
 		go func() {
 			zap.L().Info("开始处理视频消息", zap.Any("videoMsg", videoMsg))
@@ -88,12 +88,12 @@ func (m *VideoMQ) Consume() {
 				Title:     videoMsg.Title,
 				CreatedAt: time.Now().Unix(),
 			}
-			redis.AddVideo(video)
+			mysql.InsertVideo(video)
 			var wg sync.WaitGroup
 			wg.Add(3)
 			go func() {
 				defer wg.Done()
-				mysql.InsertVideo(video)
+				redis.AddVideo(video)
 			}()
 			go func() {
 				defer wg.Done()
@@ -109,23 +109,5 @@ func (m *VideoMQ) Consume() {
 
 			zap.L().Info("视频消息处理成功", zap.Any("videoMsg", videoMsg))
 		}()
-	}
-}
-
-func AddWorkCount(userId uint) {
-	// 更新redis中的用户作品数
-	if !redis.IsExistUserField(userId, redis.WorkCountField) {
-		cnt := mysql.FindWorkCountsByAuthorId(userId)
-		err := redis.SetWorkCountByUserId(userId, cnt)
-		if err != nil {
-			zap.L().Error("redis更新作品数失败", zap.Error(err))
-			return
-		}
-		return
-	}
-	err := redis.IncrementWorkCountByUserId(userId)
-	if err != nil {
-		zap.L().Error("redis增加其作品数失败", zap.Error(err))
-		return
 	}
 }

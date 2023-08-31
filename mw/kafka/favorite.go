@@ -5,6 +5,7 @@ import (
 	"douyin/dal/mysql"
 	"encoding/json"
 	"fmt"
+	"log"
 )
 
 // FavoriteMessage 往kafka中发送的消息
@@ -46,7 +47,7 @@ func (m *FavoriteMQ) ProduceAddFavoriteMsg(userId, videoId uint) error {
 	}
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
-		fmt.Println("kafka发送添加点赞的消息失败：", err)
+		log.Println("kafka发送添加点赞的消息失败：", err)
 		return err
 	}
 	return nil
@@ -61,7 +62,7 @@ func (m *FavoriteMQ) ProduceDelFavoriteMsg(userId, videoId uint) error {
 	}
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
-		fmt.Println("kafka发送删除点赞的消息失败：", err)
+		log.Println("kafka发送删除点赞的消息失败：", err)
 		return err
 	}
 	return nil
@@ -72,14 +73,14 @@ func (m *FavoriteMQ) Consume() {
 	for {
 		msg, err := m.Consumer.ReadMessage(context.Background())
 		if err != nil {
-			fmt.Println("[FavoriteMQ]从消息队列中读取消息失败:", err)
+			log.Println("[FavoriteMQ]从消息队列中读取消息失败:", err)
 		}
 
 		// 解析消息
 		var message FavoriteMessage
 		err = json.Unmarshal(msg.Value, &message)
 		if err != nil {
-			fmt.Println("[FavoriteMQ]解析消息失败:", err)
+			log.Println("[FavoriteMQ]解析消息失败:", err)
 			continue
 		}
 
@@ -89,14 +90,14 @@ func (m *FavoriteMQ) Consume() {
 			// 添加点赞
 			ok := mysql.AddUserFavorite(message.UserId, message.VideoId)
 			if !ok {
-				fmt.Println("[FavoriteMQ]添加点赞失败:", err)
+				log.Println("[FavoriteMQ]添加点赞失败:", err)
 				continue
 			}
 		case 1:
 			// 删除点赞
 			err = mysql.DeleteUserFavorite(message.UserId, message.VideoId)
 			if err != nil {
-				fmt.Println("[FavoriteMQ]删除点赞失败:", err)
+				log.Println("[FavoriteMQ]删除点赞失败:", err)
 				continue
 			}
 		}

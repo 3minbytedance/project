@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"douyin/dal/model"
-	"fmt"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"log"
@@ -10,11 +9,7 @@ import (
 
 // AddFollow 添加关注关系
 func AddFollow(userId, followId uint) error {
-	fmt.Println(userId,followId)
 	follow := model.UserFollow{UserId: userId, FollowId: followId}
-	fmt.Println(follow.ID)
-	fmt.Println(follow.UserId)
-	fmt.Println(follow)
 	result := DB.Model(&model.UserFollow{}).Create(&follow)
 	// 判断是否创建成功
 	if result.Error != nil {

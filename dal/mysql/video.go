@@ -41,3 +41,9 @@ func GetLatestVideos(latestTime string) []model.Video {
 	}
 	return videos
 }
+
+func GetAllVideos(latestTime string) []model.Video {
+	videos := make([]model.Video, 0, 30)
+	DB.Model(&model.Video{}).Where("created_at < ?", latestTime).Order("created_at DESC").Find(&videos)
+	return videos
+}

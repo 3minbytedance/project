@@ -36,7 +36,7 @@ func InitCommentKafka() {
 func (m *CommentMQ) ProduceAddCommentMsg(message *model.Comment) error {
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
-		fmt.Println("kafka发送添加评论的消息失败：", err)
+		log.Println("kafka发送添加评论的消息失败：", err)
 		return err
 	}
 	return nil
@@ -46,7 +46,7 @@ func (m *CommentMQ) ProduceAddCommentMsg(message *model.Comment) error {
 func (m *CommentMQ) ProduceDelCommentMsg(commentId uint) error {
 	err := kafkaManager.ProduceMessage(m.Producer, commentId)
 	if err != nil {
-		fmt.Println("kafka发送删除评论的消息失败：", err)
+		log.Println("kafka发送删除评论的消息失败：", err)
 		return err
 	}
 	return nil
@@ -71,7 +71,7 @@ func (m *CommentMQ) Consume() {
 		var result json.RawMessage
 		err = json.Unmarshal(msg.Value, &result)
 		if err != nil {
-			fmt.Println("[CommentMQ]解析消息失败:", err)
+			log.Println("[CommentMQ]解析消息失败:", err)
 			continue
 		}
 
@@ -82,9 +82,9 @@ func (m *CommentMQ) Consume() {
 		if err == nil {
 			_, err = mysql.AddComment(message)
 			if err != nil {
-				fmt.Println("[CommentMQ]向mysql中添加评论失败:", err)
+				log.Println("[CommentMQ]向mysql中添加评论失败:", err)
 			}
-			fmt.Println("[CommentMQ]向mysql中添加评论成功")
+			log.Println("[CommentMQ]向mysql中添加评论成功")
 			continue
 		}
 
@@ -94,11 +94,11 @@ func (m *CommentMQ) Consume() {
 		if err == nil {
 			err = mysql.DeleteCommentById(*commentId)
 			if err != nil {
-				fmt.Println("[CommentMQ]从mysql中删除评论失败:", err)
+				log.Println("[CommentMQ]从mysql中删除评论失败:", err)
 			}
-			fmt.Println("[CommentMQ]从mysql中删除评论成功")
+			log.Println("[CommentMQ]从mysql中删除评论成功")
 			continue
 		}
-		fmt.Println("[CommentMQ]解析消息失败:", result)
+		log.Println("[CommentMQ]解析消息失败:", result)
 	}
 }

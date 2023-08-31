@@ -71,10 +71,9 @@ func SendMessage(message *model.Message) (err error) {
 	collection := Mongo.Collection("messages")
 	_, err = collection.InsertOne(Ctx, message)
 	if err != nil {
-		fmt.Println("消息插入到 MongoDB失败。")
+		log.Println("消息插入到 MongoDB失败。")
 		return err
 	}
-	fmt.Println("消息已插入到 MongoDB。")
 	return
 }
 
@@ -110,7 +109,7 @@ func GetMessageList(fromUserId, toUserId uint, preMsgTime int64) ([]*model.Messa
 		log.Fatal(err)
 	}
 
-	fmt.Println("找到的聊天记录数量:", len(messages))
+	//log.Println("找到的聊天记录数量:", len(messages))
 
 	return messages, nil
 }

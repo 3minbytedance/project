@@ -31,6 +31,8 @@ const (
 	FollowerList = "followerList" //粉丝列表
 )
 
+const VideoList = "videos"
+
 const TokenKey = "token:"
 
 const (
@@ -84,6 +86,12 @@ func DelVideoHashField(videoId uint, field string) {
 func DelUserHashField(userId uint, field string) {
 	key := fmt.Sprintf("%s:%d", UserKey, userId)
 	Rdb.HDel(Ctx, key, field)
+}
+
+// DelVideoKey 删除videos ZSet key
+func DelVideoKey() {
+	key := VideoList
+	Rdb.Del(Ctx, key)
 }
 
 func AcquireCommentLock(videoId uint) bool {

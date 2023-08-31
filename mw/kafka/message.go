@@ -55,7 +55,7 @@ func (m *MessageMQ) Consume() {
 			log.Fatal("Failed to read message:", err)
 		}
 
-		fmt.Printf("Received message: %s\n", msg.Value)
+		//fmt.Printf("Received message: %s\n", msg.Value)
 
 		// 发送确认
 		err = m.Consumer.CommitMessages(context.Background(), msg)

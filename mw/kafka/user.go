@@ -5,7 +5,7 @@ import (
 	"douyin/dal/model"
 	"douyin/dal/mysql"
 	"encoding/json"
-	"fmt"
+	"log"
 )
 
 type UserMQ struct {
@@ -35,7 +35,7 @@ func InitUserKafka() {
 func (m *UserMQ) ProduceCreateUserMsg(message *model.User) {
 	err := kafkaManager.ProduceMessage(m.Producer, message)
 	if err != nil {
-		fmt.Println("kafka发送添加点赞的消息失败：", err)
+		log.Println("kafka发送添加点赞的消息失败：", err)
 		return
 	}
 }
@@ -45,21 +45,21 @@ func (m *UserMQ) Consume() {
 	for {
 		msg, err := m.Consumer.ReadMessage(context.Background())
 		if err != nil {
-			fmt.Println("[UserMQ]从消息队列中读取消息失败:", err)
+			log.Println("[UserMQ]从消息队列中读取消息失败:", err)
 		}
 
 		// 解析消息
 		var user model.User
 		err = json.Unmarshal(msg.Value, &user)
 		if err != nil {
-			fmt.Println("[UserMQ]解析消息失败:", err)
+			log.Println("[UserMQ]解析消息失败:", err)
 			continue
 		}
 
 		// 创建用户
 		_, err = mysql.CreateUser(&user)
 		if err != nil {
-			fmt.Println("[UserMQ]创建用户失败:", err)
+			log.Println("[UserMQ]创建用户失败:", err)
 		}
 	}
 }

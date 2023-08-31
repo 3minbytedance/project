@@ -5,7 +5,6 @@ import (
 	"douyin/constant/biz"
 	"github.com/google/uuid"
 	"github.com/tencentyun/cos-go-sdk-v5"
-	"github.com/tencentyun/cos-go-sdk-v5/debug"
 	"go.uber.org/zap"
 	"net/http"
 	"net/url"
@@ -44,13 +43,6 @@ func getClient() *cos.Client {
 			SecretID:     biz.SecretId,
 			SecretKey:    biz.SecretKey,
 			SessionToken: biz.SessionToken,
-			Transport: &debug.DebugRequestTransport{
-				RequestHeader: true,
-				// Notice when put a large file and set need the request body, might happend out of memory error.
-				RequestBody:    true,
-				ResponseHeader: false,
-				ResponseBody:   false,
-			},
 		},
 	})
 	return c

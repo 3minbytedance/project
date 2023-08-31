@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"fmt"
 	"go.uber.org/zap"
 	"strconv"
 	"time"
@@ -25,7 +24,6 @@ func TokenIsExisted(userId uint) bool {
 	// 判断key是否存在
 	exists, err := Rdb.Exists(Ctx, key).Result()
 	if err != nil {
-		fmt.Println(err)
 		return false
 	}
 	return err == nil && exists == 1

@@ -64,6 +64,8 @@ func main() {
 	common.InitWorkCountFilter()
 	common.LoadWorkCountToBloomFilter()
 
+	InitVideoListToRedis()
+
 	addr, err := net.ResolveTCPAddr("tcp", constant.VideoServicePort)
 	if err != nil {
 		panic(err)

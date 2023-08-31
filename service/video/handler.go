@@ -5,6 +5,7 @@ import (
 	"douyin/common"
 	"douyin/constant"
 	"douyin/constant/biz"
+	"douyin/dal/model"
 	"douyin/dal/mysql"
 	"douyin/kitex_gen/comment/commentservice"
 	"douyin/kitex_gen/favorite"
@@ -23,6 +24,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -70,15 +72,15 @@ func init() {
 func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFeedRequest) (resp *video.VideoFeedResponse, err error) {
 	zap.L().Info("VideoFeed", zap.Any("request", request))
 	latestTime := request.GetLatestTime()
-	videos := mysql.GetLatestVideos(latestTime)
-	//redis.GetVideos(latestTime)
-	if len(videos) == 0 {
+	//videos := mysql.GetLatestVideos(latestTime)
+	var videos []model.Video
+	videos = redis.GetVideos(latestTime)
+
+	if videos == nil || len(videos) == 0 {
+		//如果视频都看完，重置时间戳
+		latestTime = strconv.FormatInt(time.Now().Unix(), 10)
 		zap.L().Info("视频列表为空")
-		return &video.VideoFeedResponse{
-			StatusCode: common.CodeSuccess,
-			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
-			VideoList:  nil,
-		}, nil
+		videos = redis.GetVideos(latestTime)
 	}
 	currentId := request.GetUserId()
 	videoList := make([]*video.Video, 0, len(videos))
@@ -309,4 +311,29 @@ func getWorkCount(userId uint) (int32, error) {
 	//重试
 	time.Sleep(redis.RetryTime)
 	return getWorkCount(userId)
+}
+
+func InitVideoListToRedis() {
+	latestTime := strconv.FormatInt(time.Now().Unix(), 10)
+	videos := mysql.GetAllVideos(latestTime)
+	redis.DelVideoKey()
+	redis.AddVideos(videos)
+}
+
+func AddWorkCount(userId uint) {
+	// 更新redis中的用户作品数
+	if !redis.IsExistUserField(userId, redis.WorkCountField) {
+		cnt := mysql.FindWorkCountsByAuthorId(userId)
+		err := redis.SetWorkCountByUserId(userId, cnt)
+		if err != nil {
+			zap.L().Error("redis更新作品数失败", zap.Error(err))
+			return
+		}
+		return
+	}
+	err := redis.IncrementWorkCountByUserId(userId)
+	if err != nil {
+		zap.L().Error("redis增加其作品数失败", zap.Error(err))
+		return
+	}
 }
