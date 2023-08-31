@@ -2,7 +2,7 @@ package redis
 
 import (
 	"douyin/dal/model"
-	"encoding/json"
+	"github.com/cloudwego/hertz/pkg/common/json"
 	red "github.com/redis/go-redis/v9"
 )
 
@@ -22,7 +22,7 @@ func AddVideo(video model.Video) {
 	})
 }
 
-func GetVideos(time string) []model.Video {
+func GetVideos(time string) []string {
 	videos, _ := Rdb.ZRangeArgs(Ctx, red.ZRangeArgs{
 		Key:     VideoList,
 		ByScore: true,
@@ -32,15 +32,5 @@ func GetVideos(time string) []model.Video {
 		Offset:  0,
 		Count:   30,
 	}).Result()
-
-	videoList := make([]model.Video, 0, 30)
-	var v model.Video
-	for _, val := range videos {
-		err := json.Unmarshal([]byte(val), &v)
-		if err != nil {
-			continue
-		}
-		videoList = append(videoList, v)
-	}
-	return videoList
+	return videos
 }

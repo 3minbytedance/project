@@ -16,6 +16,7 @@ import (
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"fmt"
+	"github.com/cloudwego/hertz/pkg/common/json"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/google/uuid"
@@ -73,8 +74,7 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 	zap.L().Info("VideoFeed", zap.Any("request", request))
 	latestTime := request.GetLatestTime()
 	//videos := mysql.GetLatestVideos(latestTime)
-	var videos []model.Video
-	videos = redis.GetVideos(latestTime)
+	videos := redis.GetVideos(latestTime)
 
 	if videos == nil || len(videos) == 0 {
 		//如果视频都看完，重置时间戳
@@ -94,20 +94,25 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 		close(favoriteCountCh)
 		close(isFavoriteCh)
 	}()
+	var videoModel model.Video
 	for _, v := range videos {
+		err = json.Unmarshal([]byte(v), &videoModel)
+		if err != nil {
+			continue
+		}
 		go func() {
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: currentId,
-				UserId:  int64(v.AuthorId),
+				UserId:  int64(videoModel.AuthorId),
 			})
 			userRespCh <- userResp
 		}()
 		go func() {
-			commentCount, _ := commentClient.GetCommentCount(ctx, int64(v.ID))
+			commentCount, _ := commentClient.GetCommentCount(ctx, int64(videoModel.ID))
 			commentCountCh <- commentCount
 		}()
 		go func() {
-			favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int64(v.ID))
+			favoriteCount, _ := favoriteClient.GetVideoFavoriteCount(ctx, int64(videoModel.ID))
 			favoriteCountCh <- favoriteCount
 		}()
 		//判断当前请求用户是否点赞该视频
@@ -115,7 +120,7 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 			if id != 0 {
 				isFavorite, _ := favoriteClient.IsUserFavorite(ctx, &favorite.IsUserFavoriteRequest{
 					UserId:  id,
-					VideoId: int64(v.ID),
+					VideoId: int64(videoModel.ID),
 				})
 				isFavoriteCh <- isFavorite
 				return
@@ -125,10 +130,10 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 
 		// 将查询结果转换为VideoResponse类型
 		videoResponse := video.Video{
-			Id:       int64(v.ID),
-			PlayUrl:  biz.OSS + v.VideoUrl,
-			CoverUrl: biz.OSS + v.CoverUrl,
-			Title:    v.Title,
+			Id:       int64(videoModel.ID),
+			PlayUrl:  biz.OSS + videoModel.VideoUrl,
+			CoverUrl: biz.OSS + videoModel.CoverUrl,
+			Title:    videoModel.Title,
 		}
 		for receivedCount := 0; receivedCount < 4; receivedCount++ {
 			select {
@@ -148,7 +153,7 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 
 		videoList = append(videoList, &videoResponse)
 	}
-	nextTime := videos[len(videos)-1].CreatedAt
+	nextTime := videoModel.CreatedAt
 
 	return &video.VideoFeedResponse{
 		StatusCode: common.CodeSuccess,
@@ -242,7 +247,7 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 			}
 			isFavoriteCh <- false
 		}(fromUserId)
-		videoResponse := video.Video{
+		videoResponse := &video.Video{
 			Id:       int64(v.ID),
 			Author:   userResp.GetUser(),
 			PlayUrl:  biz.OSS + v.VideoUrl,
@@ -262,7 +267,7 @@ func (s *VideoServiceImpl) GetPublishVideoList(ctx context.Context, request *vid
 				break
 			}
 		}
-		videoList = append(videoList, &videoResponse)
+		videoList = append(videoList, videoResponse)
 	}
 
 	return &video.PublishVideoListResponse{
