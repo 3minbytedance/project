@@ -194,21 +194,16 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	}
 
 	followList := make([]*user.User, 0, len(id))
-	userRespCh := make(chan *user.UserInfoByIdResponse, 10)
-	defer func() {
-		close(userRespCh)
-	}()
 
-	for _, com := range id {
-		go func() {
+	for pos, com := range id {
+		go func(i int, id uint) {
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: actionId,
-				UserId:  int64(com),
+				UserId:  int64(id),
 			})
-			userRespCh <- userResp
-		}()
-		userResp := <-userRespCh
-		followList = append(followList, userResp.GetUser())
+			followList[i] = userResp.GetUser()
+		}(pos, com)
+
 	}
 	return &relation.FollowListResponse{
 		StatusCode: common.CodeSuccess,
@@ -240,36 +235,16 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 		}, nil
 	}
 	followerList := make([]*user.User, 0, len(id))
-	userRespCh := make(chan *user.UserInfoByIdResponse, 10)
-	defer func() {
-		close(userRespCh)
-	}()
 
-	for _, com := range id {
+	for pos, com := range id {
 
-		go func() {
+		go func(i int, id uint) {
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: actionId,
-				UserId:  int64(com),
+				UserId:  int64(id),
 			})
-			userRespCh <- userResp
-		}()
-		userResp := <-userRespCh
-		followerList = append(followerList, userResp.GetUser())
-
-		//userResp, err := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
-		//	ActorId: actionId,
-		//	UserId:  int64(com),
-		//})
-		//if err != nil {
-		//	zap.L().Error("查询Follower用户信息失败", zap.Error(err))
-		//	return &relation.FollowerListResponse{
-		//		StatusCode: common.CodeServerBusy,
-		//		StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
-		//		UserList:   nil,
-		//	}, err
-		//}
-		//followerList = append(followerList, userResp.GetUser())
+			followerList[i] = userResp.GetUser()
+		}(pos, com)
 	}
 	return &relation.FollowerListResponse{
 		StatusCode: common.CodeSuccess,
@@ -309,19 +284,15 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 		}, nil
 	}
 	friendList := make([]*user.User, 0, len(id))
-	userRespCh := make(chan *user.UserInfoByIdResponse, 10)
-	defer close(userRespCh)
 
-	for _, com := range id {
-		go func() {
+	for pos, com := range id {
+		go func(i int, id uint) {
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: actionId,
-				UserId:  int64(com),
+				UserId:  int64(id),
 			})
-			userRespCh <- userResp
-		}()
-		userResp := <-userRespCh
-		friendList = append(friendList, userResp.GetUser())
+			friendList[i] = userResp.GetUser()
+		}(pos, com)
 	}
 	return &relation.FriendListResponse{
 		StatusCode: common.CodeSuccess,
