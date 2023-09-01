@@ -16,9 +16,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"net"
-	"net/http"
-	_ "net/http/pprof"
-	"runtime"
+	//_ "net/http/pprof"
 	"strconv"
 )
 
@@ -81,11 +79,11 @@ func main() {
 
 	//pprof 监听
 	// 对阻塞超过1纳秒的 goroutine 进行数据采集
-	runtime.SetBlockProfileRate(1)
-	// 启动一个 http 服务
-	go func() {
-		http.ListenAndServe(":8001", nil)
-	}()
+	//runtime.SetBlockProfileRate(1)
+	//// 启动一个 http 服务
+	//go func() {
+	//	http.ListenAndServe(":8001", nil)
+	//}()
 
 	svr := user.NewServer(
 		NewUserServiceImpl(),

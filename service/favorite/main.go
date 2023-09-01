@@ -16,8 +16,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"net"
-	"net/http"
-	_ "net/http/pprof"
+	//_ "net/http/pprof"
 )
 
 func main() {
@@ -67,12 +66,12 @@ func main() {
 		panic(err)
 	}
 
-	go func() {
-		ip := "0.0.0.0:8899"
-		if err := http.ListenAndServe(ip, nil); err != nil {
-			log.Printf("start pprof failed on %s\n", ip)
-		}
-	}()
+	//go func() {
+	//	ip := "0.0.0.0:8899"
+	//	if err := http.ListenAndServe(ip, nil); err != nil {
+	//		log.Printf("start pprof failed on %s\n", ip)
+	//	}
+	//}()
 
 	svr := favorite.NewServer(
 		new(FavoriteServiceImpl),

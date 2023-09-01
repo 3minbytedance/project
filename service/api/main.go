@@ -16,8 +16,7 @@ import (
 	"go.uber.org/zap"
 	"io/ioutil"
 	"log"
-	"net/http"
-	_ "net/http/pprof"
+	//_ "net/http/pprof"
 )
 
 func main() {
@@ -44,12 +43,12 @@ func main() {
 		server.WithTransport(standard.NewTransporter),
 	)
 	//pprof.Register(h)
-	go func() {
-		ip := "0.0.0.0:8888"
-		if err := http.ListenAndServe(ip, nil); err != nil {
-			log.Printf("start pprof failed on %s\n", ip)
-		}
-	}()
+	//go func() {
+	//	ip := "0.0.0.0:8888"
+	//	if err := http.ListenAndServe(ip, nil); err != nil {
+	//		log.Printf("start pprof failed on %s\n", ip)
+	//	}
+	//}()
 
 	customizedRegister(h)
 	h.Spin()
@@ -109,12 +108,12 @@ func main2() {
 	)
 	h.AddProtocol("h2", factory.NewServerFactory())
 	//pprof.Register(h)
-	go func() {
-		ip := "0.0.0.0:8888"
-		if err := http.ListenAndServe(ip, nil); err != nil {
-			log.Printf("start pprof failed on %s\n", ip)
-		}
-	}()
+	//go func() {
+	//	ip := "0.0.0.0:8888"
+	//	if err := http.ListenAndServe(ip, nil); err != nil {
+	//		log.Printf("start pprof failed on %s\n", ip)
+	//	}
+	//}()
 
 	customizedRegister(h)
 	h.Spin()
