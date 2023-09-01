@@ -3,15 +3,19 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"douyin/config"
 	"douyin/constant"
 	"douyin/logger"
 	"douyin/mw/redis"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/network/standard"
+	"github.com/hertz-contrib/http2"
 	hertzConfig "github.com/hertz-contrib/http2/config"
 	"github.com/hertz-contrib/http2/factory"
 	"go.uber.org/zap"
+	"io/ioutil"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -35,12 +39,40 @@ func main() {
 		zap.L().Error("Init redis failed, err:%v\n", zap.Error(err))
 		return
 	}
+
+	cert, err := tls.LoadX509KeyPair("./tls/www.godreamcode.top.pem", "./tls/www.godreamcode.top.key")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	certBytes, err := ioutil.ReadFile("./tls/Digicert G2 ROOT.cer")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	caCertPool := x509.NewCertPool()
+	ok := caCertPool.AppendCertsFromPEM(certBytes)
+	if !ok {
+		panic("Failed to parse root certificate.")
+	}
+	cfg := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MinVersion:       tls.VersionTLS12,
+		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		},
+		ClientCAs:    caCertPool,
+		NextProtos: []string{http2.NextProtoTLS},
+	}
+
 	h := server.Default(
 		server.WithHostPorts(constant.ApiServicePort),
 		server.WithMaxRequestBodySize(50*1024*1024),
 		server.WithStreamBody(true),
 		server.WithTransport(standard.NewTransporter),
-		server.WithH2C(true),
+		server.WithTLS(cfg),
+		server.WithALPN(true),
 	)
 	h.AddProtocol("h2", factory.NewServerFactory(
 		hertzConfig.WithReadTimeout(time.Minute)))
