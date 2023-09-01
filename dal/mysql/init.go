@@ -33,9 +33,10 @@ func Init(appConfig *config.AppConfig) (err error) {
 	mysqlLog := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
-			SlowThreshold: time.Second,
-			LogLevel:      logger.Info,
-			Colorful:      true,
+			SlowThreshold:             time.Second,
+			IgnoreRecordNotFoundError: true,
+			LogLevel:                  logger.Error,
+			Colorful:                  false,
 		})
 
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: mysqlLog, PrepareStmt: true})
