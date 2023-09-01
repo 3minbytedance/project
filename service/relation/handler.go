@@ -175,16 +175,6 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	actionId := request.GetUserId()
 	toUserId := request.GetToUserId()
 
-	_, exist := GetName(uint(toUserId))
-	// 用户名不存在
-	if !exist {
-		return &relation.FollowListResponse{
-			StatusCode: common.CodeUserNotFound,
-			StatusMsg:  common.MapErrMsg(common.CodeUserNotFound),
-			UserList:   nil,
-		}, nil
-	}
-
 	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowList)
 	if res == redis.KeyNotExistsInBoth {
 		return &relation.FollowListResponse{
@@ -231,16 +221,6 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *relation.FollowerListRequest) (resp *relation.FollowerListResponse, err error) {
 	actionId := request.GetUserId()
 	toUserId := request.GetToUserId()
-
-	_, exist := GetName(uint(toUserId))
-	// 用户名不存在
-	if !exist {
-		return &relation.FollowerListResponse{
-			StatusCode: common.CodeUserNotFound,
-			StatusMsg:  common.MapErrMsg(common.CodeUserNotFound),
-			UserList:   nil,
-		}, nil
-	}
 
 	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowerList)
 	if res == redis.KeyNotExistsInBoth {
@@ -302,16 +282,6 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relation.FriendListRequest) (resp *relation.FriendListResponse, err error) {
 	actionId := request.GetUserId()
 	toUserId := request.GetToUserId()
-
-	_, exist := GetName(uint(toUserId))
-	// 用户名不存在
-	if !exist {
-		return &relation.FriendListResponse{
-			StatusCode: common.CodeUserNotFound,
-			StatusMsg:  common.MapErrMsg(common.CodeUserNotFound),
-			UserList:   nil,
-		}, nil
-	}
 
 	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowList)
 	if res == redis.KeyNotExistsInBoth {
