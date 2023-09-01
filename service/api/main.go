@@ -12,17 +12,50 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/network/standard"
 	"github.com/hertz-contrib/http2"
-	hertzConfig "github.com/hertz-contrib/http2/config"
 	"github.com/hertz-contrib/http2/factory"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
-	"time"
 )
 
 func main() {
+	// 加载配置
+	if err := config.Init(); err != nil {
+		zap.L().Error("Load config failed, err:%v\n", zap.Error(err))
+		return
+	}
+	// 加载日志
+	if err := logger.Init(config.Conf.LogConfig, config.Conf.Mode); err != nil {
+		zap.L().Error("Init logger failed, err:%v\n", zap.Error(err))
+		return
+	}
+
+	// 初始化中间件: redis
+	if err := redis.Init(config.Conf); err != nil {
+		zap.L().Error("Init redis failed, err:%v\n", zap.Error(err))
+		return
+	}
+	h := server.Default(
+		server.WithHostPorts(constant.ApiServicePort),
+		server.WithMaxRequestBodySize(50*1024*1024),
+		server.WithStreamBody(true),
+		server.WithTransport(standard.NewTransporter),
+	)
+	//pprof.Register(h)
+	go func() {
+		ip := "0.0.0.0:8888"
+		if err := http.ListenAndServe(ip, nil); err != nil {
+			log.Printf("start pprof failed on %s\n", ip)
+		}
+	}()
+
+	customizedRegister(h)
+	h.Spin()
+}
+
+func main2() {
 	// 加载配置
 	if err := config.Init(); err != nil {
 		zap.L().Error("Load config failed, err:%v\n", zap.Error(err))
@@ -54,7 +87,7 @@ func main() {
 		panic("Failed to parse root certificate.")
 	}
 	cfg := &tls.Config{
-		Certificates: []tls.Certificate{cert},
+		Certificates:     []tls.Certificate{cert},
 		MinVersion:       tls.VersionTLS12,
 		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
 		CipherSuites: []uint16{
@@ -62,7 +95,7 @@ func main() {
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		},
-		ClientCAs:    caCertPool,
+		ClientCAs:  caCertPool,
 		NextProtos: []string{http2.NextProtoTLS},
 	}
 
@@ -74,8 +107,7 @@ func main() {
 		server.WithTLS(cfg),
 		server.WithALPN(true),
 	)
-	h.AddProtocol("h2", factory.NewServerFactory(
-		hertzConfig.WithReadTimeout(time.Minute)))
+	h.AddProtocol("h2", factory.NewServerFactory())
 	//pprof.Register(h)
 	go func() {
 		ip := "0.0.0.0:8888"

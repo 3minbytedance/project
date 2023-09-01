@@ -1,6 +1,6 @@
 name: "douyin"
 node: 1
-mode: "local"
+mode: "remote"
 port: 8080
 version: "v0.0.1"
 log:
@@ -60,28 +60,28 @@ local:
 #    password: ""
 #
 
-
-#remote:
-#  mysql:
-#    address: "114.115.222.161"
-#    port: 3306
-#    username: doushen
-#    password: CEzYXnXpGcx5rZwW
-#    database: doushen
-#    timeout: 10
-#  redis:
-#    address: "114.115.222.161"
-#    port: 6379
-#    password: ""
-#    comment_db: 0
-#    pool_size: 30
-#    min_idle_conns: 30
-#    expire_time: 1800   # 30分钟
-#  kafka:
-#    address: "114.115.222.161"
-#    port: 9092
-#  mongo:
-#    address: "114.115.222.161"
-#    port: 27017
-#    username: douyin
-#    password: douyin
+remote:
+  mysql:
+    address: "127.0.0.1"
+    port: 3306
+    username: doushen
+    password: CEzYXnXpGcx5rZwW
+    database: doushen
+    timeout: 10
+  redis:
+    address: "127.0.0.1"
+    port: 6379
+    password: "fl#ztS6g0F9O"
+    comment_db: 0
+    pool_size: 30
+    min_idle_conns: 30
+    expire_time: 1800   # 30分钟
+  kafka:
+    address: "127.0.0.1"
+    port: 9092
+  mongo:
+    address: "127.0.0.1"
+    port: 27017
+    username: admin
+    password: w5W7PNXYBzLBGHRx
+    db: admin
