@@ -16,6 +16,9 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"net"
+	"net/http"
+	_ "net/http/pprof"
+	"runtime"
 )
 
 func main() {
@@ -64,6 +67,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	//pprof 监听
+	// 对阻塞超过1纳秒的 goroutine 进行数据采集
+	runtime.SetBlockProfileRate(1)
+	go func() {
+		http.ListenAndServe(":8002", nil)
+	}()
 
 	svr := relation.NewServer(
 		new(RelationServiceImpl),

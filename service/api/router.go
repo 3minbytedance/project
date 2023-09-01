@@ -3,7 +3,6 @@
 package main
 
 import (
-	"douyin/common"
 	"douyin/service/api/biz/comment"
 	"douyin/service/api/biz/favorite"
 	"douyin/service/api/biz/message"
@@ -16,7 +15,7 @@ import (
 
 // customizeRegister registers customize routers.
 func customizedRegister(r *server.Hertz) {
-	r.Use(common.AccessLog())
+	//r.Use(common.AccessLog())
 	douyin := r.Group("/douyin")
 
 	// 限流中间件，测试时不要开启
