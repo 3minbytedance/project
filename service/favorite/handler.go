@@ -14,13 +14,13 @@ import (
 	"douyin/kitex_gen/video"
 	"douyin/mw/kafka"
 	mwRedis "douyin/mw/redis"
-	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
+	"strconv"
 	"sync/atomic"
 	"time"
 )
@@ -260,8 +260,8 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 				}
 			}()
 			go func() {
-				common.AddToFavoriteUserIdBloom(fmt.Sprintf("%d", userId))
-				common.AddToFavoriteVideoIdBloom(fmt.Sprintf("%d", videoId))
+				common.AddToFavoriteUserIdBloom(strconv.Itoa(int(userId)))
+				common.AddToFavoriteVideoIdBloom(strconv.Itoa(int(videoId)))
 			}()
 			return biz.FavoriteActionSuccess
 		}
@@ -373,7 +373,7 @@ func checkAndSetUserFavoriteListKey(userId uint, key string) int {
 			return mwRedis.KeyExistsAndNotSet
 		}
 
-		exist := common.TestFavoriteUserIdBloom(fmt.Sprintf("%d", userId))
+		exist := common.TestFavoriteUserIdBloom(strconv.Itoa(int(userId)))
 
 		// 不存在
 		if !exist {
@@ -419,7 +419,7 @@ func checkAndSetVideoFavoriteCountKey(videoId uint, key string) (videoFavoriteCo
 		}
 		// redis中不存在，从数据库中读取
 
-		exist := common.TestFavoriteVideoIdBloom(fmt.Sprintf("%d", videoId))
+		exist := common.TestFavoriteVideoIdBloom(strconv.Itoa(int(videoId)))
 
 		// 不存在
 		if !exist {

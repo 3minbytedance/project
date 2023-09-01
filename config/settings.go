@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"log"
@@ -86,7 +85,7 @@ func Init() (err error) {
 	viper.SetConfigFile("config/app.yaml") // 指定配置文件路径
 	err = viper.ReadInConfig()             // 读取配置信息
 	if err != nil {                        // 读取配置信息失败¬
-		panic(fmt.Errorf("Read app.yaml failed: %s \n", err))
+		log.Fatalf("Read app.yaml failed: %s \n", err)
 	}
 
 	// 读取到的配置信息 反序列化到 Conf 里面

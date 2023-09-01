@@ -11,13 +11,13 @@ import (
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"errors"
-	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -97,8 +97,8 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 			}()
 			//添加到布隆过滤器
 			go func() {
-				common.AddToRelationFollowIdBloom(fmt.Sprintf("%d", fromUserId))
-				common.AddToRelationFollowerIdBloom(fmt.Sprintf("%d", toUserId))
+				common.AddToRelationFollowIdBloom(strconv.Itoa(int(fromUserId)))
+				common.AddToRelationFollowerIdBloom(strconv.Itoa(int(toUserId)))
 			}()
 			return &relation.RelationActionResponse{
 				StatusCode: common.CodeSuccess,
@@ -396,7 +396,7 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 				return redis.KeyExistsAndNotSet
 			}
 
-			exist := common.TestRelationFollowIdBloom(fmt.Sprintf("%d", userId))
+			exist := common.TestRelationFollowIdBloom(strconv.Itoa(int(userId)))
 
 			// 不存在
 			if !exist {
@@ -427,7 +427,7 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 				return redis.KeyExistsAndNotSet
 			}
 
-			exist := common.TestRelationFollowerIdBloom(fmt.Sprintf("%d", userId))
+			exist := common.TestRelationFollowerIdBloom(strconv.Itoa(int(userId)))
 
 			// 不存在
 			if !exist {

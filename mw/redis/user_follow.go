@@ -1,31 +1,34 @@
 package redis
 
 import (
-	"fmt"
 	_ "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 )
 
 // GetFollowCountById 根据userId查找关注数
 func GetFollowCountById(userId uint) (int, error) {
-	key := fmt.Sprintf("%s:%d", FollowList, userId)
+	baseSlice := []string{FollowList, strconv.Itoa(int(userId))}
+	key := strings.Join(baseSlice, Delimiter)
 	size, err := Rdb.SCard(Ctx, key).Result()
 	return int(size), err
 }
 
 // GetFollowerCountById 根据userId查找粉丝数
 func GetFollowerCountById(userId uint) (int, error) {
-	key := fmt.Sprintf("%s:%d", FollowerList, userId)
+	baseSlice := []string{FollowerList, strconv.Itoa(int(userId))}
+	key := strings.Join(baseSlice, Delimiter)
 	size, err := Rdb.SCard(Ctx, key).Result()
 	return int(size), err
 }
 
 // GetFollowListById 根据userId查找关注list
 func GetFollowListById(userId uint) ([]uint, error) {
-	key := fmt.Sprintf("%s:%d", FollowList, userId)
+	baseSlice := []string{FollowList, strconv.Itoa(int(userId))}
+	key := strings.Join(baseSlice, Delimiter)
 	list, err := Rdb.SMembers(Ctx, key).Result()
 	result := make([]uint, 0)
 	if err != nil {
@@ -43,7 +46,8 @@ func GetFollowListById(userId uint) ([]uint, error) {
 
 // GetFollowerListById 根据userId查找粉丝list
 func GetFollowerListById(userId uint) ([]uint, error) {
-	key := fmt.Sprintf("%s:%d", FollowerList, userId)
+	baseSlice := []string{FollowerList, strconv.Itoa(int(userId))}
+	key := strings.Join(baseSlice, Delimiter)
 	list, err := Rdb.SMembers(Ctx, key).Result()
 	result := make([]uint, 0)
 	if err != nil {
@@ -61,9 +65,12 @@ func GetFollowerListById(userId uint) ([]uint, error) {
 
 // GetFriendListById 根据userId查找好友list
 func GetFriendListById(userId uint) ([]uint, error) {
-	key1 := fmt.Sprintf("%s:%d", FollowerList, userId)
-	key2 := fmt.Sprintf("%s:%d", FollowList, userId)
-	friend, err := Rdb.SInter(Ctx, key2, key1).Result()
+	baseSliceFollower := []string{FollowerList, strconv.Itoa(int(userId))}
+	keyFollower := strings.Join(baseSliceFollower, Delimiter)
+	baseSliceFollow := []string{FollowList, strconv.Itoa(int(userId))}
+	keyFollow := strings.Join(baseSliceFollow, Delimiter)
+
+	friend, err := Rdb.SInter(Ctx, keyFollow, keyFollower).Result()
 	result := make([]uint, 0, len(friend))
 	if err != nil {
 		return result, err
@@ -80,7 +87,8 @@ func GetFriendListById(userId uint) ([]uint, error) {
 
 // SetFollowListByUserId 设置关注列表
 func SetFollowListByUserId(userId uint, ids []uint) error {
-	key := fmt.Sprintf("%s:%d", FollowList, userId)
+	baseSlice := []string{FollowList, strconv.Itoa(int(userId))}
+	key := strings.Join(baseSlice, Delimiter)
 	pipe := Rdb.Pipeline()
 	for _, value := range ids {
 		err := pipe.SAdd(Ctx, key, value).Err()
@@ -98,7 +106,8 @@ func SetFollowListByUserId(userId uint, ids []uint) error {
 
 // SetFollowerListByUserId 设置粉丝列表
 func SetFollowerListByUserId(userId uint, ids []uint) error {
-	key := fmt.Sprintf("%s:%d", FollowerList, userId)
+	baseSlice := []string{FollowerList, strconv.Itoa(int(userId))}
+	key := strings.Join(baseSlice, Delimiter)
 	pipe := Rdb.Pipeline()
 	// 转换为[]interface{}
 	for _, value := range ids {
@@ -117,42 +126,48 @@ func SetFollowerListByUserId(userId uint, ids []uint) error {
 
 // IncreaseFollowCountByUserId 给Id对应的关注set加上 id
 func IncreaseFollowCountByUserId(userId uint, id uint) error {
-	key := fmt.Sprintf("%s:%d", FollowList, userId)
+	baseSlice := []string{FollowList, strconv.Itoa(int(userId))}
+	key := strings.Join(baseSlice, Delimiter)
 	err := Rdb.SAdd(Ctx, key, id).Err()
 	return err
 }
 
 // DecreaseFollowCountByUserId userId 关注列表取关 followId
 func DecreaseFollowCountByUserId(userId uint, followId uint) error {
-	key := fmt.Sprintf("%s:%d", FollowList, userId)
+	baseSlice := []string{FollowList, strconv.Itoa(int(userId))}
+	key := strings.Join(baseSlice, Delimiter)
 	err := Rdb.SRem(Ctx, key, followId).Err()
 	return err
 }
 
 // IncreaseFollowerCountByUserId 给userId粉丝列表加上 followid
 func IncreaseFollowerCountByUserId(userId uint, followId uint) error {
-	key := fmt.Sprintf("%s:%d", FollowerList, userId)
+	baseSlice := []string{FollowerList, strconv.Itoa(int(userId))}
+	key := strings.Join(baseSlice, Delimiter)
 	err := Rdb.SAdd(Ctx, key, followId).Err()
 	return err
 }
 
 // DecreaseFollowerCountByUserId 给userId对应的粉丝列表减去id
 func DecreaseFollowerCountByUserId(userId uint, id uint) error {
-	key := fmt.Sprintf("%s:%d", FollowerList, userId)
+	baseSlice := []string{FollowerList, strconv.Itoa(int(userId))}
+	key := strings.Join(baseSlice, Delimiter)
 	err := Rdb.SRem(Ctx, key, id).Err()
 	return err
 }
 
 // IsInMyFollowList userid的follow list是否存在id
 func IsInMyFollowList(userId uint, id uint) (bool, error) {
-	key := fmt.Sprintf("%s:%d", FollowList, userId)
+	baseSlice := []string{FollowList, strconv.Itoa(int(userId))}
+	key := strings.Join(baseSlice, Delimiter)
 	found, err := Rdb.SIsMember(Ctx, key, id).Result()
 	return found, err
 }
 
 // IsInMyFollowerList userid的follower list是否存在id
 func IsInMyFollowerList(userId uint, id uint) (bool, error) {
-	key := fmt.Sprintf("%s:%d", FollowerList, userId)
+	baseSlice := []string{FollowerList, strconv.Itoa(int(userId))}
+	key := strings.Join(baseSlice, Delimiter)
 	found, err := Rdb.SIsMember(Ctx, key, id).Result()
 	return found, err
 }
@@ -160,8 +175,11 @@ func IsInMyFollowerList(userId uint, id uint) (bool, error) {
 // ActionFollow
 // 更新fromUserId关注和toUserId粉丝
 func ActionFollow(fromUserId, toUserId uint) error {
-	keyFollow := fmt.Sprintf("%s:%d", FollowList, fromUserId)
-	keyFollower := fmt.Sprintf("%s:%d", FollowerList, toUserId)
+	baseSliceFollow := []string{FollowList, strconv.Itoa(int(fromUserId))}
+	keyFollow := strings.Join(baseSliceFollow, Delimiter)
+	baseSliceFollower := []string{FollowerList, strconv.Itoa(int(toUserId))}
+	keyFollower := strings.Join(baseSliceFollower, Delimiter)
+
 	pipe := Rdb.TxPipeline()
 	pipe.SAdd(Ctx, keyFollow, toUserId)
 	pipe.SAdd(Ctx, keyFollower, fromUserId)
@@ -172,8 +190,11 @@ func ActionFollow(fromUserId, toUserId uint) error {
 // ActionCancelFollow
 // 更新fromUserId关注和toUserId粉丝
 func ActionCancelFollow(fromUserId, toUserId uint) error {
-	keyFollow := fmt.Sprintf("%s:%d", FollowList, fromUserId)
-	keyFollower := fmt.Sprintf("%s:%d", FollowerList, toUserId)
+	baseSliceFollow := []string{FollowList, strconv.Itoa(int(fromUserId))}
+	keyFollow := strings.Join(baseSliceFollow, Delimiter)
+	baseSliceFollower := []string{FollowerList, strconv.Itoa(int(toUserId))}
+	keyFollower := strings.Join(baseSliceFollower, Delimiter)
+
 	pipe := Rdb.TxPipeline()
 	pipe.SRem(Ctx, keyFollow, toUserId)
 	pipe.SRem(Ctx, keyFollower, fromUserId)

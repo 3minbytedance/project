@@ -15,7 +15,6 @@ import (
 	video "douyin/kitex_gen/video"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
-	"fmt"
 	"github.com/cloudwego/hertz/pkg/common/json"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
@@ -294,7 +293,7 @@ func getWorkCount(userId uint) (int32, error) {
 	if redis.AcquireUserLock(userId, redis.WorkCountField) {
 		defer redis.ReleaseUserLock(userId, redis.WorkCountField)
 
-		exist := common.TestWorkCountBloom(fmt.Sprintf("%d", userId))
+		exist := common.TestWorkCountBloom(strconv.Itoa(int(userId)))
 
 		// 不存在
 		if !exist {

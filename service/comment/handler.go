@@ -13,13 +13,13 @@ import (
 	"douyin/mw/redis"
 	"douyin/service/comment/pack"
 	"errors"
-	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"go.uber.org/zap"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -87,7 +87,7 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		}
 
 		go func() {
-			common.AddToCommentBloom(fmt.Sprintf("%d", videoId))
+			common.AddToCommentBloom(strconv.Itoa(int(videoId)))
 		}()
 		// cache aside
 		redis.DelVideoHashField(videoId, redis.CommentCountField)
@@ -207,7 +207,7 @@ func checkAndSetRedisCommentKey(videoId uint) (isSet bool, commentCount int64) {
 	if redis.AcquireCommentLock(videoId) {
 		defer redis.ReleaseCommentLock(videoId)
 
-		exist := common.TestCommentBloom(fmt.Sprintf("%d", videoId))
+		exist := common.TestCommentBloom(strconv.Itoa(int(videoId)))
 
 		// 不存在
 		if !exist {
