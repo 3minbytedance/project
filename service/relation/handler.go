@@ -194,6 +194,14 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 		}, err
 	}
 
+	if len(id) == 0 {
+		return &relation.FollowListResponse{
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
+			UserList:   nil,
+		}, err
+	}
+
 	followList := make([]*user.User, 0, len(id))
 	var wg sync.WaitGroup
 	wg.Add(len(id))
@@ -240,6 +248,14 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 			UserList:   nil,
 		}, nil
 	}
+	if len(id) == 0 {
+		return &relation.FollowerListResponse{
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
+			UserList:   nil,
+		}, err
+	}
+
 	followerList := make([]*user.User, 0, len(id))
 	var wg sync.WaitGroup
 	wg.Add(len(id))
@@ -292,6 +308,14 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 			UserList:   nil,
 		}, nil
 	}
+	if len(id) == 0 {
+		return &relation.FriendListResponse{
+			StatusCode: common.CodeSuccess,
+			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
+			UserList:   nil,
+		}, err
+	}
+
 	friendList := make([]*user.User, 0, len(id))
 	var wg sync.WaitGroup
 	wg.Add(len(id))
