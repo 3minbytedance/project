@@ -55,6 +55,15 @@ func (s *RelationServiceImpl) RelationAction(ctx context.Context, request *relat
 	fromUserId := uint(request.GetUserId())
 	toUserId := uint(request.GetToUserId())
 
+	_, exist := GetName(uint(toUserId))
+	// 用户名不存在
+	if !exist {
+		return &relation.RelationActionResponse{
+			StatusCode: common.CodeUserNotFound,
+			StatusMsg:  common.MapErrMsg(common.CodeUserNotFound),
+		}, nil
+	}
+
 	switch request.ActionType {
 	case 1: // 关注
 		//判断用户是否已经关注过了
@@ -166,6 +175,16 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	actionId := request.GetUserId()
 	toUserId := request.GetToUserId()
 
+	_, exist := GetName(uint(toUserId))
+	// 用户名不存在
+	if !exist {
+		return &relation.FollowListResponse{
+			StatusCode: common.CodeUserNotFound,
+			StatusMsg:  common.MapErrMsg(common.CodeUserNotFound),
+			UserList:   nil,
+		}, nil
+	}
+
 	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowList)
 	if res == redis.KeyNotExistsInBoth {
 		return &relation.FollowListResponse{
@@ -212,6 +231,17 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *relation.FollowerListRequest) (resp *relation.FollowerListResponse, err error) {
 	actionId := request.GetUserId()
 	toUserId := request.GetToUserId()
+
+	_, exist := GetName(uint(toUserId))
+	// 用户名不存在
+	if !exist {
+		return &relation.FollowerListResponse{
+			StatusCode: common.CodeUserNotFound,
+			StatusMsg:  common.MapErrMsg(common.CodeUserNotFound),
+			UserList:   nil,
+		}, nil
+	}
+
 	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowerList)
 	if res == redis.KeyNotExistsInBoth {
 		return &relation.FollowerListResponse{
@@ -272,6 +302,17 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relation.FriendListRequest) (resp *relation.FriendListResponse, err error) {
 	actionId := request.GetUserId()
 	toUserId := request.GetToUserId()
+
+	_, exist := GetName(uint(toUserId))
+	// 用户名不存在
+	if !exist {
+		return &relation.FriendListResponse{
+			StatusCode: common.CodeUserNotFound,
+			StatusMsg:  common.MapErrMsg(common.CodeUserNotFound),
+			UserList:   nil,
+		}, nil
+	}
+
 	res := CheckAndSetRedisRelationKey(uint(toUserId), redis.FollowList)
 	if res == redis.KeyNotExistsInBoth {
 		return &relation.FriendListResponse{
@@ -456,4 +497,31 @@ func CheckAndSetRedisRelationKey(userId uint, key string) int {
 	// 重试
 	time.Sleep(redis.RetryTime)
 	return CheckAndSetRedisRelationKey(userId, key)
+}
+
+// GetName 根据userId获取用户名
+func GetName(userId uint) (string, bool) {
+	// 从redis中获取用户名
+	// 1. 缓存中有数据, 直接返回
+	if name, err := redis.GetNameByUserId(userId); err == nil {
+		return name, true
+	}
+	//缓存不存在，尝试从数据库中取
+	if redis.AcquireUserLock(userId, redis.NameField) {
+		defer redis.ReleaseUserLock(userId, redis.NameField)
+		// 2. 缓存中没有数据，从数据库中获取
+		userModel, exist, _ := mysql.FindUserByUserID(userId)
+		if !exist {
+			return "", false
+		}
+		// 将用户名写入redis
+		err := redis.SetNameByUserId(userId, userModel.Name)
+		if err != nil {
+			zap.L().Error("将用户名写入redis失败：", zap.Error(err))
+		}
+		return userModel.Name, true
+	}
+	// 重试
+	time.Sleep(redis.RetryTime)
+	return GetName(userId)
 }
