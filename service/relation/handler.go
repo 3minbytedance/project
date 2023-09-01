@@ -18,6 +18,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -194,9 +195,12 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 	}
 
 	followList := make([]*user.User, 0, len(id))
+	var wg sync.WaitGroup
+	wg.Add(len(id))
 
 	for pos, com := range id {
 		go func(i int, id uint) {
+			defer wg.Done()
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: actionId,
 				UserId:  int64(id),
@@ -205,6 +209,8 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 		}(pos, com)
 
 	}
+	wg.Wait()
+
 	return &relation.FollowListResponse{
 		StatusCode: common.CodeSuccess,
 		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
@@ -235,10 +241,12 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 		}, nil
 	}
 	followerList := make([]*user.User, 0, len(id))
+	var wg sync.WaitGroup
+	wg.Add(len(id))
 
 	for pos, com := range id {
-
 		go func(i int, id uint) {
+			defer wg.Done()
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: actionId,
 				UserId:  int64(id),
@@ -246,6 +254,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 			followerList[i] = userResp.GetUser()
 		}(pos, com)
 	}
+	wg.Wait()
 	return &relation.FollowerListResponse{
 		StatusCode: common.CodeSuccess,
 		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
@@ -284,9 +293,11 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 		}, nil
 	}
 	friendList := make([]*user.User, 0, len(id))
-
+	var wg sync.WaitGroup
+	wg.Add(len(id))
 	for pos, com := range id {
 		go func(i int, id uint) {
+			defer wg.Done()
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: actionId,
 				UserId:  int64(id),
@@ -294,6 +305,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 			friendList[i] = userResp.GetUser()
 		}(pos, com)
 	}
+	wg.Wait()
 	return &relation.FriendListResponse{
 		StatusCode: common.CodeSuccess,
 		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
