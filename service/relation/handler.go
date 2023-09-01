@@ -202,7 +202,7 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 		}, err
 	}
 
-	followList := make([]*user.User, 0, len(id))
+	followList := make([]*user.User, len(id))
 	var wg sync.WaitGroup
 	wg.Add(len(id))
 
@@ -256,7 +256,7 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 		}, err
 	}
 
-	followerList := make([]*user.User, 0, len(id))
+	followerList := make([]*user.User, len(id))
 	var wg sync.WaitGroup
 	wg.Add(len(id))
 
@@ -316,7 +316,7 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 		}, err
 	}
 
-	friendList := make([]*user.User, 0, len(id))
+	friendList := make([]*user.User, len(id))
 	var wg sync.WaitGroup
 	wg.Add(len(id))
 	for pos, com := range id {
