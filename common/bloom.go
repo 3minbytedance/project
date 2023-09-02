@@ -13,8 +13,10 @@ var bloomCommentFilter *bloom.BloomFilter
 var bloomWorkCountFilter *bloom.BloomFilter
 var bloomFavoriteUserIdFilter *bloom.BloomFilter
 var bloomFavoriteVideoIdFilter *bloom.BloomFilter
+var bloomFavoriteTotalFavoriteFilter *bloom.BloomFilter
 var bloomRelationFollowIdFilter *bloom.BloomFilter
 var bloomRelationFollowerIdFilter *bloom.BloomFilter
+
 
 func InitUserBloomFilter() {
 	// 初始化用户名布隆过滤器
@@ -39,6 +41,11 @@ func InitFavoriteUserIdFilter() {
 func InitFavoriteVideoIdFilter() {
 	// 初始化视频点赞数布隆过滤器
 	bloomFavoriteVideoIdFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
+}
+
+func InitTotalFavoriteFilter() {
+	// 初始化用户总的获赞数布隆过滤器
+	bloomFavoriteTotalFavoriteFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
 }
 
 func InitRelationFollowIdFilter() {
@@ -139,6 +146,23 @@ func LoadFavoriteVideoIdToBloomFilter() {
 		AddToFavoriteVideoIdBloom(videoId)
 	}
 	zap.L().Info("Loaded %d video from favorite to the bloom filter.\n", zap.Int("size", len(videoIdList)))
+}
+
+func AddToTotalFavoriteBloom(data string) {
+	bloomFavoriteTotalFavoriteFilter.Add([]byte(data))
+}
+
+func TestTotalFavoriteBloom(data string) bool {
+	return bloomFavoriteTotalFavoriteFilter.Test([]byte(data))
+}
+
+func LoadTotalFavoriteBloom() {
+	var userIdList []string
+	mysql.DB.Model(&model.Video{}).Distinct().Pluck("author_id", &userIdList)
+	for _, userId := range userIdList {
+		AddToTotalFavoriteBloom(userId)
+	}
+	zap.L().Info("Loaded %d video from favorite to the bloom filter.\n", zap.Int("size", len(userIdList)))
 }
 
 func AddToRelationFollowIdBloom(data string) {

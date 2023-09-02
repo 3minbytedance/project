@@ -60,6 +60,8 @@ func main() {
 	common.LoadFavoriteUserIdToBloomFilter()
 	common.InitFavoriteVideoIdFilter()
 	common.LoadFavoriteVideoIdToBloomFilter()
+	common.InitTotalFavoriteFilter()
+	common.LoadTotalFavoriteBloom()
 
 	addr, err := net.ResolveTCPAddr("tcp", constant.FavoriteServicePort)
 	if err != nil {

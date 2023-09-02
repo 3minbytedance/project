@@ -78,7 +78,6 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 	if videos == nil || len(videos) == 0 {
 		//如果视频都看完，重置时间戳
 		latestTime = strconv.FormatInt(time.Now().Unix(), 10)
-		zap.L().Info("视频列表为空")
 		videos = redis.GetVideos(latestTime)
 	}
 	currentId := request.GetUserId()

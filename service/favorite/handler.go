@@ -458,6 +458,13 @@ func checkAndSetTotalFavoriteFieldKey(userId uint, key string) (totalFavoriteCou
 			return totalCount, mwRedis.KeyExistsAndNotSet
 		}
 
+		exist := common.TestTotalFavoriteBloom(strconv.Itoa(int(userId)))
+
+		// 不存在
+		if !exist {
+			return 0, mwRedis.KeyNotExistsInBoth
+		}
+
 		var total int64
 		// 获取用户发布的视频列表
 		videosByAuthorId, exist := dalMySQL.FindVideosByAuthorId(userId)
