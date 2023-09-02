@@ -9,7 +9,7 @@ import (
 func AddVideos(videos []model.Video) {
 	for _, video := range videos {
 		marshal, _ := json.Marshal(&video)
-		Rdb.ZAdd(Ctx, "videos", red.Z{
+		Rdb.ZAdd(Ctx, VideoList, red.Z{
 			Score: float64(video.CreatedAt), Member: marshal,
 		})
 	}
@@ -17,7 +17,7 @@ func AddVideos(videos []model.Video) {
 
 func AddVideo(video model.Video) {
 	marshal, _ := json.Marshal(&video)
-	Rdb.ZAdd(Ctx, "videos", red.Z{
+	Rdb.ZAdd(Ctx, VideoList, red.Z{
 		Score: float64(video.CreatedAt), Member: marshal,
 	})
 }

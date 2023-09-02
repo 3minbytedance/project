@@ -375,7 +375,7 @@ func (p *CommentActionRequest) FastRead(buf []byte) (int, error) {
 				}
 			}
 		case 5:
-			if fieldTypeId == thrift.I32 {
+			if fieldTypeId == thrift.I64 {
 				l, err = p.FastReadField5(buf[offset:])
 				offset += l
 				if err != nil {
@@ -481,7 +481,7 @@ func (p *CommentActionRequest) FastReadField4(buf []byte) (int, error) {
 func (p *CommentActionRequest) FastReadField5(buf []byte) (int, error) {
 	offset := 0
 
-	if v, l, err := bthrift.Binary.ReadI32(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadI64(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
@@ -567,8 +567,8 @@ func (p *CommentActionRequest) fastWriteField4(buf []byte, binaryWriter bthrift.
 func (p *CommentActionRequest) fastWriteField5(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
 	if p.IsSetCommentId() {
-		offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "comment_id", thrift.I32, 5)
-		offset += bthrift.Binary.WriteI32(buf[offset:], *p.CommentId)
+		offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "comment_id", thrift.I64, 5)
+		offset += bthrift.Binary.WriteI64(buf[offset:], *p.CommentId)
 
 		offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	}
@@ -616,8 +616,8 @@ func (p *CommentActionRequest) field4Length() int {
 func (p *CommentActionRequest) field5Length() int {
 	l := 0
 	if p.IsSetCommentId() {
-		l += bthrift.Binary.FieldBeginLength("comment_id", thrift.I32, 5)
-		l += bthrift.Binary.I32Length(*p.CommentId)
+		l += bthrift.Binary.FieldBeginLength("comment_id", thrift.I64, 5)
+		l += bthrift.Binary.I64Length(*p.CommentId)
 
 		l += bthrift.Binary.FieldEndLength()
 	}

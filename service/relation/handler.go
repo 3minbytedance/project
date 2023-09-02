@@ -18,7 +18,6 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -202,22 +201,23 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 		}, err
 	}
 
-	followList := make([]*user.User, len(id))
-	var wg sync.WaitGroup
-	wg.Add(len(id))
-
-	for pos, com := range id {
-		go func(i int, id uint) {
-			defer wg.Done()
+	followList := make([]*user.User, 0, len(id))
+	userRespCh := make(chan *user.UserInfoByIdResponse)
+	defer close(userRespCh)
+	for _, com := range id {
+		go func() {
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: actionId,
-				UserId:  int64(id),
+				UserId:  int64(com),
 			})
-			followList[i] = userResp.GetUser()
-		}(pos, com)
-
+			userRespCh <- userResp
+		}()
+		userResp := <-userRespCh
+		if userResp == nil {
+			continue
+		}
+		followList = append(followList, userResp.GetUser())
 	}
-	wg.Wait()
 
 	return &relation.FollowListResponse{
 		StatusCode: common.CodeSuccess,
@@ -256,21 +256,23 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 		}, err
 	}
 
-	followerList := make([]*user.User, len(id))
-	var wg sync.WaitGroup
-	wg.Add(len(id))
-
-	for pos, com := range id {
-		go func(i int, id uint) {
-			defer wg.Done()
+	followerList := make([]*user.User, 0, len(id))
+	userRespCh := make(chan *user.UserInfoByIdResponse)
+	defer close(userRespCh)
+	for _, com := range id {
+		go func() {
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: actionId,
-				UserId:  int64(id),
+				UserId:  int64(com),
 			})
-			followerList[i] = userResp.GetUser()
-		}(pos, com)
+			userRespCh <- userResp
+		}()
+		userResp := <-userRespCh
+		if userResp == nil {
+			continue
+		}
+		followerList = append(followerList, userResp.GetUser())
 	}
-	wg.Wait()
 	return &relation.FollowerListResponse{
 		StatusCode: common.CodeSuccess,
 		StatusMsg:  common.MapErrMsg(common.CodeSuccess),
@@ -316,20 +318,22 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 		}, err
 	}
 
-	friendList := make([]*user.User, len(id))
-	var wg sync.WaitGroup
-	wg.Add(len(id))
-	for pos, com := range id {
-		go func(i int, id uint) {
-			defer wg.Done()
+	friendList := make([]*user.User, 0, len(id))
+	userRespCh := make(chan *user.UserInfoByIdResponse)
+	for _, com := range id {
+		go func() {
 			userResp, _ := userClient.GetUserInfoById(ctx, &user.UserInfoByIdRequest{
 				ActorId: actionId,
-				UserId:  int64(id),
+				UserId:  int64(com),
 			})
-			friendList[i] = userResp.GetUser()
-		}(pos, com)
+			userRespCh <- userResp
+		}()
+		userResp := <-userRespCh
+		if userResp == nil {
+			continue
+		}
+		friendList = append(friendList, userResp.User)
 	}
-	wg.Wait()
 	return &relation.FriendListResponse{
 		StatusCode: common.CodeSuccess,
 		StatusMsg:  common.MapErrMsg(common.CodeSuccess),

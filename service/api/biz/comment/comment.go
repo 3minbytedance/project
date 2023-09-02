@@ -122,7 +122,7 @@ func Action(ctx context.Context, c *app.RequestContext) {
 			UserId:     int64(userId),
 			VideoId:    videoId,
 			ActionType: int32(actionType),
-			CommentId:  proto.Int32(int32(commentId)),
+			CommentId:  proto.Int64(commentId),
 		}
 
 		resp, err := commentClient.CommentAction(ctx, req)

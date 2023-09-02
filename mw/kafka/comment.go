@@ -5,7 +5,6 @@ import (
 	"douyin/dal/model"
 	"douyin/dal/mysql"
 	"encoding/json"
-	"fmt"
 	"log"
 )
 
@@ -60,7 +59,7 @@ func (m *CommentMQ) Consume() {
 			log.Fatal("[CommentMQ]从消息队列中读取消息失败:", err)
 		}
 
-		fmt.Printf("[CommentMQ]从消息队列中读取到消息: %v\n", msg)
+		log.Printf("[CommentMQ]从消息队列中读取到消息: %v\n", msg)
 
 		// 发送确认
 		err = m.Consumer.CommitMessages(context.Background(), msg)

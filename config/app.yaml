@@ -1,6 +1,6 @@
 name: "douyin"
 node: 1
-mode: "remote"
+mode: "local"
 port: 8080
 version: "v0.0.1"
 log:

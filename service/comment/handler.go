@@ -54,7 +54,7 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		zap.Int64("user_id", request.GetUserId()),
 		zap.Int64("video_id", request.GetVideoId()),
 		zap.Int32("action_type", request.GetActionType()),
-		zap.Int32("comment_id", request.GetCommentId()),
+		zap.Int64("comment_id", request.GetCommentId()),
 		zap.String("comment_text", request.GetCommentText()),
 	)
 	videoId := uint(request.GetVideoId())
@@ -67,12 +67,14 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 	if userResp.GetUser() == nil || err != nil {
 		resp.StatusCode = 1
 		resp.StatusMsg = err.Error()
-		return resp, err
+		err = nil
+		return resp, nil
 	}
 
 	switch request.GetActionType() {
 	case 1: // 新增评论
 		commentData := model.Comment{
+			ID:        common.GetUid(),
 			UserId:    uint(userId),
 			VideoId:   videoId,
 			Content:   common.ReplaceWord(request.GetCommentText()),

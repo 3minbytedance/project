@@ -10,7 +10,7 @@ import (
 const Delimiter = ":"
 
 const (
-	//VideoKey hash 类型 key:video_videoId
+	//VideoKey hash 类型 video:videoId
 	VideoKey = "video"
 
 	CommentCountField = "commentCount"
@@ -19,7 +19,7 @@ const (
 )
 
 const (
-	//UserKey hash 类型 key:user_userId
+	//UserKey hash 类型 user:userId
 	UserKey = "user"
 
 	WorkCountField     = "workCount"      //作品数
