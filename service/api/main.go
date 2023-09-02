@@ -36,41 +36,6 @@ func main() {
 		zap.L().Error("Init redis failed, err:%v\n", zap.Error(err))
 		return
 	}
-	h := server.Default(
-		server.WithHostPorts(constant.ApiServicePort),
-		server.WithMaxRequestBodySize(50*1024*1024),
-		server.WithStreamBody(true),
-		server.WithTransport(standard.NewTransporter),
-	)
-	//pprof.Register(h)
-	//go func() {
-	//	ip := "0.0.0.0:8888"
-	//	if err := http.ListenAndServe(ip, nil); err != nil {
-	//		log.Printf("start pprof failed on %s\n", ip)
-	//	}
-	//}()
-
-	customizedRegister(h)
-	h.Spin()
-}
-
-func main2() {
-	// 加载配置
-	if err := config.Init(); err != nil {
-		zap.L().Error("Load config failed, err:%v\n", zap.Error(err))
-		return
-	}
-	// 加载日志
-	if err := logger.Init(config.Conf.LogConfig, config.Conf.Mode); err != nil {
-		zap.L().Error("Init logger failed, err:%v\n", zap.Error(err))
-		return
-	}
-
-	// 初始化中间件: redis
-	if err := redis.Init(config.Conf); err != nil {
-		zap.L().Error("Init redis failed, err:%v\n", zap.Error(err))
-		return
-	}
 
 	cert, err := tls.LoadX509KeyPair("./tls/www.godreamcode.top.pem", "./tls/www.godreamcode.top.key")
 	if err != nil {
@@ -107,6 +72,41 @@ func main2() {
 		server.WithALPN(true),
 	)
 	h.AddProtocol("h2", factory.NewServerFactory())
+	//pprof.Register(h)
+	//go func() {
+	//	ip := "0.0.0.0:8888"
+	//	if err := http.ListenAndServe(ip, nil); err != nil {
+	//		log.Printf("start pprof failed on %s\n", ip)
+	//	}
+	//}()
+
+	customizedRegister(h)
+	h.Spin()
+}
+
+func mainWithOutTLS() {
+	// 加载配置
+	if err := config.Init(); err != nil {
+		zap.L().Error("Load config failed, err:%v\n", zap.Error(err))
+		return
+	}
+	// 加载日志
+	if err := logger.Init(config.Conf.LogConfig, config.Conf.Mode); err != nil {
+		zap.L().Error("Init logger failed, err:%v\n", zap.Error(err))
+		return
+	}
+
+	// 初始化中间件: redis
+	if err := redis.Init(config.Conf); err != nil {
+		zap.L().Error("Init redis failed, err:%v\n", zap.Error(err))
+		return
+	}
+	h := server.Default(
+		server.WithHostPorts(constant.ApiServicePort),
+		server.WithMaxRequestBodySize(50*1024*1024),
+		server.WithStreamBody(true),
+		server.WithTransport(standard.NewTransporter),
+	)
 	//pprof.Register(h)
 	//go func() {
 	//	ip := "0.0.0.0:8888"

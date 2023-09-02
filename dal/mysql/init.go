@@ -35,7 +35,7 @@ func Init(appConfig *config.AppConfig) (err error) {
 		logger.Config{
 			SlowThreshold:             time.Second,
 			IgnoreRecordNotFoundError: true,
-			LogLevel:                  logger.Info,
+			LogLevel:                  logger.Error,
 			Colorful:                  false,
 		})
 

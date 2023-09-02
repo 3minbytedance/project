@@ -52,7 +52,6 @@ func init() {
 	message[CodeInvalidRegisterPassword] = "密码不合规"
 	message[CodeUsernameAlreadyExists] = "用户名已存在"
 	message[CodeInvalidCommentAction] = "这不是您的评论"
-
 }
 
 func MapErrMsg(errCode int32) string {
