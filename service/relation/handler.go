@@ -212,11 +212,13 @@ func (s *RelationServiceImpl) GetFollowList(ctx context.Context, request *relati
 			})
 			userRespCh <- userResp
 		}()
-		userResp := <-userRespCh
-		if userResp == nil {
-			continue
+		select {
+		case userResp := <-userRespCh:
+			if userResp == nil {
+				continue
+			}
+			followList = append(followList, userResp.GetUser())
 		}
-		followList = append(followList, userResp.GetUser())
 	}
 
 	return &relation.FollowListResponse{
@@ -267,11 +269,13 @@ func (s *RelationServiceImpl) GetFollowerList(ctx context.Context, request *rela
 			})
 			userRespCh <- userResp
 		}()
-		userResp := <-userRespCh
-		if userResp == nil {
-			continue
+		select {
+		case userResp := <-userRespCh:
+			if userResp == nil {
+				continue
+			}
+			followerList = append(followerList, userResp.GetUser())
 		}
-		followerList = append(followerList, userResp.GetUser())
 	}
 	return &relation.FollowerListResponse{
 		StatusCode: common.CodeSuccess,
@@ -328,11 +332,13 @@ func (s *RelationServiceImpl) GetFriendList(ctx context.Context, request *relati
 			})
 			userRespCh <- userResp
 		}()
-		userResp := <-userRespCh
-		if userResp == nil {
-			continue
+		select {
+		case userResp := <-userRespCh:
+			if userResp == nil {
+				continue
+			}
+			friendList = append(friendList, userResp.GetUser())
 		}
-		friendList = append(friendList, userResp.User)
 	}
 	return &relation.FriendListResponse{
 		StatusCode: common.CodeSuccess,
