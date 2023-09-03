@@ -3,7 +3,7 @@
 项目团队：起名起了3min<br>
 项目文档：https://vish8y9znlg.feishu.cn/docx/XffIdI4sso6oGNx2yWEc4DV4nrh  <br>
 
-**如何运行本项目？**
+**如何运行本项目？** <br>
 使用 Linux 环境<br>
 安装go 1.20 版本<br>
 安装MySQL 8.0 以上版本<br>
