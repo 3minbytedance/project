@@ -64,6 +64,7 @@ func (m *VideoMQ) Consume() {
 		err = json.Unmarshal(msg.Value, videoMsg)
 		if err != nil {
 			log.Println("[VideoMQ]解析消息失败:", err)
+			return
 		}
 		go func() {
 			zap.L().Info("开始处理视频消息", zap.Any("videoMsg", videoMsg))
@@ -104,7 +105,7 @@ func (m *VideoMQ) Consume() {
 				defer wg.Done()
 				// 添加到布隆过滤器
 				common.AddToWorkCountBloom(fmt.Sprintf("%d", videoMsg.UserID))
-				common.AddToTotalFavoriteBloom(fmt.Sprintf("%d",videoMsg.UserID))
+				common.AddToTotalFavoriteBloom(fmt.Sprintf("%d", videoMsg.UserID))
 			}()
 			wg.Wait()
 
