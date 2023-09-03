@@ -21,4 +21,7 @@ sh ./build_all_services.sh
 
 sh ./start_all_services.sh  
 
-
+在架构选型上，项目演进从gin -> hertz+kitex<br>
+其中main分支为稳定大版本<br>
+develop-rpc 为目前正在开发的rpc分支<br>
+develop分支为最初的gin单体原型设计<br>
