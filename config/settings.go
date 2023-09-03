@@ -8,7 +8,7 @@ import (
 
 var (
 	Conf      = new(AppConfig)
-	LocalMode = "remote"
+	LocalMode = "local"
 )
 
 type AppConfig struct {

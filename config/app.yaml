@@ -1,6 +1,6 @@
 name: "douyin"
 node: 1
-mode: "remote"
+mode: "local"
 port: 8080
 version: "v0.0.1"
 log:
@@ -14,7 +14,7 @@ local:
     address: "127.0.0.1"
     port: 3306
     username: doushen
-    password: doushen
+    password: CEzYXnXpGcx5rZwW
     database: doushen
     timeout: 10
   redis:

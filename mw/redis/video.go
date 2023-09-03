@@ -30,7 +30,7 @@ func GetVideos(time string) []string {
 		Start:   0,
 		Stop:    "(" + time, //(0,time)
 		Offset:  0,
-		Count:   30,
+		Count:   29,
 	}).Result()
 	return videos
 }
