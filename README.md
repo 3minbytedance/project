@@ -6,10 +6,10 @@
 **如何运行本项目？** <br>
 使用 Linux 环境<br>
 安装go 1.20 版本<br>
-安装MySQL 8.0 以上版本<br>
-安装Redis 6.2 以上版本<br>
-安装Kafka 3.0 以上版本<br>
-安装MongoDB 4.4 以上版本<br>
+安装MySQL 8.0 及以上版本<br>
+安装Redis 6.2 及以上版本<br>
+安装Kafka 3.0 及以上版本<br>
+安装MongoDB 4.4 及以上版本<br>
 
 并在config/app.yaml 中修改配置<br>
 
