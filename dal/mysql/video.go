@@ -25,8 +25,8 @@ func FindWorkCountsByAuthorId(authorId uint) int64 {
 }
 
 // InsertVideo return 是否插入成功
-func InsertVideo(video model.Video) bool {
-	result := DB.Model(model.Video{}).Create(&video)
+func InsertVideo(video *model.Video) bool {
+	result := DB.Model(model.Video{}).Create(video)
 	return result.RowsAffected != 0
 }
 

@@ -88,12 +88,12 @@ func (m *VideoMQ) Consume() {
 				Title:     videoMsg.Title,
 				CreatedAt: time.Now().Unix(),
 			}
-			mysql.InsertVideo(video)
+			mysql.InsertVideo(&video)
 			var wg sync.WaitGroup
 			wg.Add(3)
 			go func() {
 				defer wg.Done()
-				redis.AddVideo(video)
+				redis.AddVideo(&video)
 			}()
 			go func() {
 				defer wg.Done()
