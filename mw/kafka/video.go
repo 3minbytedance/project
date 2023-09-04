@@ -105,7 +105,6 @@ func (m *VideoMQ) Consume() {
 				defer wg.Done()
 				// 添加到布隆过滤器
 				common.AddToWorkCountBloom(fmt.Sprintf("%d", videoMsg.UserID))
-				common.AddToTotalFavoriteBloom(fmt.Sprintf("%d", videoMsg.UserID))
 			}()
 			wg.Wait()
 

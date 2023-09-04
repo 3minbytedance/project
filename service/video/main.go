@@ -62,7 +62,6 @@ func main() {
 
 	// 初始化Bloom Filter
 	common.InitWorkCountFilter()
-	common.InitTotalFavoriteFilter()
 	common.LoadWorkCountToBloomFilter()
 
 	InitVideoListToRedis()
