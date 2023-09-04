@@ -245,8 +245,6 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 			}
 			// 判断是否在redis中，防止对空key操作
 			checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
-			checkAndSetVideoFavoriteCountKey(videoId, mwRedis.VideoFavoritedCountField)
-			checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId, mwRedis.TotalFavoriteField)
 
 			err := mwRedis.ActionLike(userId, videoId, videoModel.AuthorId)
 			if err != nil {
@@ -279,9 +277,6 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 
 			// 判断是否在redis中，防止对空key操作
 			checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
-			checkAndSetVideoFavoriteCountKey(videoId, mwRedis.VideoFavoritedCountField)
-			checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId, mwRedis.TotalFavoriteField)
-
 			err := mwRedis.ActionCancelLike(userId, videoId, videoModel.AuthorId)
 			if err != nil {
 				return biz.FavoriteActionError
