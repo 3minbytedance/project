@@ -8,6 +8,7 @@ import (
 	"douyin/kitex_gen/user/userservice"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -19,6 +20,7 @@ import (
 )
 
 var userClient userservice.Client
+var illegalCharRe *regexp.Regexp
 
 func init() {
 	// Etcd 服务发现
@@ -38,11 +40,22 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	illegalCharRe = regexp.MustCompile(`[?;=]`)
 }
 
 func Register(ctx context.Context, c *app.RequestContext) {
 	username := c.Query("username")
 	password := c.Query("password")
+
+	statusCode := checkUserRegisterInfo(username, password)
+
+	if statusCode != common.CodeSuccess {
+		c.JSON(http.StatusOK, user.UserRegisterResponse{
+			StatusCode: statusCode,
+			StatusMsg:  common.MapErrMsg(statusCode),
+		})
+		return
+	}
 
 	resp, err := userClient.Register(ctx, &user.UserRegisterRequest{
 		Username: username,
@@ -107,4 +120,20 @@ func Info(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	c.JSON(http.StatusOK, resp)
+}
+
+func checkUserRegisterInfo(username string, password string) int32 {
+	if illegalCharRe.MatchString(username) {
+		return common.CodeInvalidRegisterUsername
+	}
+
+	if len(username) == 0 || len(username) > 32 {
+		return common.CodeInvalidRegisterUsername
+	}
+
+	if len(password) < 6 || len(password) > 32 {
+		return common.CodeInvalidRegisterPassword
+	}
+
+	return common.CodeSuccess
 }

@@ -72,13 +72,6 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 
 	// 检查注册信息是否合理
 	resp = new(user.UserRegisterResponse)
-	statusCode, statusMsg := CheckUserRegisterInfo(request.Username, request.Password)
-	resp.StatusCode = statusCode
-	resp.StatusMsg = statusMsg
-
-	if statusCode != common.CodeSuccess {
-		return
-	}
 
 	userData := model.User{}
 	userData.Name = request.Username
@@ -106,6 +99,8 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 		// 用户名存入Bloom Filter
 		common.AddToUserBloom(request.Username)
 	}()
+	resp.StatusCode = common.CodeSuccess
+	resp.StatusMsg = common.MapErrMsg(common.CodeSuccess)
 	return
 }
 
@@ -287,17 +282,4 @@ func GetName(userId uint) (string, bool) {
 	// 重试
 	time.Sleep(redis.RetryTime)
 	return GetName(userId)
-}
-
-func CheckUserRegisterInfo(username string, password string) (int32, string) {
-
-	if len(username) == 0 || len(username) > 32 {
-		return common.CodeInvalidRegisterUsername, common.MapErrMsg(common.CodeInvalidRegisterUsername)
-	}
-
-	if len(password) < 6 || len(password) > 32 {
-		return common.CodeInvalidRegisterPassword, common.MapErrMsg(common.CodeInvalidRegisterPassword)
-	}
-
-	return common.CodeSuccess, common.MapErrMsg(common.CodeSuccess)
 }
