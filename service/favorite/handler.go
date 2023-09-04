@@ -423,6 +423,7 @@ func checkAndSetVideoFavoriteCountKey(videoId uint, key string) (videoFavoriteCo
 
 		// 不存在
 		if !exist {
+			mwRedis.SetVideoFavoritedCountByVideoId(videoId, 0)
 			return 0, mwRedis.KeyNotExistsInBoth
 		}
 
@@ -462,6 +463,7 @@ func checkAndSetTotalFavoriteFieldKey(userId uint, key string) (totalFavoriteCou
 
 		// 不存在
 		if !exist {
+			mwRedis.SetTotalFavoritedByUserId(userId, 0)
 			return 0, mwRedis.KeyNotExistsInBoth
 		}
 
@@ -469,6 +471,7 @@ func checkAndSetTotalFavoriteFieldKey(userId uint, key string) (totalFavoriteCou
 		// 获取用户发布的视频列表
 		videosByAuthorId, exist := dalMySQL.FindVideosByAuthorId(userId)
 		if !exist {
+			mwRedis.SetTotalFavoritedByUserId(userId, 0)
 			return 0, mwRedis.KeyNotExistsInBoth
 		}
 		for _, videoModel := range videosByAuthorId {
