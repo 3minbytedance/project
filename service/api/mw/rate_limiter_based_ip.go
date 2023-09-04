@@ -17,7 +17,7 @@ var (
 	refillToken     int     = 10
 )
 
-// 限流器
+// RateLimiter 限流器
 func RateLimiter() app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
 
