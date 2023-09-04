@@ -18,6 +18,7 @@ func GetFavoritesByIdFromMysql(id uint, idType int) ([]model.Favorite, int, erro
 		rows int64
 		err  error
 	)
+
 	switch idType {
 	case IdTypeVideo:
 		dbStruct := DB.Where("video_id = ?", id).Find(&res)
@@ -29,6 +30,12 @@ func GetFavoritesByIdFromMysql(id uint, idType int) ([]model.Favorite, int, erro
 		err = DB.Error
 	}
 	return res, int(rows), err
+}
+
+func GetVideoFavoriteCountByVideoId(id uint) (int64, error) {
+	var cnt int64
+	err := DB.Model(&model.Favorite{}).Where("video_id = ?", id).Count(&cnt).Error
+	return cnt, err
 }
 
 // AddUserFavorite 添加喜欢关系

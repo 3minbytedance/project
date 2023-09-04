@@ -148,7 +148,7 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 			Id:       int64(videoModel.ID),
 			PlayUrl:  biz.OSS + videoModel.VideoUrl,
 			CoverUrl: biz.OSS + videoModel.CoverUrl,
-			Title: videoModel.Title,
+			Title:    videoModel.Title,
 		}
 
 		for receivedCount := 0; receivedCount < 4; receivedCount++ {
@@ -232,7 +232,7 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 	}
 	switch actionType {
 	case 1:
-		if mwRedis.IsInUserFavoriteList(userId, videoId){
+		if mwRedis.IsInUserFavoriteList(userId, videoId) {
 			return biz.FavoriteActionRepeat
 		}
 		// 点赞
@@ -240,9 +240,8 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 			defer mwRedis.ReleaseFavoriteLock(userId, mwRedis.FavoriteAction)
 			// 判断是否在redis中，防止对空key操作
 			checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
-			checkAndSetVideoFavoriteCountKey(videoId, mwRedis.VideoFavoritedCountField)
 			// 判断重复点赞
-			if mwRedis.IsInUserFavoriteList(userId, videoId){
+			if mwRedis.IsInUserFavoriteList(userId, videoId) {
 				return biz.FavoriteActionRepeat
 			}
 			err := mwRedis.ActionLike(userId, videoId, videoModel.AuthorId)
@@ -269,8 +268,7 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 			defer mwRedis.ReleaseFavoriteLock(userId, mwRedis.FavoriteAction)
 			// 判断是否在redis中，防止对空key操作
 			checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
-			checkAndSetVideoFavoriteCountKey(videoId, mwRedis.VideoFavoritedCountField)
-			if !mwRedis.IsInUserFavoriteList(userId, videoId){
+			if !mwRedis.IsInUserFavoriteList(userId, videoId) {
 				return biz.FavoriteActionRepeat
 			}
 			err := mwRedis.ActionCancelLike(userId, videoId, videoModel.AuthorId)
@@ -327,15 +325,15 @@ func getFavoritesByUserId(userId uint) ([]uint, error) {
 // getIdListFromFavoriteSlice 从Favorite的slice中获取id的列表
 func getIdListFromFavoriteSlice(favorites []model.Favorite, idType int) []uint {
 	res := make([]uint, 0, len(favorites))
-	for _, fav := range favorites {
-		switch idType {
-		case dalMySQL.IdTypeUser:
+	switch idType {
+	case dalMySQL.IdTypeUser:
+		for _, fav := range favorites {
 			res = append(res, fav.VideoId)
-		case dalMySQL.IdTypeVideo:
-			res = append(res, fav.UserId)
 		}
+		return res
+	default:
+		return []uint{}
 	}
-	return res
 }
 
 // IsUserFavorite 判断是否点赞
@@ -417,17 +415,16 @@ func checkAndSetVideoFavoriteCountKey(videoId uint, key string) (videoFavoriteCo
 			mwRedis.SetVideoFavoritedCountByVideoId(videoId, 0)
 			return 0, mwRedis.KeyNotExistsInBoth
 		}
-
-		_, num, err := dalMySQL.GetFavoritesByIdFromMysql(videoId, dalMySQL.IdTypeVideo)
+		num, err := dalMySQL.GetVideoFavoriteCountByVideoId(videoId)
 		if err != nil {
 			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
 			return 0, mwRedis.KeyNotExistsInBoth
 		}
-		err = mwRedis.SetVideoFavoritedCountByVideoId(videoId, int64(num)) // 加载视频被点赞数量
+		err = mwRedis.SetVideoFavoritedCountByVideoId(videoId, num) // 加载视频被点赞数量
 		if err != nil {
 			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
 		}
-		return int64(num), mwRedis.KeyUpdated
+		return num, mwRedis.KeyUpdated
 	}
 	time.Sleep(mwRedis.RetryTime)
 	return checkAndSetVideoFavoriteCountKey(videoId, key)

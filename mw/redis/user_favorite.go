@@ -172,7 +172,7 @@ func ActionLike(userId, videoId, authorId uint) error {
 
 	pipe := Rdb.TxPipeline()
 	pipe.SAdd(Ctx, favoriteListKey, videoId)
-	pipe.HIncrBy(Ctx, videoKey, VideoFavoritedCountField, 1)
+	pipe.Del(Ctx, videoKey, VideoFavoritedCountField)
 	pipe.Del(Ctx, userKey, TotalFavoriteField)
 	_, err := pipe.Exec(Ctx)
 	return err
@@ -192,7 +192,7 @@ func ActionCancelLike(userId, videoId, authorId uint) error {
 	userKey := strings.Join(baseSliceUser, Delimiter)
 	pipe := Rdb.TxPipeline()
 	pipe.SRem(Ctx, favoriteListKey, videoId)
-	pipe.HIncrBy(Ctx, videoKey, VideoFavoritedCountField, -1)
+	pipe.Del(Ctx, videoKey, VideoFavoritedCountField)
 	pipe.Del(Ctx, userKey, TotalFavoriteField)
 	_, err := pipe.Exec(Ctx)
 	return err
