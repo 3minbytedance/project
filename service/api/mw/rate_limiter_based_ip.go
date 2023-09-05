@@ -12,9 +12,9 @@ import (
 
 var (
 	timeNow                 = time.Now
-	bucketSize      int     = 10
+	bucketSize      int     = 10000
 	refillPerSecond float64 = 60
-	refillToken     int     = 10
+	refillToken     int     = 20
 )
 
 // RateLimiter 限流器
@@ -33,7 +33,6 @@ func RateLimiter() app.HandlerFunc {
 		}
 
 		if !permit {
-
 			c.JSON(http.StatusTooManyRequests, Response{
 				StatusCode: -1,
 				StatusMsg:  "Too many request",

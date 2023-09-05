@@ -222,6 +222,7 @@ func (s *FavoriteServiceImpl) IsUserFavorite(ctx context.Context, request *favor
 }
 
 // favoriteActions 点赞，取消赞的操作过程
+// 返回值 status 类型：
 // FavoriteActionSuccess 表示点赞/取消点赞成功
 // FavoriteActionRepeat 表示重复点赞/取消点赞
 // FavoriteActionError 表示其他错误

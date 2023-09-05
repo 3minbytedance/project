@@ -20,7 +20,7 @@ func customizedRegister(r *server.Hertz) {
 	douyin := r.Group("/douyin")
 
 	// 限流中间件，测试时不要开启
-	//douyin.Use(mw.RateLimiter())
+	douyin.Use(mw.RateLimiter())
 	//douyin.GET("/test", mw.RateLimiter(), user.Test)
 
 	// user service
