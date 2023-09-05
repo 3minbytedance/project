@@ -233,7 +233,7 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 	switch actionType {
 	case 1:
 		if mwRedis.IsInUserFavoriteList(userId, videoId) {
-			return biz.FavoriteActionRepeat
+			return biz.FavoriteActionSuccess
 		}
 		// 点赞
 		if mwRedis.AcquireFavoriteLock(userId, mwRedis.FavoriteAction) {
@@ -242,7 +242,7 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 			checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
 			// 判断重复点赞
 			if mwRedis.IsInUserFavoriteList(userId, videoId) {
-				return biz.FavoriteActionRepeat
+				return biz.FavoriteActionSuccess
 			}
 			err := mwRedis.ActionLike(userId, videoId, videoModel.AuthorId)
 			if err != nil {
@@ -269,7 +269,7 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 			// 判断是否在redis中，防止对空key操作
 			checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
 			if !mwRedis.IsInUserFavoriteList(userId, videoId) {
-				return biz.FavoriteActionRepeat
+				return biz.FavoriteActionSuccess
 			}
 			err := mwRedis.ActionCancelLike(userId, videoId, videoModel.AuthorId)
 			if err != nil {
