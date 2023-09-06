@@ -4,37 +4,28 @@ import (
 	"context"
 	"douyin/common"
 	"douyin/mw/redis"
-	"fmt"
 	"github.com/cloudwego/hertz/pkg/app"
 	"net/http"
 	"strings"
 	"time"
 )
 
+const tokenBucket = "tokenBucket"
+
 var (
 	timeNow                 = time.Now
-	bucketSize      int     = 1000 // 令牌桶的容量
-	refillPerSecond float64 = 60   // 每隔多长时间添加令牌
-	refillToken     int     = 10   // 每次令牌桶填充操作时添加的令牌数量
+	bucketSize      int     = 100 // 令牌桶的容量
+	refillPerSecond float64 = 60  // 每隔多长时间添加令牌
+	refillToken     int     = 20  // 每次令牌桶填充操作时添加的令牌数量
 )
 
 // RateLimiter 限流器
 func RateLimiter() app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
-
 		ipAddr := strings.Split(c.ClientIP(), ":")[0]
 		permit, remain, err := Acquire(ipAddr)
-		if err != nil {
+		if err != nil || !permit {
 			c.JSON(http.StatusBadRequest, Response{
-				StatusCode: -1,
-				StatusMsg:  "Failed to acquire IP",
-			})
-			c.Abort()
-			return
-		}
-
-		if !permit {
-			c.JSON(http.StatusTooManyRequests, Response{
 				StatusCode: common.CodeLimiterCount,
 				StatusMsg:  common.MapErrMsg(common.CodeLimiterCount),
 			})
@@ -48,7 +39,8 @@ func RateLimiter() app.HandlerFunc {
 
 func Acquire(key string) (bool, int, error) {
 	now := timeNow()
-	cacheKey := fmt.Sprintf("tokenbucket:%s", key)
+	baseSlice := []string{tokenBucket, key}
+	cacheKey := strings.Join(baseSlice, redis.Delimiter)
 
 	remain, err := redis.RunScript(
 		script,
@@ -59,7 +51,6 @@ func Acquire(key string) (bool, int, error) {
 		bucketSize,
 	)
 	if err != nil {
-		//context.WithField("err", err).Error("redis.RunScript failed")
 		return false, 0, err
 	}
 	if remain.(int64) < 0 {
