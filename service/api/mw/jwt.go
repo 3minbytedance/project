@@ -122,8 +122,8 @@ func AuthBody() app.HandlerFunc {
 func RequestLoginLimiter() app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
 		ip := c.ClientIP()
-		count := redis.IncrementLoginLimiterComment(ip)
-		if count > 5 {
+		success := redis.IncrementLoginLimiterComment(ip)
+		if !success {
 			c.Abort()
 			c.JSON(http.StatusOK, Response{
 				StatusCode: common.CodeLimiterCount,
@@ -139,8 +139,8 @@ func RequestLoginLimiter() app.HandlerFunc {
 func RequestCommentLimiter() app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
 		ip := c.ClientIP()
-		count := redis.IncrementCommentLimiterComment(ip)
-		if count > 20 {
+		success := redis.IncrementCommentLimiterComment(ip)
+		if !success {
 			c.Abort()
 			c.JSON(http.StatusOK, Response{
 				StatusCode: common.CodeLimiterCount,
@@ -156,8 +156,8 @@ func RequestCommentLimiter() app.HandlerFunc {
 func RequestUploadLimiter() app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
 		ip := c.ClientIP()
-		count := redis.IncrementUploadLimiterComment(ip)
-		if count > 3 {
+		success := redis.IncrementUploadLimiterComment(ip)
+		if !success {
 			c.Abort()
 			c.JSON(http.StatusOK, Response{
 				StatusCode: common.CodeLimiterCount,

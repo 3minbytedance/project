@@ -13,9 +13,9 @@ import (
 
 var (
 	timeNow                 = time.Now
-	bucketSize      int     = 20 // 令牌桶的容量
-	refillPerSecond float64 = 60 // 每秒允许通过的请求速率
-	refillToken     int     = 10 // 每次令牌桶填充操作时添加的令牌数量
+	bucketSize      int     = 1000 // 令牌桶的容量
+	refillPerSecond float64 = 60   // 每隔多长时间添加令牌
+	refillToken     int     = 10   // 每次令牌桶填充操作时添加的令牌数量
 )
 
 // RateLimiter 限流器
