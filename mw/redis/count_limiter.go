@@ -6,12 +6,23 @@ import (
 	"time"
 )
 
-const limiterTime = 2 * time.Hour // 2 小时
-const loginLimit = "loginLimit"
-const commentLimit = "commentLimit"
-const uploadLimit = "uploadLimit"
+const (
+	limiterTime  = 2 * time.Hour // 2 小时
 
-func IncrementLoginLimiterComment(ip string) bool {
+	loginLimit   = "loginLimit"
+	commentLimit = "commentLimit"
+	uploadLimit  = "uploadLimit"
+	messageLimit = "messageLimit"
+)
+
+const (
+	loginMaxCount   = 5
+	commentMaxCount = 30
+	uploadMaxCount  = 3
+	messageMaxCount = 50
+)
+
+func IncrementLoginLimiterCount(ip string) bool {
 	baseSlice := []string{loginLimit, ip}
 	key := strings.Join(baseSlice, Delimiter)
 	Rdb.SetNX(Ctx, key, 0, limiterTime)
@@ -20,14 +31,14 @@ func IncrementLoginLimiterComment(ip string) bool {
 	if err != nil {
 		return false
 	}
-	if count < 5 {
+	if count < loginMaxCount {
 		Rdb.Incr(Ctx, key).Val()
 		return true
 	}
 	return false
 }
 
-func IncrementCommentLimiterComment(ip string) bool {
+func IncrementCommentLimiterCount(ip string) bool {
 	baseSlice := []string{commentLimit, ip}
 	key := strings.Join(baseSlice, Delimiter)
 	Rdb.SetNX(Ctx, key, 0, limiterTime)
@@ -36,14 +47,14 @@ func IncrementCommentLimiterComment(ip string) bool {
 	if err != nil {
 		return false
 	}
-	if count < 20 {
+	if count < commentMaxCount {
 		Rdb.Incr(Ctx, key).Val()
 		return true
 	}
 	return false
 }
 
-func IncrementUploadLimiterComment(ip string) bool {
+func IncrementUploadLimiterCount(ip string) bool {
 	baseSlice := []string{uploadLimit, ip}
 	key := strings.Join(baseSlice, Delimiter)
 	Rdb.SetNX(Ctx, key, 0, limiterTime)
@@ -52,7 +63,23 @@ func IncrementUploadLimiterComment(ip string) bool {
 	if err != nil {
 		return false
 	}
-	if count < 3 {
+	if count < uploadMaxCount {
+		Rdb.Incr(Ctx, key).Val()
+		return true
+	}
+	return false
+}
+
+func IncrementMessageLimiterCount(ip string) bool {
+	baseSlice := []string{messageLimit, ip}
+	key := strings.Join(baseSlice, Delimiter)
+	Rdb.SetNX(Ctx, key, 0, limiterTime)
+	result, _ := Rdb.Get(Ctx, key).Result()
+	count, err := strconv.Atoi(result)
+	if err != nil {
+		return false
+	}
+	if count < messageMaxCount {
 		Rdb.Incr(Ctx, key).Val()
 		return true
 	}

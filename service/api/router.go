@@ -20,11 +20,11 @@ func customizedRegister(r *server.Hertz) {
 	douyin := r.Group("/douyin")
 
 	// 限流中间件，测试时不要开启
-	douyin.Use(mw.RateLimiter())
+	//douyin.Use(mw.RateLimiter())
 	//douyin.GET("/test", mw.RateLimiter(), user.Test)
 
 	// user service
-	userGroup := douyin.Group("/user")
+	userGroup := douyin.Group("/user", mw.RateLimiter())
 	{
 		userGroup.POST("/register/", user.Register)
 		userGroup.POST("/login/", mw.RequestLoginLimiter(), user.Login)
@@ -32,28 +32,28 @@ func customizedRegister(r *server.Hertz) {
 	}
 
 	// video service
-	douyin.GET("/feed/", mw.AuthWithoutLogin(), video.FeedList)
+	douyin.GET("/feed/", mw.RateLimiter(), mw.AuthWithoutLogin(), video.FeedList)
 	videoGroup := douyin.Group("/publish")
 	{
-		videoGroup.GET("/list/", mw.AuthWithoutLogin(), video.GetPublishList)
+		videoGroup.GET("/list/", mw.RateLimiter(), mw.AuthWithoutLogin(), video.GetPublishList)
 		videoGroup.POST("/action/", mw.RequestUploadLimiter(), mw.AuthBody(), video.Publish)
 	}
 	// comment service
 	commentGroup := douyin.Group("/comment")
 	{
-		commentGroup.POST("/action/", mw.RequestCommentLimiter(), mw.Auth(), comment.Action)
-		commentGroup.GET("/list/", mw.AuthWithoutLogin(), comment.List)
+		commentGroup.POST("/action/",  mw.Auth(),mw.RequestCommentLimiter(), comment.Action)
+		commentGroup.GET("/list/", mw.RateLimiter(), mw.AuthWithoutLogin(), comment.List)
 	}
 
 	// favorite service
-	favoriteGroup := douyin.Group("/favorite")
+	favoriteGroup := douyin.Group("/favorite", mw.RateLimiter())
 	{
 		favoriteGroup.POST("/action/", mw.Auth(), favorite.Action)
 		favoriteGroup.GET("/list/", mw.AuthWithoutLogin(), favorite.List)
 	}
 
 	// relation service
-	relationGroup := douyin.Group("/relation")
+	relationGroup := douyin.Group("/relation", mw.RateLimiter())
 	{
 		relationGroup.POST("/action/", mw.Auth(), relation.Action)
 		relationGroup.GET("/follow/list/", mw.AuthWithoutLogin(), relation.FollowList)
@@ -63,7 +63,7 @@ func customizedRegister(r *server.Hertz) {
 	// message service
 	messageGroup := douyin.Group("/message")
 	{
-		messageGroup.POST("/action/", mw.Auth(), message.Action)
-		messageGroup.GET("/chat/", mw.Auth(), message.Chat)
+		messageGroup.POST("/action/", mw.RateLimiter(), mw.Auth(), message.Action)
+		messageGroup.GET("/chat/",mw.Auth(), mw.RequestMessageLimiter(), message.Chat)
 	}
 }
