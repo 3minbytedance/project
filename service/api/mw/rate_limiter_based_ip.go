@@ -2,6 +2,7 @@ package mw
 
 import (
 	"context"
+	"douyin/common"
 	"douyin/mw/redis"
 	"fmt"
 	"github.com/cloudwego/hertz/pkg/app"
@@ -12,9 +13,9 @@ import (
 
 var (
 	timeNow                 = time.Now
-	bucketSize      int     = 10000
-	refillPerSecond float64 = 60
-	refillToken     int     = 20
+	bucketSize      int     = 20 // 令牌桶的容量
+	refillPerSecond float64 = 60 // 每秒允许通过的请求速率
+	refillToken     int     = 10 // 每次令牌桶填充操作时添加的令牌数量
 )
 
 // RateLimiter 限流器
@@ -34,8 +35,8 @@ func RateLimiter() app.HandlerFunc {
 
 		if !permit {
 			c.JSON(http.StatusTooManyRequests, Response{
-				StatusCode: -1,
-				StatusMsg:  "Too many request",
+				StatusCode: common.CodeLimiterCount,
+				StatusMsg:  common.MapErrMsg(common.CodeLimiterCount),
 			})
 			c.Abort()
 			return

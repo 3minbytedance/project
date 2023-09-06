@@ -23,9 +23,9 @@ import (
 
 var videoClient videoservice.Client
 
-// 限制上传文件的最大大小 50MB 最小大小10KB
+// 限制上传文件的最大大小 50MB 最小大小1MB
 const maxFileSize = 50 * 1024 * 1024
-const minFileSize = 50 * 1024
+const minFileSize = 1 * 1024 * 1024
 
 func init() {
 

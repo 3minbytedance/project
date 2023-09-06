@@ -27,7 +27,7 @@ func customizedRegister(r *server.Hertz) {
 	userGroup := douyin.Group("/user")
 	{
 		userGroup.POST("/register/", user.Register)
-		userGroup.POST("/login/", user.Login)
+		userGroup.POST("/login/", mw.RequestLoginLimiter(), user.Login)
 		userGroup.GET("/", mw.AuthWithoutLogin(), user.Info)
 	}
 
@@ -36,12 +36,12 @@ func customizedRegister(r *server.Hertz) {
 	videoGroup := douyin.Group("/publish")
 	{
 		videoGroup.GET("/list/", mw.AuthWithoutLogin(), video.GetPublishList)
-		videoGroup.POST("/action/", mw.AuthBody(), video.Publish)
+		videoGroup.POST("/action/", mw.RequestUploadLimiter(), mw.AuthBody(), video.Publish)
 	}
 	// comment service
 	commentGroup := douyin.Group("/comment")
 	{
-		commentGroup.POST("/action/", mw.Auth(), comment.Action)
+		commentGroup.POST("/action/", mw.RequestCommentLimiter(), mw.Auth(), comment.Action)
 		commentGroup.GET("/list/", mw.AuthWithoutLogin(), comment.List)
 	}
 

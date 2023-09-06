@@ -117,3 +117,54 @@ func AuthBody() app.HandlerFunc {
 		c.Next(ctx)
 	}
 }
+
+// RequestLoginLimiter 限制登录请求次数
+func RequestLoginLimiter() app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		ip := c.ClientIP()
+		count := redis.IncrementLoginLimiterComment(ip)
+		if count > 5 {
+			c.Abort()
+			c.JSON(http.StatusOK, Response{
+				StatusCode: common.CodeLimiterCount,
+				StatusMsg:  common.MapErrMsg(common.CodeLimiterCount),
+			})
+			return
+		}
+		c.Next(ctx)
+	}
+}
+
+// RequestCommentLimiter 限制评论请求次数
+func RequestCommentLimiter() app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		ip := c.ClientIP()
+		count := redis.IncrementCommentLimiterComment(ip)
+		if count > 20 {
+			c.Abort()
+			c.JSON(http.StatusOK, Response{
+				StatusCode: common.CodeLimiterCount,
+				StatusMsg:  common.MapErrMsg(common.CodeLimiterCount),
+			})
+			return
+		}
+		c.Next(ctx)
+	}
+}
+
+// RequestUploadLimiter 限制上传请求次数
+func RequestUploadLimiter() app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		ip := c.ClientIP()
+		count := redis.IncrementUploadLimiterComment(ip)
+		if count > 3 {
+			c.Abort()
+			c.JSON(http.StatusOK, Response{
+				StatusCode: common.CodeLimiterCount,
+				StatusMsg:  common.MapErrMsg(common.CodeLimiterCount),
+			})
+			return
+		}
+		c.Next(ctx)
+	}
+}

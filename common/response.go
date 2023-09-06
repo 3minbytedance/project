@@ -26,6 +26,7 @@ const (
 	CodeUsernameAlreadyExists
 
 	CodeInvalidCommentAction
+	CodeLimiterCount
 )
 
 var message map[int32]string
@@ -52,6 +53,7 @@ func init() {
 	message[CodeInvalidRegisterPassword] = "密码不合规"
 	message[CodeUsernameAlreadyExists] = "用户名已存在"
 	message[CodeInvalidCommentAction] = "这不是您的评论"
+	message[CodeLimiterCount] = "请求次数过多，已被限制，稍后再试"
 }
 
 func MapErrMsg(errCode int32) string {
