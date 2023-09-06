@@ -1,6 +1,19 @@
 package redis
 
-import "github.com/redis/go-redis/v9"
+import (
+	"github.com/redis/go-redis/v9"
+	"strings"
+	"time"
+)
+
+var (
+	timeNow                 = time.Now
+	bucketSize      int     = 60 // 令牌桶的容量
+	refillPerSecond float64 = 60 // 每隔多长时间添加令牌
+	refillToken     int     = 20 // 每次令牌桶填充操作时添加的令牌数量
+
+	tokenBucket = "tokenBucket" // key名
+)
 
 func Ping() error {
 	if _, err := Rdb.Ping(Ctx).Result(); err != nil {
@@ -9,8 +22,29 @@ func Ping() error {
 	return nil
 }
 
-func RunScript(script string, keys []string, args ...interface{}) (interface{}, error) {
-	val, err := redis.NewScript(script).Run(Ctx, Rdb, keys, args).Result()
+func AcquireBucket(key string) (bool, int, error) {
+	now := timeNow()
+	baseSlice := []string{tokenBucket, key}
+	cacheKey := strings.Join(baseSlice, Delimiter)
+
+	remain, err := runScript(
+		[]string{cacheKey},
+		now.Unix(),
+		refillToken,
+		refillPerSecond,
+		bucketSize,
+	)
+	if err != nil {
+		return false, 0, err
+	}
+	if remain.(int64) < 0 {
+		return false, bucketSize, nil
+	}
+	return true, int(remain.(int64)), nil
+}
+
+func runScript(keys []string, args ...interface{}) (interface{}, error) {
+	val, err := redis.NewScript(rateScript).Run(Ctx, Rdb, keys, args).Result()
 	if err != nil && err != redis.Nil {
 		return nil, nil
 	}
@@ -52,4 +86,3 @@ const (
 	return remainToken
 	`
 )
-
