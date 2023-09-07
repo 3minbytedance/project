@@ -40,7 +40,7 @@ func SetCommentCountByVideoId(videoId uint, commentCount int64) error {
 	baseSliceVideo := []string{VideoKey, strconv.Itoa(int(videoId))}
 	key := strings.Join(baseSliceVideo, Delimiter)
 	err := Rdb.HSet(Ctx, key, CommentCountField, commentCount).Err()
-	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	randomSeconds := 600 + rand.Intn(31) // 600秒到630秒之间的随机数
 	expiration := time.Duration(randomSeconds) * time.Second
 	Rdb.Expire(Ctx, key, expiration)
 	return err

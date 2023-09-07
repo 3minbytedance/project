@@ -36,7 +36,5 @@ func Init(appConfig *config.AppConfig) (err error) {
 	if err = Rdb.Ping(Ctx).Err(); err != nil {
 		return err
 	}
-
 	return
-
 }

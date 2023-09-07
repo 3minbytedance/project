@@ -35,7 +35,7 @@ func SetWorkCountByUserId(userId uint, workCount int64) error {
 	baseSlice := []string{UserKey, strconv.Itoa(int(userId))}
 	key := strings.Join(baseSlice, Delimiter)
 	err := Rdb.HSet(Ctx, key, WorkCountField, workCount).Err()
-	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	randomSeconds := 600 + rand.Intn(31) // 600秒到630秒之间的随机数
 	expiration := time.Duration(randomSeconds) * time.Second
 	Rdb.Expire(Ctx, key, expiration)
 	return err
@@ -45,7 +45,7 @@ func SetNameByUserId(userId uint, name string) error {
 	baseSlice := []string{UserKey, strconv.Itoa(int(userId))}
 	key := strings.Join(baseSlice, Delimiter)
 	err := Rdb.HSet(Ctx, key, NameField, name).Err()
-	randomSeconds := rand.Intn(600) + 30 // 600秒到630秒之间的随机数
+	randomSeconds := 600 + rand.Intn(31) // 600秒到630秒之间的随机数
 	expiration := time.Duration(randomSeconds) * time.Second
 	Rdb.Expire(Ctx, key, expiration)
 	return err
