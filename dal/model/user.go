@@ -1,16 +1,27 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 type User struct {
 	// 用户的信息社交平台信息
-	gorm.Model
+	ID        uint   `gorm:"primaryKey"`
+	Name      string `gorm:"uniqueIndex;size:32"` // 用户名称
+	Password  string `gorm:"not null"`            // 用户密码
+	DeletedAt gorm.DeletedAt
+}
+
+type UserInfo struct {
+	// 用户的信息社交平台信息
+	ID              uint   `gorm:"primaryKey"`
 	Name            string `gorm:"uniqueIndex;size:32"` // 用户名称
-	Password        string // 用户密码
 	Avatar          string // 用户头像
 	BackgroundImage string // 用户个人页顶部大图
-	Signature       string `default:"默认签名"` // 个人简介
-	//Salt            string // 加密盐
+	Signature       string
+	CreatedAt       time.Time
+	DeletedAt       gorm.DeletedAt
 }
 
 type UserResponse struct {
@@ -40,5 +51,9 @@ type UserDetailResponse struct {
 }
 
 func (*User) TableName() string {
-	return "user"
+	return "user_login"
+}
+
+func (*UserInfo) TableName() string {
+	return "user_info"
 }

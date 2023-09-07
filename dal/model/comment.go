@@ -9,7 +9,7 @@ import (
 type Comment struct {
 	ID        uint `gorm:"primaryKey"`
 	VideoId   uint `gorm:"index"` // 非唯一索引
-	UserId    uint `gorm:"index"` // 非唯一索引
+	UserId    uint
 	Content   string
 	CreatedAt time.Time
 	DeletedAt gorm.DeletedAt

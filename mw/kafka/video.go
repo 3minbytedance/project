@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"log"
+	"os"
 	"sync"
 	"time"
 )
@@ -67,6 +68,9 @@ func (m *VideoMQ) Consume() {
 			return
 		}
 		go func() {
+			defer func() {
+				os.Remove(videoMsg.VideoPath)
+			}()
 			zap.L().Info("开始处理视频消息", zap.Any("videoMsg", videoMsg))
 			// 视频存储到oss
 			if err = common.UploadToOSS(videoMsg.VideoPath, videoMsg.VideoFileName); err != nil {

@@ -81,7 +81,7 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 	userData.Password, _ = common.MakePassword(request.Password)
 
 	// 数据入库
-	userId, err := mysql.CreateUser(&userData)
+	err = mysql.CreateUser(&userData)
 	if err != nil {
 		zap.L().Info("Create user err:", zap.Error(err))
 		resp.StatusCode = common.CodeUsernameAlreadyExists
@@ -90,11 +90,11 @@ func (s *UserServiceImpl) Register(ctx context.Context, request *user.UserRegist
 		return
 	}
 
-	resp.UserId = int64(userId)
-	resp.Token = common.GenerateToken(userId, request.Username)
+	resp.UserId = int64(userData.ID)
+	resp.Token = common.GenerateToken(userData.ID, request.Username)
 
 	// 将token存入redis
-	redis.SetToken(userId, resp.Token)
+	redis.SetToken(userData.ID, resp.Token)
 	go func() {
 		// 用户名存入Bloom Filter
 		common.AddToUserBloom(request.Username)

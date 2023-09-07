@@ -15,7 +15,7 @@ import (
 func CreateDirectoryIfNotExist() error {
 	if _, err := os.Stat(biz.FileLocalPath); os.IsNotExist(err) {
 		// 创建文件夹
-		err = os.MkdirAll(biz.FileLocalPath, 0777)
+		err = os.MkdirAll(biz.FileLocalPath, 0700)
 		if err != nil {
 			zap.Error(err)
 			return err

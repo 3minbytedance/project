@@ -53,8 +53,6 @@ func main() {
 		zap.L().Error("Init kafka failed, err:%v\n", zap.Error(err))
 		return
 	}
-	// 初始化用户模块的kafka
-	kafka.InitUserKafka()
 
 	// 初始化Bloom Filter
 	common.InitUserBloomFilter()

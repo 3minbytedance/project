@@ -7,4 +7,6 @@ const (
 	SecretId      = "AKIDFKMQPakpcN6tkV9oJg6PanzAGC0hGkCZ"
 	SecretKey     = "MWXXLzQlutgMtLl5HH9pPp5CB0cfcMxR"
 	SessionToken  = "SECRETTOKEN"
+
+	FileMode = 0600 // 本用户可读写，不可执行
 )

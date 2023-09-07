@@ -31,13 +31,33 @@ func FindUserByUserID(id uint) (user model.User, exist bool, err error) {
 		return user, false, err
 	}
 	return user, true, nil
-
 }
 
-func CreateUser(user *model.User) (id uint, err error) {
-	// 数据入库
-	zap.L().Debug("USER: ", zap.Any("user", user))
-	err = DB.Create(user).Error
-	id = user.ID
-	return
+func CreateUser(user *model.User) error {
+	userInfo := model.UserInfo{
+		ID:   user.ID,
+		Name: user.Name,
+	}
+	tx := DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := tx.Error; err != nil {
+		return err
+	}
+
+	if err := tx.Create(user).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Create(&userInfo).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }

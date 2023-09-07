@@ -166,7 +166,7 @@ func (s *VideoServiceImpl) PublishVideo(ctx context.Context, request *video.Publ
 	// 根据UUID生成新的文件名
 	videoFileName := strings.Replace(uuid.New().String(), "-", "", -1) + ".mp4"
 	videoPath := biz.FileLocalPath + videoFileName
-	err = os.WriteFile(videoPath, request.GetData(), 0644)
+	err = os.WriteFile(videoPath, request.GetData(), biz.FileMode)
 	if err != nil {
 		err = nil
 		return &video.PublishVideoResponse{
