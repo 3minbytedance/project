@@ -180,13 +180,13 @@ func ActionLike(userId, videoId, authorId uint) error {
 // 用户取消点赞，减少用户喜欢的视频列表,减少视频被喜欢的数量,减少视频作者的被点赞量
 func ActionCancelLike(userId, videoId, authorId uint) error {
 	// 用户喜欢的视频列表
-	baseSliceFavorite := []string{FavoriteList,  strconv.Itoa(int(userId))}
+	baseSliceFavorite := []string{FavoriteList, strconv.Itoa(int(userId))}
 	favoriteListKey := strings.Join(baseSliceFavorite, Delimiter)
 	// 视频被喜欢的数量
 	baseSliceVideo := []string{VideoKey, strconv.Itoa(int(videoId))}
 	videoKey := strings.Join(baseSliceVideo, Delimiter)
 	// 视频作者的被点赞量
-	baseSliceUser := []string{UserKey,  strconv.Itoa(int(authorId))}
+	baseSliceUser := []string{UserKey, strconv.Itoa(int(authorId))}
 	userKey := strings.Join(baseSliceUser, Delimiter)
 	pipe := Rdb.TxPipeline()
 	pipe.SRem(Ctx, favoriteListKey, videoId)
