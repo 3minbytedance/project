@@ -19,30 +19,28 @@ func customizedRegister(r *server.Hertz) {
 	r.Use(common.AccessLog())
 	douyin := r.Group("/douyin")
 
-	// 限流中间件，测试时不要开启
-	douyin.Use(mw.RateLimiter())
 	//douyin.GET("/test", mw.RateLimiter(), user.Test)
 
 	// user service
 	userGroup := douyin.Group("/user")
 	{
-		userGroup.POST("/register/", user.Register)
+		userGroup.POST("/register/",mw.RequestRegisterLimiter(), user.Register)
 		userGroup.POST("/login/", mw.RequestLoginLimiter(), user.Login)
-		userGroup.GET("/", mw.AuthWithoutLogin(), user.Info)
+		userGroup.GET("/", mw.RateLimiter(), mw.AuthWithoutLogin(), user.Info)
 	}
 
 	// video service
-	douyin.GET("/feed/", mw.AuthWithoutLogin(), video.FeedList)
+	douyin.GET("/feed/", mw.RateLimiter(), mw.AuthWithoutLogin(), video.FeedList)
 	videoGroup := douyin.Group("/publish")
 	{
-		videoGroup.GET("/list/",mw.AuthWithoutLogin(), video.GetPublishList)
+		videoGroup.GET("/list/", mw.RateLimiter(), mw.AuthWithoutLogin(), video.GetPublishList)
 		videoGroup.POST("/action/", mw.RequestUploadLimiter(), mw.AuthBody(), video.Publish)
 	}
 	// comment service
 	commentGroup := douyin.Group("/comment")
 	{
-		commentGroup.POST("/action/",  mw.Auth(),mw.RequestCommentLimiter(), comment.Action)
-		commentGroup.GET("/list/", mw.AuthWithoutLogin(), comment.List)
+		commentGroup.POST("/action/", mw.RequestCommentLimiter(), mw.Auth(), comment.Action)
+		commentGroup.GET("/list/", mw.RateLimiter(), mw.AuthWithoutLogin(), comment.List)
 	}
 
 	// favorite service
@@ -51,6 +49,7 @@ func customizedRegister(r *server.Hertz) {
 		favoriteGroup.POST("/action/", mw.Auth(), favorite.Action)
 		favoriteGroup.GET("/list/", mw.AuthWithoutLogin(), favorite.List)
 	}
+	favoriteGroup.Use(mw.RateLimiter())
 
 	// relation service
 	relationGroup := douyin.Group("/relation")
@@ -60,10 +59,11 @@ func customizedRegister(r *server.Hertz) {
 		relationGroup.GET("/follower/list/", mw.AuthWithoutLogin(), relation.FollowerList)
 		relationGroup.GET("/friend/list/", mw.Auth(), relation.FriendList)
 	}
+	favoriteGroup.Use(mw.RateLimiter())
 	// message service
 	messageGroup := douyin.Group("/message")
 	{
-		messageGroup.POST("/action/", mw.Auth(), message.Action)
-		messageGroup.GET("/chat/",mw.Auth(), mw.RequestMessageLimiter(), message.Chat)
+		messageGroup.POST("/action/", mw.RequestMessageLimiter(), mw.Auth(), message.Action)
+		messageGroup.GET("/chat/", mw.Auth(), message.Chat)
 	}
 }

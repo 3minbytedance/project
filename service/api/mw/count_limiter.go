@@ -14,11 +14,28 @@ func RequestLoginLimiter() app.HandlerFunc {
 		ip := c.ClientIP()
 		success := redis.IncrementLoginLimiterCount(ip)
 		if !success {
-			c.Abort()
 			c.JSON(http.StatusOK, Response{
 				StatusCode: common.CodeLimiterCount,
 				StatusMsg:  common.MapErrMsg(common.CodeLimiterCount),
 			})
+			c.Abort()
+			return
+		}
+		c.Next(ctx)
+	}
+}
+
+// RequestRegisterLimiter 限制注册请求次数
+func RequestRegisterLimiter() app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		ip := c.ClientIP()
+		success := redis.IncrementRegisterLimiterCount(ip)
+		if !success {
+			c.JSON(http.StatusOK, Response{
+				StatusCode: common.CodeLimiterCount,
+				StatusMsg:  common.MapErrMsg(common.CodeLimiterCount),
+			})
+			c.Abort()
 			return
 		}
 		c.Next(ctx)
@@ -31,11 +48,11 @@ func RequestCommentLimiter() app.HandlerFunc {
 		ip := c.ClientIP()
 		success := redis.IncrementCommentLimiterCount(ip)
 		if !success {
-			c.Abort()
 			c.JSON(http.StatusOK, Response{
 				StatusCode: common.CodeLimiterCount,
 				StatusMsg:  common.MapErrMsg(common.CodeLimiterCount),
 			})
+			c.Abort()
 			return
 		}
 		c.Next(ctx)
@@ -48,11 +65,11 @@ func RequestUploadLimiter() app.HandlerFunc {
 		ip := c.ClientIP()
 		success := redis.IncrementUploadLimiterCount(ip)
 		if !success {
-			c.Abort()
 			c.JSON(http.StatusOK, Response{
 				StatusCode: common.CodeLimiterCount,
 				StatusMsg:  common.MapErrMsg(common.CodeLimiterCount),
 			})
+			c.Abort()
 			return
 		}
 		c.Next(ctx)
@@ -65,11 +82,11 @@ func RequestMessageLimiter() app.HandlerFunc {
 		ip := c.ClientIP()
 		success := redis.IncrementMessageLimiterCount(ip)
 		if !success {
-			c.Abort()
 			c.JSON(http.StatusOK, Response{
 				StatusCode: common.CodeLimiterCount,
 				StatusMsg:  common.MapErrMsg(common.CodeLimiterCount),
 			})
+			c.Abort()
 			return
 		}
 		c.Next(ctx)

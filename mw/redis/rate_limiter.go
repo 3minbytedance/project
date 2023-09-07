@@ -8,9 +8,9 @@ import (
 
 var (
 	timeNow                 = time.Now
-	bucketSize      int     = 100 // 令牌桶的容量
-	refillPerSecond float64 = 60 // 每隔多长时间添加令牌
-	refillToken     int     = 20 // 每次令牌桶填充操作时添加的令牌数量
+	bucketSize      int     = 60 // 令牌桶的容量
+	refillPerSecond float64 = 30 // 每隔多长时间添加令牌
+	refillToken     int     = 10 // 每次令牌桶填充操作时添加的令牌数量
 
 	tokenBucket = "tokenBucket" // key名
 )
