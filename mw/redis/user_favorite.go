@@ -1,6 +1,8 @@
 package redis
 
 import (
+	"fmt"
+	"github.com/redis/go-redis/v9"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -62,26 +64,26 @@ func DecrementFavoritedCountByVideoId(videoId uint) error {
 }
 
 // SetTotalFavoritedByUserId 设置用户发布视频的总的被点赞数
-func SetTotalFavoritedByUserId(userId uint, totalFavorite int64) error {
+func SetTotalFavoritedByUserId(userId uint, totalFavorite int64) {
 	baseSliceUser := []string{UserKey, strconv.Itoa(int(userId))}
 	key := strings.Join(baseSliceUser, Delimiter)
-	err := Rdb.HSet(Ctx, key, TotalFavoriteField, totalFavorite).Err()
+	Rdb.HSetNX(Ctx, key, TotalFavoriteField, totalFavorite)
 	randomSeconds := 600 + rand.Intn(31) // 600秒到630秒之间的随机数
 	expiration := time.Duration(randomSeconds) * time.Second
 	Rdb.Expire(Ctx, key, expiration)
-	return err
+	return
 }
 
 // SetVideoFavoritedCountByVideoId 设置该videoId下被点赞总量
-func SetVideoFavoritedCountByVideoId(videoId uint, totalFavorited int64) error {
+func SetVideoFavoritedCountByVideoId(videoId uint, totalFavorited int64) {
 	baseSliceVideo := []string{VideoKey, strconv.Itoa(int(videoId))}
 	key := strings.Join(baseSliceVideo, Delimiter)
 
-	err := Rdb.HSet(Ctx, key, VideoFavoritedCountField, totalFavorited).Err()
+	Rdb.HSet(Ctx, key, VideoFavoritedCountField, totalFavorited)
 	randomSeconds := 600 + rand.Intn(31) // 600秒到630秒之间的随机数
 	expiration := time.Duration(randomSeconds) * time.Second
 	Rdb.Expire(Ctx, key, expiration)
-	return err
+	return
 }
 
 // GetFavoriteListByUserId 根据userId查找喜欢的视频list
@@ -149,18 +151,34 @@ func IsInUserFavoriteList(userId uint, videoId uint) bool {
 
 // GetUserFavoriteVideoCountById 根据userId查找喜欢的视频数量
 func GetUserFavoriteVideoCountById(userId uint) (int64, error) {
-	baseSliceFavorite := []string{FavoriteList, strconv.Itoa(int(userId))}
-	key := strings.Join(baseSliceFavorite, Delimiter)
-	size, err := Rdb.SCard(Ctx, key).Result()
-	return size, err
+	// 用户喜欢数
+	baseSliceFavoriteCount := []string{UserKey, strconv.Itoa(int(userId))}
+	favoriteCountKey := strings.Join(baseSliceFavoriteCount, Delimiter)
+
+	favoriteCount, err := Rdb.HGet(Ctx, favoriteCountKey, FavoriteCountFiled).Int64()
+	return favoriteCount, err
+}
+
+// SetUserFavoriteVideoCountById 根据userId设置喜欢的视频数量
+func SetUserFavoriteVideoCountById(userId uint, favoriteCount int64) {
+	// 用户喜欢数
+	baseSliceFavoriteCount := []string{UserKey, strconv.Itoa(int(userId))}
+	favoriteCountKey := strings.Join(baseSliceFavoriteCount, Delimiter)
+
+	Rdb.HSet(Ctx, favoriteCountKey, FavoriteCountFiled, favoriteCount)
+	return
 }
 
 // ActionLike
 // 更新用户喜欢的视频列表,更新视频被喜欢的数量,更新视频作者的被点赞量
 func ActionLike(userId, videoId, authorId uint) error {
+
 	// 用户喜欢的视频列表
-	baseSliceFavorite := []string{FavoriteList, strconv.Itoa(int(userId))}
-	favoriteListKey := strings.Join(baseSliceFavorite, Delimiter)
+	baseSliceFavoriteList := []string{FavoriteList, strconv.Itoa(int(userId))}
+	favoriteListKey := strings.Join(baseSliceFavoriteList, Delimiter)
+	// 用户喜欢数
+	baseSliceFavoriteCount := []string{UserKey, strconv.Itoa(int(userId))}
+	favoriteCountKey := strings.Join(baseSliceFavoriteCount, Delimiter)
 	// 视频被喜欢的数量
 	baseSliceVideo := []string{VideoKey, strconv.Itoa(int(videoId))}
 	videoKey := strings.Join(baseSliceVideo, Delimiter)
@@ -168,11 +186,13 @@ func ActionLike(userId, videoId, authorId uint) error {
 	baseSliceUser := []string{UserKey, strconv.Itoa(int(authorId))}
 	userKey := strings.Join(baseSliceUser, Delimiter)
 
-	pipe := Rdb.TxPipeline()
-	pipe.SAdd(Ctx, favoriteListKey, videoId)
-	pipe.Del(Ctx, videoKey, VideoFavoritedCountField)
-	pipe.Del(Ctx, userKey, TotalFavoriteField)
-	_, err := pipe.Exec(Ctx)
+	_, err := Rdb.TxPipelined(Ctx, func(pipe redis.Pipeliner) error {
+		pipe.SAdd(Ctx, favoriteListKey, videoId)
+		pipe.HIncrBy(Ctx, videoKey, VideoFavoritedCountField, 1)
+		pipe.HIncrBy(Ctx, userKey, TotalFavoriteField, 1)
+		pipe.HIncrBy(Ctx, favoriteCountKey, FavoriteCountFiled, 1)
+		return nil
+	})
 	return err
 }
 
@@ -182,16 +202,23 @@ func ActionCancelLike(userId, videoId, authorId uint) error {
 	// 用户喜欢的视频列表
 	baseSliceFavorite := []string{FavoriteList, strconv.Itoa(int(userId))}
 	favoriteListKey := strings.Join(baseSliceFavorite, Delimiter)
-	// 视频被喜欢的数量
+	// 视频被喜欢的数量0
 	baseSliceVideo := []string{VideoKey, strconv.Itoa(int(videoId))}
 	videoKey := strings.Join(baseSliceVideo, Delimiter)
 	// 视频作者的被点赞量
 	baseSliceUser := []string{UserKey, strconv.Itoa(int(authorId))}
 	userKey := strings.Join(baseSliceUser, Delimiter)
-	pipe := Rdb.TxPipeline()
-	pipe.SRem(Ctx, favoriteListKey, videoId)
-	pipe.Del(Ctx, videoKey, VideoFavoritedCountField)
-	pipe.Del(Ctx, userKey, TotalFavoriteField)
-	_, err := pipe.Exec(Ctx)
+	// 用户喜欢数
+	baseSliceFavoriteCount := []string{UserKey, strconv.Itoa(int(userId))}
+	favoriteCountKey := strings.Join(baseSliceFavoriteCount, Delimiter)
+
+	_, err := Rdb.TxPipelined(Ctx, func(pipe redis.Pipeliner) error {
+		pipe.SRem(Ctx, favoriteListKey, videoId)
+		pipe.HIncrBy(Ctx, videoKey, VideoFavoritedCountField, -1)
+		pipe.HIncrBy(Ctx, userKey, TotalFavoriteField, -1)
+		pipe.HIncrBy(Ctx, favoriteCountKey, FavoriteCountFiled, -1)
+		return nil
+	})
+	fmt.Println(err)
 	return err
 }

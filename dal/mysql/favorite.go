@@ -12,7 +12,7 @@ var (
 )
 
 // GetFavoritesByIdFromMysql 从数据库中根据Id类型获取对应的数据
-func GetFavoritesByIdFromMysql(id uint, idType int) ([]model.Favorite, int, error) {
+func GetFavoritesByIdFromMysql(id uint, idType int) ([]model.Favorite, int64, error) {
 	var (
 		res  []model.Favorite
 		rows int64
@@ -29,7 +29,7 @@ func GetFavoritesByIdFromMysql(id uint, idType int) ([]model.Favorite, int, erro
 		rows = dbStruct.RowsAffected
 		err = DB.Error
 	}
-	return res, int(rows), err
+	return res, rows, err
 }
 
 func GetVideoFavoriteCountByVideoId(id uint) (int64, error) {

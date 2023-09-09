@@ -25,6 +25,7 @@ const (
 	WorkCountField     = "workCount"      //作品数
 	NameField          = "name"           //用户名
 	TotalFavoriteField = "totalFavorited" //发布视频的总获赞数量
+	FavoriteCountFiled = "favoriteCount"  //喜欢数
 
 	// FavoriteList  set类型
 	FavoriteList = "favoriteList" //喜欢视频列表
@@ -40,7 +41,6 @@ const TokenKey = "token"
 
 const (
 	Lock               = "lock"
-	FavoriteAction     = "favoriteAction"
 	FollowAction       = "followAction"
 	RetryTime          = 30 * time.Millisecond
 	KeyExistsAndNotSet = 0
@@ -164,8 +164,8 @@ func AcquireFavoriteLock(id uint, field string) bool {
 		baseSlice = []string{VideoFavoritedCountField, strconv.Itoa(int(id)), Lock}
 	case TotalFavoriteField:
 		baseSlice = []string{TotalFavoriteField, strconv.Itoa(int(id)), Lock}
-	case FavoriteAction:
-		baseSlice = []string{FavoriteAction, strconv.Itoa(int(id)), Lock}
+	case FavoriteCountFiled:
+		baseSlice = []string{FavoriteCountFiled, strconv.Itoa(int(id)), Lock}
 	default:
 		return false
 	}
@@ -188,8 +188,8 @@ func ReleaseFavoriteLock(id uint, field string) {
 		baseSlice = []string{VideoFavoritedCountField, strconv.Itoa(int(id)), Lock}
 	case TotalFavoriteField:
 		baseSlice = []string{TotalFavoriteField, strconv.Itoa(int(id)), Lock}
-	case FavoriteAction:
-		baseSlice = []string{FavoriteAction, strconv.Itoa(int(id)), Lock}
+	case FavoriteCountFiled:
+		baseSlice = []string{FavoriteCountFiled, strconv.Itoa(int(id)), Lock}
 	default:
 		return
 	}

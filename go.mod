@@ -3,6 +3,7 @@ module douyin
 go 1.20
 
 require (
+	github.com/alexedwards/argon2id v0.0.0-20230305115115-4b3c3280a736
 	github.com/apache/thrift v0.13.0
 	github.com/bits-and-blooms/bloom/v3 v3.5.0
 	github.com/bwmarrin/snowflake v0.3.0
@@ -20,10 +21,9 @@ require (
 	github.com/segmentio/kafka-go v0.4.42
 	github.com/spf13/viper v1.7.0
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.42
-	github.com/vmihailenco/msgpack/v5 v5.3.5
 	go.mongodb.org/mongo-driver v1.12.1
 	go.uber.org/zap v1.25.0
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
+	golang.org/x/crypto v0.7.0
 	google.golang.org/protobuf v1.31.0
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/gorm v1.25.3
@@ -83,7 +83,6 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
-	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
