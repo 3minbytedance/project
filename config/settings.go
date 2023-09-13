@@ -27,10 +27,11 @@ type AppConfig struct {
 	} `mapstructure:"local"`
 
 	Remote struct {
-		*MySQLConfig `mapstructure:"mysql"`
-		*RedisConfig `mapstructure:"redis"`
-		*KafkaConfig `mapstructure:"kafka"`
-		*MongoConfig `mapstructure:"mongo"`
+		*MySQLConfig    `mapstructure:"mysql"`
+		*RedisConfig    `mapstructure:"redis"`
+		*KafkaConfig    `mapstructure:"kafka"`
+		*MongoConfig    `mapstructure:"mongo"`
+		*RocketMQConfig `mapstructure:"rocketmq"`
 	} `mapstructure:"remote"`
 }
 
