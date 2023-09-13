@@ -79,6 +79,13 @@ type MongoConfig struct {
 	DB       string `mapstructure:"db"`
 }
 
+type RocketMQConfig struct {
+	Address  string `mapstructure:"address"`
+	Port     int    `mapstructure:"port"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+}
+
 func Init() (err error) {
 	//viper.AddConfigPath("../../config")
 	//viper.SetConfigName("app")
