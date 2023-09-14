@@ -11,8 +11,10 @@ import (
 	"douyin/kitex_gen/relation/relationservice"
 	user "douyin/kitex_gen/user"
 	"douyin/kitex_gen/video/videoservice"
+	"douyin/mw/localcache"
 	"douyin/mw/redis"
 	"douyin/service/user/pack"
+	"github.com/allegro/bigcache/v3"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -26,6 +28,7 @@ import (
 var relationClient relationservice.Client
 var favoriteClient favoriteservice.Client
 var videoClient videoservice.Client
+var cache *bigcache.BigCache
 
 func init() {
 	// Etcd 服务发现
@@ -57,6 +60,8 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	cache = localcache.Init(localcache.User)
 }
 
 // UserServiceImpl implements the last service interface defined in the IDL.
@@ -259,9 +264,15 @@ func (s *UserServiceImpl) GetUserInfoById(ctx context.Context, request *user.Use
 
 // GetName 根据userId获取用户名
 func GetName(userId uint) (string, bool) {
+	if val, err := cache.Get(strconv.Itoa(int(userId))); err == nil {
+		return string(val), true
+	}
 	// 从redis中获取用户名
 	// 1. 缓存中有数据, 直接返回
 	if name, err := redis.GetNameByUserId(userId); err == nil {
+		go func(uint, string) {
+			cache.Set(strconv.Itoa(int(userId)), []byte(name))
+		}(userId, name)
 		return name, true
 	}
 	//缓存不存在，尝试从数据库中取
@@ -277,6 +288,9 @@ func GetName(userId uint) (string, bool) {
 		if err != nil {
 			zap.L().Error("将用户名写入redis失败：", zap.Error(err))
 		}
+		go func(uint, string) {
+			cache.Set(strconv.Itoa(int(userId)), []byte(userModel.Name))
+		}(userId, userModel.Name)
 		return userModel.Name, true
 	}
 	// 重试

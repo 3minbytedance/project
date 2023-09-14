@@ -14,7 +14,9 @@ import (
 	"douyin/kitex_gen/user/userservice"
 	video "douyin/kitex_gen/video"
 	"douyin/mw/kafka"
+	"douyin/mw/localcache"
 	"douyin/mw/redis"
+	"github.com/allegro/bigcache/v3"
 	"github.com/cloudwego/hertz/pkg/common/json"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
@@ -32,6 +34,7 @@ import (
 var userClient userservice.Client
 var commentClient commentservice.Client
 var favoriteClient favoriteservice.Client
+var cache *bigcache.BigCache
 
 // VideoServiceImpl implements the last service interface defined in the IDL.
 type VideoServiceImpl struct{}
@@ -66,6 +69,8 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	cache = localcache.Init(localcache.Video)
 }
 
 // VideoFeed implements the VideoServiceImpl interface.
@@ -282,9 +287,18 @@ func (s *VideoServiceImpl) GetWorkCount(ctx context.Context, userId int64) (resp
 }
 
 func getWorkCount(userId uint) (int32, error) {
+	// 从localCache中取
+	if val, err := cache.Get(strconv.Itoa(int(userId))); err == nil {
+		count, _ := strconv.Atoi(string(val))
+		return int32(count), nil
+	}
+
 	// 从redis中获取作品数
 	// 1. 缓存中有数据, 直接返回
 	if workCount, err := redis.GetWorkCountByUserId(userId); err == nil {
+		go func(uint, int64) {
+			cache.Set(strconv.Itoa(int(userId)), []byte(strconv.FormatInt(workCount, 10)))
+		}(userId, workCount)
 		return int32(workCount), nil
 	}
 
@@ -300,6 +314,9 @@ func getWorkCount(userId uint) (int32, error) {
 			if err != nil {
 				zap.L().Error("redis更新作品数失败", zap.Error(err))
 			}
+			go func(uint) {
+				cache.Set(strconv.Itoa(int(userId)), []byte("0"))
+			}(userId)
 			return 0, nil
 		}
 		// 2. 从数据库中获取
@@ -309,6 +326,10 @@ func getWorkCount(userId uint) (int32, error) {
 		if err != nil {
 			zap.L().Error("将作品数写入redis失败", zap.Error(err))
 		}
+		go func(uint, int64) {
+			cache.Set(strconv.Itoa(int(userId)), []byte(strconv.FormatInt(workCount, 10)))
+		}(userId, workCount)
+
 		return int32(workCount), nil
 	}
 	//重试

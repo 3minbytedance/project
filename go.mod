@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/alexedwards/argon2id v0.0.0-20230305115115-4b3c3280a736
+	github.com/allegro/bigcache/v3 v3.1.0
 	github.com/apache/thrift v0.13.0
 	github.com/bits-and-blooms/bloom/v3 v3.5.0
 	github.com/bwmarrin/snowflake v0.3.0
@@ -12,6 +13,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/google/uuid v1.3.0
+	github.com/hertz-contrib/etag v0.1.0
 	github.com/hertz-contrib/http2 v0.1.8
 	github.com/importcjj/sensitive v0.0.0-20200106142752-42d1c505be7b
 	github.com/kitex-contrib/obs-opentelemetry v0.2.3
@@ -23,7 +25,7 @@ require (
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.42
 	go.mongodb.org/mongo-driver v1.12.1
 	go.uber.org/zap v1.25.0
-	golang.org/x/crypto v0.7.0
+	golang.org/x/sync v0.1.0
 	google.golang.org/protobuf v1.31.0
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/gorm v1.25.3
@@ -57,7 +59,6 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/henrylee2cn/ameda v1.4.10 // indirect
 	github.com/henrylee2cn/goutil v0.0.0-20210127050712-89660552f6f8 // indirect
-	github.com/hertz-contrib/etag v0.1.0 // indirect
 	github.com/jhump/protoreflect v1.8.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
@@ -98,8 +99,8 @@ require (
 	go.uber.org/goleak v1.2.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.2.0 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/genproto v0.0.0-20230526203410-71b5a4ffd15e // indirect
