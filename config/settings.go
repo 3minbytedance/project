@@ -27,10 +27,11 @@ type AppConfig struct {
 	} `mapstructure:"local"`
 
 	Remote struct {
-		*MySQLConfig `mapstructure:"mysql"`
-		*RedisConfig `mapstructure:"redis"`
-		*KafkaConfig `mapstructure:"kafka"`
-		*MongoConfig `mapstructure:"mongo"`
+		*MySQLConfig    `mapstructure:"mysql"`
+		*RedisConfig    `mapstructure:"redis"`
+		*KafkaConfig    `mapstructure:"kafka"`
+		*MongoConfig    `mapstructure:"mongo"`
+		*RocketMQConfig `mapstructure:"rocketmq"`
 	} `mapstructure:"remote"`
 }
 
@@ -77,6 +78,13 @@ type MongoConfig struct {
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
 	DB       string `mapstructure:"db"`
+}
+
+type RocketMQConfig struct {
+	Address  string `mapstructure:"address"`
+	Port     int    `mapstructure:"port"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
 }
 
 func Init() (err error) {

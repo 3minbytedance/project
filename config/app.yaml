@@ -60,3 +60,6 @@ remote:
     username: admin
     password: w5W7PNXYBzLBGHRx
     db: admin
+  rocketmq:
+    address: "127.0.0.1"
+    port: 9093
