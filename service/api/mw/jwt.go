@@ -5,7 +5,6 @@ import (
 	"douyin/common"
 	"douyin/mw/redis"
 	"github.com/cloudwego/hertz/pkg/app"
-	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -24,8 +23,8 @@ func Auth() app.HandlerFunc {
 			// token有误（含len(token)=0的情况），阻止后面函数执行
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
-				StatusCode: -1,
-				StatusMsg:  "Token Error",
+				StatusCode: common.CodeInvalidToken,
+				StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 			})
 			return
 		}
@@ -35,15 +34,17 @@ func Auth() app.HandlerFunc {
 			// token有误，阻止后面函数执行
 			c.Abort()
 			c.JSON(http.StatusOK, Response{
-				StatusCode: -1,
-				StatusMsg:  "登录已过期，请退出账户并重新登陆",
+				StatusCode: common.CodeInvalidToken,
+				StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 			})
 			return
 		}
-		// 给token续期
-		redis.SetToken(claims.ID, token)
+		go func(id uint) {
+			// 给token续期，并标记位活跃
+			redis.SetToken(id, token)
+			redis.SetMonthlyActiveBit(id)
+		}(claims.ID)
 
-		zap.L().Debug("CLAIM-ID", zap.Uint("ID", claims.ID))
 		c.Set(common.ContextUserIDKey, claims.ID)
 		c.Next(ctx)
 	}
@@ -64,19 +65,18 @@ func AuthWithoutLogin() app.HandlerFunc {
 			// 查看token是否在redis中, 若在，则返回用户id, 并且给token续期, 若不在，则将userID设为0
 			exist := redis.TokenIsExisted(claims.ID)
 			if !exist {
-				zap.L().Debug("Token is not existed, user id ", zap.Uint("ID", claims.ID))
 				// token有误，设置userId为0,tokenValid为false
 				userId = 0
 				tokenValid = false
 			} else {
 				userId = claims.ID
-				// 给token续期
-				redis.SetToken(claims.ID, token)
+				go func(id uint) {
+					// 给token续期
+					redis.SetToken(id, token)
+				}(userId)
 				tokenValid = true
 			}
 		}
-
-		zap.L().Debug("USER-ID", zap.Uint("ID", userId))
 		c.Set(common.TokenValid, tokenValid)
 		c.Set(common.ContextUserIDKey, userId)
 		c.Next(ctx)
@@ -93,8 +93,8 @@ func AuthBody() app.HandlerFunc {
 			// token有误（含len(token)=0的情况），阻止后面函数执行
 			c.Abort()
 			c.JSON(http.StatusUnauthorized, Response{
-				StatusCode: -1,
-				StatusMsg:  "Token Error",
+				StatusCode: common.CodeInvalidToken,
+				StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 			})
 			return
 		}
@@ -104,15 +104,16 @@ func AuthBody() app.HandlerFunc {
 			// token有误，阻止后面函数执行
 			c.Abort()
 			c.JSON(http.StatusOK, Response{
-				StatusCode: -1,
-				StatusMsg:  "登录已过期，请退出账户并重新登陆",
+				StatusCode: common.CodeInvalidToken,
+				StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
 			})
 			return
 		}
-		// 给token续期
-		redis.SetToken(claims.ID, token)
+		go func(id uint) {
+			// 给token续期
+			redis.SetToken(id, token)
+		}(claims.ID)
 
-		zap.L().Debug("CLAIM-ID", zap.Uint("ID", claims.ID))
 		c.Set(common.ContextUserIDKey, claims.ID)
 		c.Next(ctx)
 	}

@@ -56,8 +56,8 @@ func main() {
 	kafka.InitFavoriteKafka()
 
 	// 初始化Bloom Filter
-	common.InitFavoriteUserIdFilter()
-	common.LoadFavoriteUserIdToBloomFilter()
+	common.InitIsFavoriteFilter()
+	common.LoadIsFavoriteToBloomFilter()
 	common.InitFavoriteVideoIdFilter()
 	common.LoadFavoriteVideoIdToBloomFilter()
 

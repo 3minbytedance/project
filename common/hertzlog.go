@@ -12,10 +12,5 @@ func AccessLog() app.HandlerFunc {
 			ctx.Response.StatusCode(),
 			ctx.Request.Header.Method(), ctx.Request.URI().PathOriginal(), ctx.Request.QueryString(),
 			ctx.Request.PostArgString())
-		//start := time.Now()
-		//ctx.Next(c)
-		//end := time.Now()
-		//latency := end.Sub(start).Microseconds
-
 	}
 }

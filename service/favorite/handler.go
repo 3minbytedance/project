@@ -6,14 +6,15 @@ import (
 	"douyin/constant"
 	"douyin/constant/biz"
 	"douyin/dal/model"
-	dalMySQL "douyin/dal/mysql"
+	"douyin/dal/mysql"
 	"douyin/kitex_gen/comment/commentservice"
 	"douyin/kitex_gen/favorite"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	"douyin/kitex_gen/video"
 	"douyin/mw/kafka"
-	mwRedis "douyin/mw/redis"
+	"douyin/mw/redis"
+	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -94,16 +95,11 @@ func (s *FavoriteServiceImpl) FavoriteAction(ctx context.Context, request *favor
 // GetFavoriteList implements the FavoriteServiceImpl interface.
 func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favorite.FavoriteListRequest) (resp *favorite.FavoriteListResponse, err error) {
 	resp = new(favorite.FavoriteListResponse)
-	userId := request.GetUserId()
 	actionId := request.GetActionId()
+	userId := request.GetUserId()
 
-	favoritesByUserId, err := getFavoritesByUserId(uint(userId))
-	if err != nil {
-		return &favorite.FavoriteListResponse{
-			StatusCode: common.CodeServerBusy,
-			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
-		}, err
-	}
+	favoritesByUserId := mysql.GetFavoritesById(uint(userId))
+	fmt.Println(favoritesByUserId)
 	videos := make([]*video.Video, 0, len(favoritesByUserId))
 	userRespCh := make(chan *user.UserInfoByIdResponse)
 	commentCountCh := make(chan int32)
@@ -116,7 +112,7 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 		close(userRespCh)
 	}()
 	for _, id := range favoritesByUserId {
-		videoModel, found := dalMySQL.FindVideoByVideoId(id)
+		videoModel, found := getVideoByVideoId(id)
 		if !found {
 			continue
 		}
@@ -219,7 +215,7 @@ func (s *FavoriteServiceImpl) IsUserFavorite(ctx context.Context, request *favor
 // FavoriteActionRepeat 表示重复点赞/取消点赞
 // FavoriteActionError 表示其他错误
 func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
-	videoModel, found := dalMySQL.FindVideoByVideoId(videoId)
+	videoModel, found := getVideoByVideoId(videoId)
 	if !found {
 		return biz.FavoriteActionError
 	}
@@ -227,11 +223,10 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 	case 1:
 		// 点赞
 		// 判断是否在redis中，如果不在则从MySQL取防止对空key操作
-		checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
 		checkAndSetVideoFavoriteCountKey(videoId)
 		checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId)
 		checkAndSetUserFavoriteCountKey(userId)
-		err := mwRedis.ActionLike(userId, videoId, videoModel.AuthorId)
+		err := redis.ActionLike(userId, videoId, videoModel.AuthorId)
 		if err != nil {
 			return biz.FavoriteActionError
 		}
@@ -243,17 +238,16 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 			}
 		}()
 		go func() {
-			common.AddToFavoriteUserIdBloom(strconv.Itoa(int(userId)))
+			common.AddToIsFavoriteBloom(userId, videoId)
 			common.AddToFavoriteVideoIdBloom(strconv.Itoa(int(videoId)))
 		}()
 		return biz.FavoriteActionSuccess
 	case 2:
 		// 判断是否在redis中，如果不在则从MySQL取防止对空key操作
-		checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
 		checkAndSetVideoFavoriteCountKey(videoId)
 		checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId)
 		checkAndSetUserFavoriteCountKey(userId)
-		err := mwRedis.ActionCancelLike(userId, videoId, videoModel.AuthorId)
+		err := redis.ActionCancelLike(userId, videoId, videoModel.AuthorId)
 		if err != nil {
 			return biz.FavoriteActionError
 		}
@@ -283,91 +277,13 @@ func getFavoritesVideoCount(videoId uint) (int64, error) {
 	return count, nil
 }
 
-// getFavoritesByUserId
-// 获取当前user_id的点赞的视频id列表
-func getFavoritesByUserId(userId uint) ([]uint, error) {
-	res := checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
-	// redis和mysql中没有对应的数据
-	if res == mwRedis.KeyNotExistsInBoth {
-		return []uint{}, nil
-	}
-
-	// redis存在
-	favoritesVideoIdList, err := mwRedis.GetFavoriteListByUserId(userId)
-	if err != nil {
-		zap.L().Error("GetFavoriteListByUserId", zap.Error(err))
-		return []uint{}, err
-	}
-	return favoritesVideoIdList, nil
-}
-
-// getIdListFromFavoriteSlice 从Favorite的slice中获取id的列表
-func getIdListFromFavoriteSlice(favorites []model.Favorite, idType int) []uint {
-	res := make([]uint, 0, len(favorites))
-	switch idType {
-	case dalMySQL.IdTypeUser:
-		for _, fav := range favorites {
-			res = append(res, fav.VideoId)
-		}
-		return res
-	default:
-		return []uint{}
-	}
-}
-
 // IsUserFavorite 判断是否点赞
 func isUserFavorite(userId, videoId uint) bool {
-	res := checkAndSetUserFavoriteListKey(userId, mwRedis.FavoriteList)
-	// redis和mysql中没有对应的数据
-	if res == mwRedis.KeyNotExistsInBoth {
+	exist := common.TestIsFavoriteBloom(userId, videoId)
+	if !exist {
 		return false
 	}
-	return mwRedis.IsInUserFavoriteList(userId, videoId)
-}
-
-// checkAndSetUserFavoriteListKey
-// 返回mwRedis.KeyExistsAndNotSet 表示这个key存在，未设置
-// 返回mwRedis.KeyUpdated 表示，这个key不存在,已更新
-// 返回mwRedis.KeyNotExistsInBoth 表示，这个key在数据库和redis中都不存在，即缓存穿透
-func checkAndSetUserFavoriteListKey(userId uint, key string) int {
-	if mwRedis.IsExistUserSetField(userId, key) {
-		return mwRedis.KeyExistsAndNotSet
-	}
-	//key不存在 double check
-	if mwRedis.AcquireFavoriteLock(userId, mwRedis.FavoriteList) {
-		defer mwRedis.ReleaseFavoriteLock(userId, mwRedis.FavoriteList)
-		//double check
-		if mwRedis.IsExistUserSetField(userId, key) {
-			return mwRedis.KeyExistsAndNotSet
-		}
-
-		exist := common.TestFavoriteUserIdBloom(strconv.Itoa(int(userId)))
-
-		// 不存在
-		if !exist {
-			return mwRedis.KeyNotExistsInBoth
-		}
-
-		favorites, favoriteLength, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
-		if err != nil {
-			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
-			return mwRedis.KeyNotExistsInBoth
-		}
-		//点赞数为0
-		if favoriteLength == 0 {
-			return mwRedis.KeyNotExistsInBoth
-		}
-		idList := getIdListFromFavoriteSlice(favorites, dalMySQL.IdTypeUser)
-		// key 不存在需要同步到redis set中
-		err = mwRedis.SetFavoriteListByUserId(userId, idList)
-		if err != nil {
-			zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
-		}
-		return mwRedis.KeyUpdated
-	}
-	// 重试
-	time.Sleep(mwRedis.RetryTime)
-	return checkAndSetUserFavoriteListKey(userId, key)
+	return mysql.IsFavorite(userId, videoId)
 }
 
 // checkAndSetVideoFavoriteCountKey
@@ -375,15 +291,15 @@ func checkAndSetUserFavoriteListKey(userId uint, key string) int {
 // 返回mwRedis.KeyUpdated 表示，这个key不存在,已更新
 // 返回mwRedis.KeyNotExistsInBoth 表示，这个key在数据库和redis中都不存在，即缓存穿透
 func checkAndSetVideoFavoriteCountKey(videoId uint) (videoFavoriteCount int64, status int) {
-	if count, err := mwRedis.GetFavoritedCountByVideoId(videoId); err == nil {
-		return count, mwRedis.KeyExistsAndNotSet
+	if count, err := redis.GetFavoritedCountByVideoId(videoId); err == nil {
+		return count, redis.KeyExistsAndNotSet
 	}
 	//key不存在
-	if mwRedis.AcquireFavoriteLock(videoId, mwRedis.VideoFavoritedCountField) {
-		defer mwRedis.ReleaseFavoriteLock(videoId, mwRedis.VideoFavoritedCountField)
+	if redis.AcquireFavoriteLock(videoId, redis.VideoFavoritedCountField) {
+		defer redis.ReleaseFavoriteLock(videoId, redis.VideoFavoritedCountField)
 		//double check
-		if count, err := mwRedis.GetFavoritedCountByVideoId(videoId); err == nil {
-			return count, mwRedis.KeyExistsAndNotSet
+		if count, err := redis.GetFavoritedCountByVideoId(videoId); err == nil {
+			return count, redis.KeyExistsAndNotSet
 		}
 		// redis中不存在，从数据库中读取
 
@@ -391,18 +307,18 @@ func checkAndSetVideoFavoriteCountKey(videoId uint) (videoFavoriteCount int64, s
 
 		// 不存在
 		if !exist {
-			mwRedis.SetVideoFavoritedCountByVideoId(videoId, 0)
-			return 0, mwRedis.KeyNotExistsInBoth
+			redis.SetVideoFavoritedCountByVideoId(videoId, 0)
+			return 0, redis.KeyNotExistsInBoth
 		}
-		num, err := dalMySQL.GetVideoFavoriteCountByVideoId(videoId)
+		num, err := mysql.GetVideoFavoriteCountByVideoId(videoId)
 		if err != nil {
 			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
-			return 0, mwRedis.KeyNotExistsInBoth
+			return 0, redis.KeyNotExistsInBoth
 		}
-		mwRedis.SetVideoFavoritedCountByVideoId(videoId, num) // 加载视频被点赞数量
-		return num, mwRedis.KeyUpdated
+		redis.SetVideoFavoritedCountByVideoId(videoId, num) // 加载视频被点赞数量
+		return num, redis.KeyUpdated
 	}
-	time.Sleep(mwRedis.RetryTime)
+	time.Sleep(redis.RetryTime)
 	return checkAndSetVideoFavoriteCountKey(videoId)
 }
 
@@ -412,35 +328,35 @@ func checkAndSetVideoFavoriteCountKey(videoId uint) (videoFavoriteCount int64, s
 // 返回mwRedis.KeyUpdated 表示，这个key不存在,已更新
 // 返回mwRedis.KeyNotExistsInBoth 表示，这个key在数据库和redis中都不存在，即缓存穿透
 func checkAndSetTotalFavoriteFieldKey(userId uint) (totalFavoriteCount int64, status int) {
-	if totalCount, err := mwRedis.GetTotalFavoritedByUserId(userId); err == nil {
-		return totalCount, mwRedis.KeyExistsAndNotSet
+	if totalCount, err := redis.GetTotalFavoritedByUserId(userId); err == nil {
+		return totalCount, redis.KeyExistsAndNotSet
 	}
 	//key不存在 double check
-	if mwRedis.AcquireFavoriteLock(userId, mwRedis.TotalFavoriteField) {
-		defer mwRedis.ReleaseFavoriteLock(userId, mwRedis.TotalFavoriteField)
+	if redis.AcquireFavoriteLock(userId, redis.TotalFavoriteField) {
+		defer redis.ReleaseFavoriteLock(userId, redis.TotalFavoriteField)
 		//double check
-		if totalCount, err := mwRedis.GetTotalFavoritedByUserId(userId); err == nil {
-			return totalCount, mwRedis.KeyExistsAndNotSet
+		if totalCount, err := redis.GetTotalFavoritedByUserId(userId); err == nil {
+			return totalCount, redis.KeyExistsAndNotSet
 		}
 
 		var total int64
 		// 获取用户发布的视频列表
-		videosByAuthorId, exist := dalMySQL.FindVideosByAuthorId(userId)
+		videosByAuthorId, exist := mysql.FindVideosByAuthorId(userId)
 		if !exist {
-			mwRedis.SetTotalFavoritedByUserId(userId, 0)
-			return 0, mwRedis.KeyNotExistsInBoth
+			redis.SetTotalFavoritedByUserId(userId, 0)
+			return 0, redis.KeyNotExistsInBoth
 		}
 		for _, videoModel := range videosByAuthorId {
-			count, err := dalMySQL.GetVideoFavoriteCountByVideoId(videoModel.ID)
+			count, err := mysql.GetVideoFavoriteCountByVideoId(videoModel.ID)
 			if err != nil {
 				continue
 			}
 			atomic.AddInt64(&total, count)
 		}
-		mwRedis.SetTotalFavoritedByUserId(userId, total)
-		return total, mwRedis.KeyUpdated
+		redis.SetTotalFavoritedByUserId(userId, total)
+		return total, redis.KeyUpdated
 	}
-	time.Sleep(mwRedis.RetryTime)
+	time.Sleep(redis.RetryTime)
 	return checkAndSetTotalFavoriteFieldKey(userId)
 }
 
@@ -449,31 +365,58 @@ func checkAndSetTotalFavoriteFieldKey(userId uint) (totalFavoriteCount int64, st
 // 返回mwRedis.KeyUpdated 表示，这个key不存在,已更新
 // 返回mwRedis.KeyNotExistsInBoth 表示，这个key在数据库和redis中都不存在，即缓存穿透
 func checkAndSetUserFavoriteCountKey(userId uint) (int64, int) {
-	if count, err := mwRedis.GetUserFavoriteVideoCountById(userId); err == nil {
-		return count, mwRedis.KeyExistsAndNotSet
+	if count, err := redis.GetUserFavoriteVideoCountById(userId); err == nil {
+		return count, redis.KeyExistsAndNotSet
 	}
 	//key不存在 double check
-	if mwRedis.AcquireFavoriteLock(userId, mwRedis.FavoriteCountFiled) {
-		defer mwRedis.ReleaseFavoriteLock(userId, mwRedis.FavoriteCountFiled)
+	if redis.AcquireFavoriteLock(userId, redis.FavoriteCountFiled) {
+		defer redis.ReleaseFavoriteLock(userId, redis.FavoriteCountFiled)
 
-		_, favoriteLength, err := dalMySQL.GetFavoritesByIdFromMysql(userId, dalMySQL.IdTypeUser)
+		favoriteCount, err := mysql.GetUserFavoriteCount(userId)
 		if err != nil {
 			zap.L().Error("GetFavoritesByIdFromMysql", zap.Error(err))
-			return 0, mwRedis.KeyNotExistsInBoth
+			return 0, redis.KeyNotExistsInBoth
 		}
-		// 点赞数为0
-		if favoriteLength == 0 {
-			mwRedis.SetUserFavoriteVideoCountById(userId, 0)
-			return 0, mwRedis.KeyNotExistsInBoth
-		}
-		// key 不存在需要同步到redis set中
-		mwRedis.SetUserFavoriteVideoCountById(userId, favoriteLength)
+		// 同步到redis中
+		redis.SetUserFavoriteVideoCountById(userId, favoriteCount)
 		if err != nil {
 			zap.L().Error("SetFavoriteListByUserId", zap.Error(err))
 		}
-		return favoriteLength, mwRedis.KeyUpdated
+		return favoriteCount, redis.KeyUpdated
 	}
 	// 重试
-	time.Sleep(mwRedis.RetryTime)
+	time.Sleep(redis.RetryTime)
 	return checkAndSetUserFavoriteCountKey(userId)
 }
+
+func getVideoByVideoId(videoId uint) (model.Video, bool) {
+	videoModel, found := mysql.FindVideoByVideoId(videoId)
+	return videoModel, found
+}
+
+//func startTimer() {
+//	ticker := time.NewTicker(1 * time.Second)
+//	mutex := sync.Mutex{}
+//	var likes = make(map[uint]map[uint]string, 100)
+//
+//	for i := uint(0); i < 10; i++ {
+//		innerMap := make(map[uint]string)
+//		for j := uint(0); j < 5; j++ {
+//			innerMap[j] = fmt.Sprintf("value-%d-%d", i, j)
+//		}
+//		likes[i] = innerMap
+//	}
+//
+//	for range ticker.C {
+//		mutex.Lock()
+//		// 遍历嵌套的 map
+//		for key, innerMap := range likes {
+//			fmt.Printf("Key: %d\n", key)
+//			for innerKey, value := range innerMap {
+//				fmt.Printf("Inner Key: %d, Value: %s\n", innerKey, value)
+//			}
+//			fmt.Println()
+//		}
+//		mutex.Unlock()
+//	}
+//}

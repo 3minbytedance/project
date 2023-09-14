@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"fmt"
 	"github.com/redis/go-redis/v9"
 	"math/rand"
 	"strconv"
@@ -172,10 +171,6 @@ func SetUserFavoriteVideoCountById(userId uint, favoriteCount int64) {
 // ActionLike
 // 更新用户喜欢的视频列表,更新视频被喜欢的数量,更新视频作者的被点赞量
 func ActionLike(userId, videoId, authorId uint) error {
-
-	// 用户喜欢的视频列表
-	baseSliceFavoriteList := []string{FavoriteList, strconv.Itoa(int(userId))}
-	favoriteListKey := strings.Join(baseSliceFavoriteList, Delimiter)
 	// 用户喜欢数
 	baseSliceFavoriteCount := []string{UserKey, strconv.Itoa(int(userId))}
 	favoriteCountKey := strings.Join(baseSliceFavoriteCount, Delimiter)
@@ -187,7 +182,6 @@ func ActionLike(userId, videoId, authorId uint) error {
 	userKey := strings.Join(baseSliceUser, Delimiter)
 
 	_, err := Rdb.TxPipelined(Ctx, func(pipe redis.Pipeliner) error {
-		pipe.SAdd(Ctx, favoriteListKey, videoId)
 		pipe.HIncrBy(Ctx, videoKey, VideoFavoritedCountField, 1)
 		pipe.HIncrBy(Ctx, userKey, TotalFavoriteField, 1)
 		pipe.HIncrBy(Ctx, favoriteCountKey, FavoriteCountFiled, 1)
@@ -199,9 +193,6 @@ func ActionLike(userId, videoId, authorId uint) error {
 // ActionCancelLike
 // 用户取消点赞，减少用户喜欢的视频列表,减少视频被喜欢的数量,减少视频作者的被点赞量
 func ActionCancelLike(userId, videoId, authorId uint) error {
-	// 用户喜欢的视频列表
-	baseSliceFavorite := []string{FavoriteList, strconv.Itoa(int(userId))}
-	favoriteListKey := strings.Join(baseSliceFavorite, Delimiter)
 	// 视频被喜欢的数量0
 	baseSliceVideo := []string{VideoKey, strconv.Itoa(int(videoId))}
 	videoKey := strings.Join(baseSliceVideo, Delimiter)
@@ -213,12 +204,10 @@ func ActionCancelLike(userId, videoId, authorId uint) error {
 	favoriteCountKey := strings.Join(baseSliceFavoriteCount, Delimiter)
 
 	_, err := Rdb.TxPipelined(Ctx, func(pipe redis.Pipeliner) error {
-		pipe.SRem(Ctx, favoriteListKey, videoId)
 		pipe.HIncrBy(Ctx, videoKey, VideoFavoritedCountField, -1)
 		pipe.HIncrBy(Ctx, userKey, TotalFavoriteField, -1)
 		pipe.HIncrBy(Ctx, favoriteCountKey, FavoriteCountFiled, -1)
 		return nil
 	})
-	fmt.Println(err)
 	return err
 }

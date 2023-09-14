@@ -39,6 +39,8 @@ const VideoList = "videos"
 
 const TokenKey = "token"
 
+const MonthlyActive = "monthlyActive"
+
 const (
 	Lock               = "lock"
 	FollowAction       = "followAction"

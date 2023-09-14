@@ -12,11 +12,13 @@ import (
 	"douyin/service/api/biz/video"
 	"douyin/service/api/mw"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/hertz-contrib/etag"
 )
 
 // customizeRegister registers customize routers.
 func customizedRegister(r *server.Hertz) {
 	r.Use(common.AccessLog())
+	r.Use(etag.New())
 	douyin := r.Group("/douyin")
 
 	//douyin.GET("/test", mw.RateLimiter(), user.Test)

@@ -6,30 +6,11 @@ import (
 	"log"
 )
 
-var (
-	IdTypeVideo = 1
-	IdTypeUser  = 2
-)
-
-// GetFavoritesByIdFromMysql 从数据库中根据Id类型获取对应的数据
-func GetFavoritesByIdFromMysql(id uint, idType int) ([]model.Favorite, int64, error) {
-	var (
-		res  []model.Favorite
-		rows int64
-		err  error
-	)
-
-	switch idType {
-	case IdTypeVideo:
-		dbStruct := DB.Where("video_id = ?", id).Find(&res)
-		rows = dbStruct.RowsAffected
-		err = DB.Error
-	case IdTypeUser:
-		dbStruct := DB.Where("user_id = ?", id).Find(&res)
-		rows = dbStruct.RowsAffected
-		err = DB.Error
-	}
-	return res, rows, err
+// GetUserFavoriteCount 从数据库中根据id用户喜欢数
+func GetUserFavoriteCount(id uint) (int64, error) {
+	var cnt int64
+	err := DB.Model(&model.Favorite{}).Where("user_id = ?", id).Count(&cnt).Error
+	return cnt, err
 }
 
 func GetVideoFavoriteCountByVideoId(id uint) (int64, error) {
@@ -54,6 +35,26 @@ func DeleteUserFavorite(userId, videoId uint) error {
 		return result.Error
 	}
 	return nil
+}
+
+func IsFavorite(userId, videoId uint) bool {
+	var count int64
+	DB.Model(&model.Favorite{}).
+		Where("user_id = ? AND video_id = ?", userId, videoId).
+		Count(&count)
+	return count != 0
+}
+
+// GetFavoritesById 从数据库中获取点赞列表
+func GetFavoritesById(id uint) []uint {
+	var videoList []uint
+	DB.Model(&model.Favorite{}).
+		Limit(30).
+		Select("video_id").
+		Where("user_id = ?", id).
+		Order("id desc").
+		Find(&videoList)
+	return videoList
 }
 
 //

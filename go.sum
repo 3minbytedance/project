@@ -289,6 +289,8 @@ github.com/henrylee2cn/ameda v1.4.10 h1:JdvI2Ekq7tapdPsuhrc4CaFiqw6QXFvZIULWJgQy
 github.com/henrylee2cn/ameda v1.4.10/go.mod h1:liZulR8DgHxdK+MEwvZIylGnmcjzQ6N6f2PlWe7nEO4=
 github.com/henrylee2cn/goutil v0.0.0-20210127050712-89660552f6f8 h1:yE9ULgp02BhYIrO6sdV/FPe0xQM6fNHkVQW2IAymfM0=
 github.com/henrylee2cn/goutil v0.0.0-20210127050712-89660552f6f8/go.mod h1:Nhe/DM3671a5udlv2AdV2ni/MZzgfv2qrPL5nIi3EGQ=
+github.com/hertz-contrib/etag v0.1.0 h1:PGWEsrgrQ6J3gy7nBhIIlMA2pfKm5zvFEBmB1jRHYfk=
+github.com/hertz-contrib/etag v0.1.0/go.mod h1:BzfTbiJYQTJWKnq6LE86ThKnK6E/i4x44r8z/5hE1qc=
 github.com/hertz-contrib/http2 v0.1.8 h1:kjfCGkUxJZHgfPsnRjx1FLJBG55KvtvSQD214guBQLw=
 github.com/hertz-contrib/http2 v0.1.8/go.mod h1:m42hrl8fiTwE4p8c7JdRUZpkePEthvV89q3elL2GeD0=
 github.com/ianlancetaylor/demangle v0.0.0-20220319035150-800ac71e25c2/go.mod h1:aYm2/VgdVmcIU8iMfdMvDMsRAQjcfZSKFby6HOFvi/w=

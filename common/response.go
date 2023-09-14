@@ -36,7 +36,7 @@ func init() {
 	message[CodeSuccess] = "success"
 	message[CodeServerBusy] = "服务器开小差啦,稍后再来试一试"
 	message[CodeInvalidParam] = "参数错误"
-	message[CodeInvalidToken] = "token失效，请重新登陆"
+	message[CodeInvalidToken] = "请退出重新登陆"
 	message[CodeDBError] = "数据库繁忙,请稍后再试"
 	message[CodeFollowMyself] = "不能关注自己哦"
 	message[CodeFollowRepeat] = "请勿重复关注"

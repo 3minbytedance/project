@@ -6,16 +6,16 @@ import (
 	"github.com/bits-and-blooms/bloom/v3"
 	"go.uber.org/zap"
 	"log"
+	"strconv"
 )
 
 var bloomUserFilter *bloom.BloomFilter
 var bloomCommentFilter *bloom.BloomFilter
 var bloomWorkCountFilter *bloom.BloomFilter
-var bloomFavoriteUserIdFilter *bloom.BloomFilter
+var bloomIsFavoriteFilter *bloom.BloomFilter
 var bloomFavoriteVideoIdFilter *bloom.BloomFilter
 var bloomRelationFollowIdFilter *bloom.BloomFilter
 var bloomRelationFollowerIdFilter *bloom.BloomFilter
-
 
 func InitUserBloomFilter() {
 	// 初始化用户名布隆过滤器
@@ -32,9 +32,9 @@ func InitWorkCountFilter() {
 	bloomWorkCountFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
 }
 
-func InitFavoriteUserIdFilter() {
+func InitIsFavoriteFilter() {
 	// 初始化用户点赞数布隆过滤器
-	bloomFavoriteUserIdFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
+	bloomIsFavoriteFilter = bloom.NewWithEstimates(100000, 0.01) // 假设预期元素数量为 100000，误判率为 0.01
 }
 
 func InitFavoriteVideoIdFilter() {
@@ -108,21 +108,23 @@ func LoadWorkCountToBloomFilter() {
 	zap.L().Info("Loaded %d authors from video to the bloom filter.\n", zap.Int("size", len(authorIdList)))
 }
 
-func AddToFavoriteUserIdBloom(data string) {
-	bloomFavoriteUserIdFilter.Add([]byte(data))
+func AddToIsFavoriteBloom(userId, videoId uint) {
+	data := strconv.Itoa(int(userId)) + strconv.Itoa(int(videoId))
+	bloomIsFavoriteFilter.Add([]byte(data))
 }
 
-func TestFavoriteUserIdBloom(data string) bool {
-	return bloomFavoriteUserIdFilter.Test([]byte(data))
+func TestIsFavoriteBloom(userId, videoId uint) bool {
+	data := strconv.Itoa(int(userId)) + strconv.Itoa(int(videoId))
+	return bloomIsFavoriteFilter.Test([]byte(data))
 }
 
-func LoadFavoriteUserIdToBloomFilter() {
-	var userIdList []string
-	mysql.DB.Model(&model.Favorite{}).Distinct().Pluck("user_id", &userIdList)
-	for _, userId := range userIdList {
-		AddToFavoriteUserIdBloom(userId)
+func LoadIsFavoriteToBloomFilter() {
+	var favoriteList []model.Favorite
+	mysql.DB.Model(&model.Favorite{}).Find(&favoriteList)
+	for _, favorite := range favoriteList {
+		AddToIsFavoriteBloom(favorite.UserId, favorite.VideoId)
 	}
-	zap.L().Info("Loaded %d user from favorite to the bloom filter.\n", zap.Int("size", len(userIdList)))
+	zap.L().Info("Loaded %d from favorite to the bloom filter.\n", zap.Int("size", len(favoriteList)))
 }
 
 func AddToFavoriteVideoIdBloom(data string) {
