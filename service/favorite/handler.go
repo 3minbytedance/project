@@ -12,7 +12,6 @@ import (
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
 	"douyin/kitex_gen/video"
-	"douyin/mw/kafka"
 	"douyin/mw/localcache"
 	"douyin/mw/redis"
 	"github.com/allegro/bigcache/v3"
@@ -148,7 +147,7 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 		}()
 
 		go func() {
-			favoriteCount, _ := getFavoritesVideoCount(id)
+			favoriteCount, _ := checkAndSetVideoFavoriteCountKey(id)
 			favoriteCountCh <- int32(favoriteCount)
 		}()
 
@@ -193,10 +192,7 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 // GetVideoFavoriteCount implements the FavoriteServiceImpl interface.
 // 获取视频的点赞数
 func (s *FavoriteServiceImpl) GetVideoFavoriteCount(ctx context.Context, videoId int64) (resp int32, err error) {
-	count, err := getFavoritesVideoCount(uint(videoId))
-	if err != nil {
-		return 0, err
-	}
+	count, _ := checkAndSetVideoFavoriteCountKey(uint(videoId))
 	return int32(count), nil
 }
 
@@ -210,11 +206,11 @@ func (s *FavoriteServiceImpl) GetUserFavoriteCount(ctx context.Context, userId i
 // GetUserTotalFavoritedCount implements the FavoriteServiceImpl interface.
 // 获取用户的被喜欢总数
 func (s *FavoriteServiceImpl) GetUserTotalFavoritedCount(ctx context.Context, userId int64) (resp int32, err error) {
-	favoritesByUserId, err := getUserTotalFavoritedCount(uint(userId))
+	totalFavoriteCount, _ := checkAndSetTotalFavoriteFieldKey(uint(userId))
 	if err != nil {
 		return 0, err
 	}
-	return int32(favoritesByUserId), nil
+	return int32(totalFavoriteCount), nil
 }
 
 // IsUserFavorite implements the FavoriteServiceImpl interface.
@@ -227,22 +223,9 @@ func (s *FavoriteServiceImpl) IsUserFavorite(ctx context.Context, request *favor
 	return isUserFavorite(uint(userId), uint(videoId)), nil
 }
 
-// favoriteActions 点赞，取消赞的操作过程
-// 返回值 status 类型：
-// FavoriteActionSuccess 表示点赞/取消点赞成功
-// FavoriteActionRepeat 表示重复点赞/取消点赞
-// FavoriteActionError 表示其他错误
-func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
-	authorId, found := mysql.GetAuthorIdByVideoId(videoId)
-	if !found {
-		return biz.FavoriteActionError
-	}
+func addFavoriteActionToRedis(userId uint, videoId uint, actionType int, authorId uint) (status int) {
 	switch actionType {
 	case 1:
-		// 点赞
-		if isUserFavorite(userId, videoId) {
-			return biz.FavoriteActionRepeat
-		}
 		// 判断是否在redis中，如果不在则从MySQL取防止对空key操作
 		checkAndSetVideoFavoriteCountKey(videoId)
 		checkAndSetTotalFavoriteFieldKey(authorId)
@@ -251,13 +234,6 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 		if err != nil {
 			return biz.FavoriteActionError
 		}
-		go func() {
-			err := kafka.FavoriteMQInstance.ProduceAddFavoriteMsg(userId, videoId)
-			if err != nil {
-				zap.L().Error("更新MySQL点赞表err", zap.Error(err))
-				return
-			}
-		}()
 		go func() {
 			common.AddToIsFavoriteBloom(userId, videoId)
 			common.AddToFavoriteVideoIdBloom(strconv.Itoa(int(videoId)))
@@ -275,30 +251,10 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 		if err != nil {
 			return biz.FavoriteActionError
 		}
-		go func() {
-			err = kafka.FavoriteMQInstance.ProduceDelFavoriteMsg(userId, videoId)
-			if err != nil {
-				zap.L().Error("更新MySQL点赞表err", zap.Error(err))
-				return
-			}
-		}()
 		return biz.FavoriteActionSuccess
 	default:
 		return biz.FavoriteActionError
 	}
-}
-
-// GetUserTotalFavoritedCount 获取用户发布视频的总的被点赞数量
-func getUserTotalFavoritedCount(userId uint) (int64, error) {
-	totalFavoriteCount, _ := checkAndSetTotalFavoriteFieldKey(userId)
-	return totalFavoriteCount, nil
-}
-
-// GetFavoritesVideoCount 根据视频id，返回该视频的点赞数
-func getFavoritesVideoCount(videoId uint) (int64, error) {
-	// 判断redis中是否存在对应的video数据
-	count, _ := checkAndSetVideoFavoriteCountKey(videoId)
-	return count, nil
 }
 
 // IsUserFavorite 判断是否点赞
@@ -417,7 +373,7 @@ func getVideoByVideoId(videoId uint) (model.Video, bool) {
 	// 从localCache中取
 	if val, err := cache.Get(strconv.Itoa(int(videoId))); err == nil {
 		var v model.Video
-		msgpack.Unmarshal(val,&v)
+		msgpack.Unmarshal(val, &v)
 		return v, true
 	}
 
@@ -433,7 +389,7 @@ func getVideoByVideoId(videoId uint) (model.Video, bool) {
 }
 
 func startTimer(msgChan chan<- favoriteMap) {
-	ticker := time.NewTicker(2 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 
 	for range ticker.C {
 		flushMutex.Lock()
@@ -448,10 +404,54 @@ func startTimer(msgChan chan<- favoriteMap) {
 func consumer(ch <-chan favoriteMap) {
 	for {
 		data := <-ch // 从通道接收数据
+		addFavoriteList := make([]model.Favorite, 0, len(data))
+		deleteFavoriteList := make([]model.Favorite, 0, len(data))
 		for userId, innerMap := range data {
 			for videoId, actionType := range innerMap {
-				favoriteActions(userId, videoId, actionType)
+				authorId, isCheck := checkFavoriteAction(userId, videoId, actionType)
+				if !isCheck {
+					delete(data[userId], videoId)
+					continue
+				}
+				favoriteAction := model.Favorite{
+					UserId:  userId,
+					VideoId: videoId,
+				}
+				switch actionType {
+				case 1:
+					addFavoriteList = append(addFavoriteList, favoriteAction)
+				case 2:
+					deleteFavoriteList = append(deleteFavoriteList,favoriteAction)
+				}
+				addFavoriteActionToRedis(userId, videoId, actionType, authorId)
 			}
 		}
+		mysql.BatchCreateUserFavorite(addFavoriteList)
+		mysql.BatchDeleteUserFavorite(deleteFavoriteList)
 	}
+}
+
+// checkFavoriteAction
+// 用于判断点赞行为是否合法并返回视频作者ID和是否可以插入DB。
+// return：
+// 视频作者ID uint，不存在时返回 -1
+// 是否可以插入DB及Redis bool
+func checkFavoriteAction(userId uint, videoId uint, actionType int) (uint, bool) {
+	videoModel, found := getVideoByVideoId(videoId)
+	authorId := videoModel.AuthorId
+	if !found {
+		return -1, false
+	}
+	switch actionType {
+	case 1:
+		// 重复点赞
+		if isUserFavorite(userId, authorId) {
+			return -1, false
+		}
+	case 2:
+		if !isUserFavorite(userId, authorId) {
+			return -1, false
+		}
+	}
+	return authorId, true
 }

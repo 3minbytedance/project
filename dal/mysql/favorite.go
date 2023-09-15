@@ -20,8 +20,20 @@ func GetVideoFavoriteCountByVideoId(id uint) (int64, error) {
 
 // AddUserFavorite 添加喜欢关系
 func AddUserFavorite(userId, videoId uint) bool {
-	follow := model.Favorite{UserId: userId, VideoId: videoId}
-	result := DB.Model(&model.Favorite{}).Create(&follow)
+	favorite := model.Favorite{UserId: userId, VideoId: videoId}
+	result := DB.Model(&model.Favorite{}).Create(&favorite)
+	return result.RowsAffected != 0
+}
+
+// BatchCreateUserFavorite 批量添加喜欢关系
+func BatchCreateUserFavorite(favorites []model.Favorite) bool {
+	result := DB.Model(&model.Favorite{}).Create(&favorites)
+	return result.RowsAffected != 0
+}
+
+// BatchDeleteUserFavorite 批量删除喜欢关系
+func BatchDeleteUserFavorite(favorites []model.Favorite) bool {
+	result := DB.Model(&model.Favorite{}).Delete(&favorites)
 	return result.RowsAffected != 0
 }
 
