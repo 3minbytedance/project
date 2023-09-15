@@ -55,6 +55,15 @@ func IsFavorite(userId, videoId uint) bool {
 	return count != 0
 }
 
+func FindFavoriteByVideoId(userId, videoId uint) (uint, bool) {
+	var id uint
+	found := DB.Where("user_id = ? AND video_id = ?", userId, videoId).
+		Select("id").
+		First(&id).
+		RowsAffected != 0
+	return id, found
+}
+
 // GetFavoritesById 从数据库中获取点赞列表
 func GetFavoritesById(id uint) []uint {
 	var videoList []uint

@@ -240,9 +240,6 @@ func addFavoriteActionToRedis(userId uint, videoId uint, actionType int, authorI
 		}()
 		return biz.FavoriteActionSuccess
 	case 2:
-		if !isUserFavorite(userId, videoId) {
-			return biz.FavoriteActionRepeat
-		}
 		// 判断是否在redis中，如果不在则从MySQL取防止对空key操作
 		checkAndSetVideoFavoriteCountKey(videoId)
 		checkAndSetTotalFavoriteFieldKey(authorId)
@@ -384,7 +381,6 @@ func getVideoByVideoId(videoId uint) (model.Video, bool) {
 			cache.Set(strconv.Itoa(int(videoId)), data)
 		}(videoId, videoModel)
 	}
-
 	return videoModel, found
 }
 
@@ -405,53 +401,57 @@ func consumer(ch <-chan favoriteMap) {
 	for {
 		data := <-ch // 从通道接收数据
 		addFavoriteList := make([]model.Favorite, 0, len(data))
-		deleteFavoriteList := make([]model.Favorite, 0, len(data))
+		deleteFavoriteIDList := make([]model.Favorite, 0, len(data))
 		for userId, innerMap := range data {
 			for videoId, actionType := range innerMap {
-				authorId, isCheck := checkFavoriteAction(userId, videoId, actionType)
-				if !isCheck {
-					delete(data[userId], videoId)
+				isValid, authorId := isFavoriteActionValid(userId, videoId)
+				if !isValid {
 					continue
-				}
-				favoriteAction := model.Favorite{
-					UserId:  userId,
-					VideoId: videoId,
 				}
 				switch actionType {
 				case 1:
+					// 重复点赞
+					if mysql.IsFavorite(userId, videoId) {
+						continue
+					}
+					favoriteAction := model.Favorite{
+						UserId:  userId,
+						VideoId: videoId,
+					}
 					addFavoriteList = append(addFavoriteList, favoriteAction)
 				case 2:
-					deleteFavoriteList = append(deleteFavoriteList,favoriteAction)
+					// 重复取消点赞
+					id, exist := mysql.FindFavoriteByVideoId(userId, videoId)
+					if exist {
+						continue
+					}
+					cancelAction := model.Favorite{
+						ID: id,
+					}
+					deleteFavoriteIDList = append(deleteFavoriteIDList, cancelAction)
 				}
 				addFavoriteActionToRedis(userId, videoId, actionType, authorId)
 			}
 		}
-		mysql.BatchCreateUserFavorite(addFavoriteList)
-		mysql.BatchDeleteUserFavorite(deleteFavoriteList)
+		if len(addFavoriteList) != 0 {
+			mysql.BatchCreateUserFavorite(addFavoriteList)
+		}
+		if len(deleteFavoriteIDList) != 0 {
+			mysql.BatchDeleteUserFavorite(deleteFavoriteIDList)
+		}
 	}
 }
 
-// checkFavoriteAction
-// 用于判断点赞行为是否合法并返回视频作者ID和是否可以插入DB。
-// return：
-// 视频作者ID uint，不存在时返回 -1
-// 是否可以插入DB及Redis bool
-func checkFavoriteAction(userId uint, videoId uint, actionType int) (uint, bool) {
+// isFavoriteActionValid
+// 用于判断点赞行为是否合法，若合法返回视频作者ID
+func isFavoriteActionValid(userId uint, videoId uint) (valid bool, authorId uint) {
 	videoModel, found := getVideoByVideoId(videoId)
-	authorId := videoModel.AuthorId
+	_, exist, err := mysql.FindUserByUserID(userId)
+	if !exist || err != nil {
+		return false, 0
+	}
 	if !found {
-		return -1, false
+		return false, 0
 	}
-	switch actionType {
-	case 1:
-		// 重复点赞
-		if isUserFavorite(userId, authorId) {
-			return -1, false
-		}
-	case 2:
-		if !isUserFavorite(userId, authorId) {
-			return -1, false
-		}
-	}
-	return authorId, true
+	return true, videoModel.AuthorId
 }
