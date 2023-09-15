@@ -422,7 +422,7 @@ func consumer(ch <-chan favoriteMap) {
 				case 2:
 					// 重复取消点赞
 					id, exist := mysql.FindFavoriteByVideoId(userId, videoId)
-					if exist {
+					if !exist {
 						continue
 					}
 					cancelAction := model.Favorite{

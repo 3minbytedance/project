@@ -57,8 +57,9 @@ func IsFavorite(userId, videoId uint) bool {
 
 func FindFavoriteByVideoId(userId, videoId uint) (uint, bool) {
 	var id uint
-	found := DB.Where("user_id = ? AND video_id = ?", userId, videoId).
+	found := DB.Model(&model.Favorite{}).
 		Select("id").
+		Where("user_id = ? AND video_id = ?", userId, videoId).
 		First(&id).
 		RowsAffected != 0
 	return id, found
