@@ -121,13 +121,6 @@ func mainWithOutTLS() {
 		server.WithStreamBody(true),
 		server.WithTransport(standard.NewTransporter),
 	)
-	//pprof.Register(h)
-	//go func() {
-	//	ip := "0.0.0.0:8888"
-	//	if err := http.ListenAndServe(ip, nil); err != nil {
-	//		log.Printf("start pprof failed on %s\n", ip)
-	//	}
-	//}()
 
 	customizedRegister(h)
 	h.Spin()

@@ -70,7 +70,7 @@ func init() {
 		log.Fatal(err)
 	}
 
-	cache = localcache.Init(localcache.Video)
+	cache = localcache.Init(localcache.WorkCount)
 }
 
 // VideoFeed implements the VideoServiceImpl interface.

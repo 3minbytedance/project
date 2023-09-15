@@ -4,7 +4,6 @@ import (
 	"douyin/dal/model"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
-	"log"
 )
 
 // AddFollow 添加关注关系
@@ -12,13 +11,7 @@ func AddFollow(userId, followId uint) error {
 	follow := model.UserFollow{UserId: userId, FollowId: followId}
 	result := DB.Model(&model.UserFollow{}).Create(&follow)
 	// 判断是否创建成功
-	if result.Error != nil {
-		log.Println("创建 follow 失败:", result.Error)
-		return result.Error
-	} else {
-		log.Println("成功创建 follow")
-		return nil
-	}
+	return result.Error
 }
 
 // DeleteFollowById 删除关注关系
@@ -26,7 +19,6 @@ func DeleteFollowById(userId, followId uint) error {
 	follow := model.UserFollow{UserId: userId, FollowId: followId}
 	result := DB.Delete(&model.UserFollow{}, follow)
 	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
-		log.Println("未找到 Follow", userId, followId)
 		return result.Error
 	}
 	return nil

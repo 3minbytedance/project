@@ -3,7 +3,6 @@ package mysql
 import (
 	"douyin/dal/model"
 	"gorm.io/gorm"
-	"log"
 )
 
 // GetUserFavoriteCount 从数据库中根据id用户喜欢数
@@ -31,7 +30,6 @@ func DeleteUserFavorite(userId, videoId uint) error {
 	favorite := model.Favorite{UserId: userId, VideoId: videoId}
 	result := DB.Delete(&model.Favorite{}, favorite)
 	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
-		log.Println("未找到喜欢关系", userId, videoId)
 		return result.Error
 	}
 	return nil

@@ -4,7 +4,6 @@ import (
 	"douyin/dal/model"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
-	"log"
 )
 
 func AddComment(comment *model.Comment) (uint, error) {
@@ -24,7 +23,6 @@ func FindCommentsByVideoId(videoId uint) ([]model.Comment, error) {
 	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
 		return nil, result.Error
 	}
-	log.Println(comments)
 	return comments, nil
 }
 
@@ -40,7 +38,6 @@ func FindCommentById(commentId uint) (model.Comment, error) {
 func DeleteCommentById(commentId uint) error {
 	result := DB.Delete(&model.Comment{}, commentId)
 	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
-		log.Println("未找到 Comment")
 		return result.Error
 	}
 	return nil

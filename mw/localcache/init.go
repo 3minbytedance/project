@@ -8,18 +8,23 @@ import (
 )
 
 const (
-	Video int32 = iota
+	WorkCount int32 = iota
 	User
+	FavoriteVideo
 )
 
 func Init(rpcName int32) *bigcache.BigCache {
 
 	var lifeWindow time.Duration
 	switch rpcName {
-	case Video:
+	case WorkCount:
 		lifeWindow = 10 * time.Second
 	case User:
 		lifeWindow = 30 * time.Minute
+	case FavoriteVideo:
+		lifeWindow = 30 * time.Minute
+	default:
+		lifeWindow = 10 * time.Second
 	}
 
 	config := bigcache.Config{

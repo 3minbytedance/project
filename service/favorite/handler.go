@@ -13,11 +13,14 @@ import (
 	"douyin/kitex_gen/user/userservice"
 	"douyin/kitex_gen/video"
 	"douyin/mw/kafka"
+	"douyin/mw/localcache"
 	"douyin/mw/redis"
+	"github.com/allegro/bigcache/v3"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
+	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 	"log"
 	"strconv"
@@ -36,6 +39,8 @@ var (
 	flushMutex   = sync.RWMutex{}
 	mutex        = sync.Mutex{}
 	mapChan      = make(chan favoriteMap)
+
+	cache *bigcache.BigCache
 )
 
 func init() {
@@ -64,6 +69,8 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	cache = localcache.Init(localcache.FavoriteVideo)
 
 	go startTimer(mapChan)
 	go consumer(mapChan)
@@ -226,7 +233,7 @@ func (s *FavoriteServiceImpl) IsUserFavorite(ctx context.Context, request *favor
 // FavoriteActionRepeat 表示重复点赞/取消点赞
 // FavoriteActionError 表示其他错误
 func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
-	videoModel, found := getVideoByVideoId(videoId)
+	authorId, found := mysql.GetAuthorIdByVideoId(videoId)
 	if !found {
 		return biz.FavoriteActionError
 	}
@@ -238,9 +245,9 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 		}
 		// 判断是否在redis中，如果不在则从MySQL取防止对空key操作
 		checkAndSetVideoFavoriteCountKey(videoId)
-		checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId)
+		checkAndSetTotalFavoriteFieldKey(authorId)
 		checkAndSetUserFavoriteCountKey(userId)
-		err := redis.ActionLike(userId, videoId, videoModel.AuthorId)
+		err := redis.ActionLike(userId, videoId, authorId)
 		if err != nil {
 			return biz.FavoriteActionError
 		}
@@ -262,9 +269,9 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 		}
 		// 判断是否在redis中，如果不在则从MySQL取防止对空key操作
 		checkAndSetVideoFavoriteCountKey(videoId)
-		checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId)
+		checkAndSetTotalFavoriteFieldKey(authorId)
 		checkAndSetUserFavoriteCountKey(userId)
-		err := redis.ActionCancelLike(userId, videoId, videoModel.AuthorId)
+		err := redis.ActionCancelLike(userId, videoId, authorId)
 		if err != nil {
 			return biz.FavoriteActionError
 		}
@@ -407,7 +414,21 @@ func checkAndSetUserFavoriteCountKey(userId uint) (int64, int) {
 }
 
 func getVideoByVideoId(videoId uint) (model.Video, bool) {
+	// 从localCache中取
+	if val, err := cache.Get(strconv.Itoa(int(videoId))); err == nil {
+		var v model.Video
+		msgpack.Unmarshal(val,&v)
+		return v, true
+	}
+
 	videoModel, found := mysql.FindVideoByVideoId(videoId)
+	if found {
+		go func(uint, model.Video) {
+			data, _ := msgpack.Marshal(&videoModel)
+			cache.Set(strconv.Itoa(int(videoId)), data)
+		}(videoId, videoModel)
+	}
+
 	return videoModel, found
 }
 
@@ -416,7 +437,7 @@ func startTimer(msgChan chan<- favoriteMap) {
 
 	for range ticker.C {
 		flushMutex.Lock()
-		if favoriteData != nil || len(favoriteData) != 0 {
+		if favoriteData != nil && len(favoriteData) != 0 {
 			msgChan <- favoriteData // 发送 map 到通道
 			favoriteData = make(favoriteMap)
 		}
@@ -426,11 +447,8 @@ func startTimer(msgChan chan<- favoriteMap) {
 
 func consumer(ch <-chan favoriteMap) {
 	for {
-		d, ok := <-ch // 从通道接收数据
-		if !ok {
-			break // 通道已关闭，退出循环
-		}
-		for userId, innerMap := range d {
+		data := <-ch // 从通道接收数据
+		for userId, innerMap := range data {
 			for videoId, actionType := range innerMap {
 				favoriteActions(userId, videoId, actionType)
 			}
