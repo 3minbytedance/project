@@ -36,7 +36,7 @@ func TestSensitiveFilter(t *testing.T) {
 		t.Log(err)
 		return
 	}
-	word := common.ReplaceWord("傻逼吧卧槽啊你妈的")
+	word := common.ReplaceWord("TMD")
 	assert.True(t, word == "sad")
 
 }

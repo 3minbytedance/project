@@ -14,7 +14,6 @@ import (
 	"douyin/kitex_gen/video"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
-	"fmt"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -22,13 +21,21 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 )
 
+type favoriteMap = map[uint]map[uint]int
+
 var (
 	userClient    userservice.Client
 	commentClient commentservice.Client
+
+	favoriteData = make(favoriteMap)
+	flushMutex   = sync.RWMutex{}
+	mutex        = sync.Mutex{}
+	mapChan      = make(chan favoriteMap)
 )
 
 func init() {
@@ -57,6 +64,9 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	go startTimer(mapChan)
+	go consumer(mapChan)
 }
 
 // FavoriteServiceImpl implements the last service interface defined in the IDL.
@@ -72,24 +82,26 @@ func (s *FavoriteServiceImpl) FavoriteAction(ctx context.Context, request *favor
 	userId := uint(request.UserId)
 	videoId := uint(request.VideoId)
 	actionType := int(request.ActionType)
-	res := favoriteActions(userId, videoId, actionType)
-	switch res {
-	case biz.FavoriteActionSuccess:
+
+	flushMutex.RLock()
+	defer flushMutex.RUnlock()
+	if favoriteData[userId] == nil {
+		favoriteData[userId] = make(map[uint]int)
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+	switch actionType {
+	case 1, 2:
+		favoriteData[userId][videoId] = actionType
 		return &favorite.FavoriteActionResponse{
 			StatusCode: common.CodeSuccess,
 			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
 		}, nil
-	case biz.FavoriteActionRepeat:
-		return &favorite.FavoriteActionResponse{
-			StatusCode: common.CodeFavoriteRepeat,
-			StatusMsg:  common.MapErrMsg(common.CodeFavoriteRepeat),
-		}, nil
-	default:
-		return &favorite.FavoriteActionResponse{
-			StatusCode: common.CodeServerBusy,
-			StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
-		}, nil
 	}
+	return &favorite.FavoriteActionResponse{
+		StatusCode: common.CodeInvalidParam,
+		StatusMsg:  common.MapErrMsg(common.CodeInvalidParam),
+	}, nil
 }
 
 // GetFavoriteList implements the FavoriteServiceImpl interface.
@@ -99,7 +111,6 @@ func (s *FavoriteServiceImpl) GetFavoriteList(ctx context.Context, request *favo
 	userId := request.GetUserId()
 
 	favoritesByUserId := mysql.GetFavoritesById(uint(userId))
-	fmt.Println(favoritesByUserId)
 	videos := make([]*video.Video, 0, len(favoritesByUserId))
 	userRespCh := make(chan *user.UserInfoByIdResponse)
 	commentCountCh := make(chan int32)
@@ -222,6 +233,9 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 	switch actionType {
 	case 1:
 		// 点赞
+		if isUserFavorite(userId, videoId) {
+			return biz.FavoriteActionRepeat
+		}
 		// 判断是否在redis中，如果不在则从MySQL取防止对空key操作
 		checkAndSetVideoFavoriteCountKey(videoId)
 		checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId)
@@ -243,6 +257,9 @@ func favoriteActions(userId uint, videoId uint, actionType int) (status int) {
 		}()
 		return biz.FavoriteActionSuccess
 	case 2:
+		if !isUserFavorite(userId, videoId) {
+			return biz.FavoriteActionRepeat
+		}
 		// 判断是否在redis中，如果不在则从MySQL取防止对空key操作
 		checkAndSetVideoFavoriteCountKey(videoId)
 		checkAndSetTotalFavoriteFieldKey(videoModel.AuthorId)
@@ -394,29 +411,29 @@ func getVideoByVideoId(videoId uint) (model.Video, bool) {
 	return videoModel, found
 }
 
-//func startTimer() {
-//	ticker := time.NewTicker(1 * time.Second)
-//	mutex := sync.Mutex{}
-//	var likes = make(map[uint]map[uint]string, 100)
-//
-//	for i := uint(0); i < 10; i++ {
-//		innerMap := make(map[uint]string)
-//		for j := uint(0); j < 5; j++ {
-//			innerMap[j] = fmt.Sprintf("value-%d-%d", i, j)
-//		}
-//		likes[i] = innerMap
-//	}
-//
-//	for range ticker.C {
-//		mutex.Lock()
-//		// 遍历嵌套的 map
-//		for key, innerMap := range likes {
-//			fmt.Printf("Key: %d\n", key)
-//			for innerKey, value := range innerMap {
-//				fmt.Printf("Inner Key: %d, Value: %s\n", innerKey, value)
-//			}
-//			fmt.Println()
-//		}
-//		mutex.Unlock()
-//	}
-//}
+func startTimer(msgChan chan<- favoriteMap) {
+	ticker := time.NewTicker(2 * time.Second)
+
+	for range ticker.C {
+		flushMutex.Lock()
+		if favoriteData != nil || len(favoriteData) != 0 {
+			msgChan <- favoriteData // 发送 map 到通道
+			favoriteData = make(favoriteMap)
+		}
+		flushMutex.Unlock()
+	}
+}
+
+func consumer(ch <-chan favoriteMap) {
+	for {
+		d, ok := <-ch // 从通道接收数据
+		if !ok {
+			break // 通道已关闭，退出循环
+		}
+		for userId, innerMap := range d {
+			for videoId, actionType := range innerMap {
+				favoriteActions(userId, videoId, actionType)
+			}
+		}
+	}
+}
