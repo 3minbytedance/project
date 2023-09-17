@@ -5,7 +5,6 @@ import (
 	"douyin/dal/model"
 	"douyin/dal/mysql"
 	"encoding/json"
-	"fmt"
 	"github.com/apache/rocketmq-client-go/v2/consumer"
 	"github.com/apache/rocketmq-client-go/v2/primitive"
 	"log"
@@ -19,7 +18,7 @@ var (
 	CommentMQInstance *CommentMQ
 )
 
-func InitCommentKafka() {
+func InitCommentMQ() {
 	CommentMQInstance = &CommentMQ{
 		MQ{
 			Topic:   "comments",
@@ -36,7 +35,7 @@ func InitCommentKafka() {
 
 	CommentMQInstance.Consumer = rocketMQManager.NewConsumer(CommentMQInstance.Topic, CommentMQInstance.GroupId)
 
-	err = CommentMQInstance.Consumer.Subscribe(CommentMQInstance.Topic, consumer.MessageSelector{}, Consum)
+	err = CommentMQInstance.Consumer.Subscribe(CommentMQInstance.Topic, consumer.MessageSelector{}, Consume)
 	if err != nil {
 		panic("comment consumer 订阅失败")
 	}
@@ -48,9 +47,8 @@ func InitCommentKafka() {
 }
 
 // Consume 消费添加或者删除评论的消息
-func Consum(ctx context.Context, msgs ...*primitive.MessageExt) (consumer.ConsumeResult, error) {
+func Consume(ctx context.Context, msgs ...*primitive.MessageExt) (consumer.ConsumeResult, error) {
 	for i := range msgs {
-		fmt.Printf("subscribe callback : %v \n", msgs[i])
 		msg := msgs[i].Body
 
 		var result json.RawMessage
@@ -63,8 +61,7 @@ func Consum(ctx context.Context, msgs ...*primitive.MessageExt) (consumer.Consum
 		// 解析消息, 消息类型可能为model.Comment, 也可能为CommentId, 如果是前者, 则添加评论, 如果是后者, 则删除评论
 		// 解析为model.Comment, 则向数据库中添加评论
 		message := new(model.Comment)
-		err = json.Unmarshal(result, message)
-		if err == nil {
+		if err = json.Unmarshal(result, message); err == nil {
 			_, err = mysql.AddComment(message)
 			if err != nil {
 				log.Println("[CommentMQ]向mysql中添加评论失败:", err)
@@ -75,8 +72,7 @@ func Consum(ctx context.Context, msgs ...*primitive.MessageExt) (consumer.Consum
 
 		// 解析为整型, 即CommentId, 则从数据库中删除评论
 		commentId := new(uint)
-		err = json.Unmarshal(result, commentId)
-		if err == nil {
+		if err = json.Unmarshal(result, commentId); err == nil {
 			err = mysql.DeleteCommentById(*commentId)
 			if err != nil {
 				log.Println("[CommentMQ]从mysql中删除评论失败:", err)
@@ -85,7 +81,6 @@ func Consum(ctx context.Context, msgs ...*primitive.MessageExt) (consumer.Consum
 			continue
 		}
 		log.Println("[CommentMQ]解析消息失败:", result)
-
 	}
 	return consumer.ConsumeSuccess, nil
 }

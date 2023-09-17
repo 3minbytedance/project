@@ -29,7 +29,7 @@ func Init(appConfig *config.AppConfig) (err error) {
 	conf = appConfig.Remote.RocketMQConfig
 
 	brokerUrl := conf.Address + ":" + strconv.Itoa(conf.Port)
-	// 初始化 Kafka Manager
+	// 初始化 Manager
 	brokers := []string{brokerUrl}
 	rocketMQManager = NewRocketMQManager(brokers)
 
@@ -43,13 +43,11 @@ func NewRocketMQManager(brokers []string) *Manager {
 }
 
 func (m *Manager) NewProducer(groupId string) rocketmq.Producer {
-	// TODO writer 优雅关闭
 	c, _ := rocketmq.NewProducer(
 		producer.WithNameServer(m.Brokers), // 接入点地址
 		producer.WithRetry(2),              // 重试次数
 		producer.WithGroupName(groupId),    // 分组名称
 	)
-	c.Start()
 	return c
 }
 

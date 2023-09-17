@@ -9,6 +9,7 @@ import (
 	"douyin/logger"
 	"douyin/mw/kafka"
 	"douyin/mw/redis"
+	"douyin/mw/rocketMQ"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -54,6 +55,13 @@ func main() {
 	}
 	// 初始化comment模块的kafka
 	kafka.InitCommentKafka()
+
+	if err := rocketMQ.Init(config.Conf); err != nil {
+		zap.L().Error("Init kafka failed, err:%v\n", zap.Error(err))
+		return
+	}
+	// 初始化comment模块的rocketMQ
+	rocketMQ.InitCommentMQ()
 
 	// 初始化敏感词过滤器
 	if err := common.InitSensitiveFilter(); err != nil {
