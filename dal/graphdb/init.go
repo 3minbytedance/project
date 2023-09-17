@@ -1,39 +1,43 @@
 package graphdb
 
 import (
+	"douyin/config"
 	"fmt"
 	nebula "github.com/vesoft-inc/nebula-go/v3"
-)
-
-const (
-	address   = "112.124.58.44"
-	port      = 9669
-	username  = "root"
-	password  = "nebula"
-	namespace = "test"
 )
 
 // Initialize logger
 var log = nebula.DefaultLogger{}
 var sessionPool *nebula.SessionPool
 
-func init() {
-	hostAddress := nebula.HostAddress{Host: address, Port: port}
+func Init(appConfig *config.AppConfig) (err error) {
+	var conf *config.GraphDBConfig
+	if appConfig.Mode == config.LocalMode {
+		conf = appConfig.Local.GraphDBConfig
+	} else {
+		conf = appConfig.Remote.GraphDBConfig
+	}
+
+	hostAddress := nebula.HostAddress{Host: conf.Address, Port: conf.Port}
 
 	// Create configs for session pool
-	config, err := nebula.NewSessionPoolConf(
-		username,
-		password,
+	configs, err := nebula.NewSessionPoolConf(
+		conf.Username,
+		conf.Password,
 		[]nebula.HostAddress{hostAddress},
-		namespace,
+		conf.Namespace,
 	)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("failed to create session pool config, %s", err.Error()))
+		log.Fatal(fmt.Sprintf("failed to create graphDB session pool config, %s", err.Error()))
+		return err
 	}
 
 	// create session pool
-	sessionPool, err = nebula.NewSessionPool(*config, nebula.DefaultLogger{})
+	sessionPool, err = nebula.NewSessionPool(*configs, nebula.DefaultLogger{})
 	if err != nil {
-		log.Fatal(fmt.Sprintf("failed to initialize session pool, %s", err.Error()))
+		log.Fatal(fmt.Sprintf("failed to initialize graphDB session pool, %s", err.Error()))
+		return err
 	}
+
+	return nil
 }

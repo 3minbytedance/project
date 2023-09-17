@@ -4,6 +4,7 @@ import (
 	"douyin/common"
 	"douyin/config"
 	"douyin/constant"
+	"douyin/dal/graphdb"
 	"douyin/dal/mysql"
 	relation "douyin/kitex_gen/relation/relationservice"
 	"douyin/logger"
@@ -41,6 +42,12 @@ func main() {
 	// 初始化数据库: mysql
 	if err := mysql.Init(config.Conf); err != nil {
 		zap.L().Error("Init mysql failed, err:%v\n", zap.Error(err))
+		return
+	}
+
+	// 初始化数据库: nebulaGraph
+	if err := graphdb.Init(config.Conf);err != nil{
+		zap.L().Error("Init graphDB failed, err:%v\n", zap.Error(err))
 		return
 	}
 

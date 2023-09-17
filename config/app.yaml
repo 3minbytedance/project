@@ -34,6 +34,15 @@ local:
     username: admin
     password: w5W7PNXYBzLBGHRx
     db: admin
+  rocketmq:
+    address: "127.0.0.1"
+    port: 9093
+  graphDB:
+    address: "127.0.0.1"
+    port: 9093
+    username: admin
+    password: w5W7PNXYBzLBGHRx
+    namespace : test
 
 remote:
   mysql:
@@ -61,5 +70,8 @@ remote:
     password: w5W7PNXYBzLBGHRx
     db: admin
   rocketmq:
+    address: "127.0.0.1"
+    port: 9093
+  graphDB:
     address: "127.0.0.1"
     port: 9093

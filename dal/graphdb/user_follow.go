@@ -1,6 +1,7 @@
 package graphdb
 
 import (
+	"fmt"
 	"go.uber.org/zap"
 	"strconv"
 )
@@ -124,4 +125,18 @@ func GetFollowerList(userId uint) ([]uint, error) {
 		followList = append(followList, uint(asInt))
 	}
 	return followList, nil
+}
+
+func GetAllFollowEdge() error {
+	query := "MATCH (s)-[e:follow]->(d) RETURN id(s), id(d);"
+	resp, err := sessionPool.Execute(query)
+	if err != nil {
+		return err
+	}
+	result := resp.AsStringTable()
+	// 第0行为表头，从[1:]开始遍历
+	for _, res := range result[1:] {
+		fmt.Println(res[0])
+	}
+	return nil
 }

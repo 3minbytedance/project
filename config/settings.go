@@ -20,10 +20,12 @@ type AppConfig struct {
 	*LogConfig `mapstructure:"log"`
 
 	Local struct {
-		*MySQLConfig `mapstructure:"mysql"`
-		*RedisConfig `mapstructure:"redis"`
-		*KafkaConfig `mapstructure:"kafka"`
-		*MongoConfig `mapstructure:"mongo"`
+		*MySQLConfig    `mapstructure:"mysql"`
+		*RedisConfig    `mapstructure:"redis"`
+		*KafkaConfig    `mapstructure:"kafka"`
+		*MongoConfig    `mapstructure:"mongo"`
+		*RocketMQConfig `mapstructure:"rocketmq"`
+		*GraphDBConfig  `mapstructure:"graphDB"`
 	} `mapstructure:"local"`
 
 	Remote struct {
@@ -32,6 +34,7 @@ type AppConfig struct {
 		*KafkaConfig    `mapstructure:"kafka"`
 		*MongoConfig    `mapstructure:"mongo"`
 		*RocketMQConfig `mapstructure:"rocketmq"`
+		*GraphDBConfig  `mapstructure:"graphDB"`
 	} `mapstructure:"remote"`
 }
 
@@ -87,6 +90,14 @@ type RocketMQConfig struct {
 	Password string `mapstructure:"password"`
 }
 
+type GraphDBConfig struct {
+	Address   string `mapstructure:"address"`
+	Port      int    `mapstructure:"port"`
+	Username  string `mapstructure:"username"`
+	Password  string `mapstructure:"password"`
+	Namespace string `mapstructure:"namespace"`
+}
+
 func Init() (err error) {
 	//viper.AddConfigPath("../../config")
 	//viper.SetConfigName("app")
@@ -111,5 +122,4 @@ func Init() (err error) {
 	})
 
 	return
-
 }
