@@ -42,24 +42,22 @@ func NewRocketMQManager(brokers []string) *Manager {
 	}
 }
 
-func (m *Manager) NewProducer(groupId string) rocketmq.Producer {
+func (m *Manager) NewProducer(groupName, topic string) rocketmq.Producer {
 	c, _ := rocketmq.NewProducer(
 		producer.WithNameServer(m.Brokers), // 接入点地址
 		producer.WithRetry(2),              // 重试次数
-		producer.WithGroupName(groupId),    // 分组名称
+		producer.WithCreateTopicKey(topic),
+		producer.WithGroupName(groupName),
 	)
 	return c
 }
 
-func (m *Manager) NewConsumer(topic, groupId string) rocketmq.PushConsumer {
+func (m *Manager) NewConsumer(groupId string) rocketmq.PushConsumer {
 	c, _ := rocketmq.NewPushConsumer(
 		consumer.WithNameServer(m.Brokers), // 接入点地址
 		consumer.WithConsumerModel(consumer.Clustering),
 		consumer.WithGroupName(groupId), // 分组名称
 	)
-	//c.Subscribe()
-	//c.Start()
-
 	return c
 }
 

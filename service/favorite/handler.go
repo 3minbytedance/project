@@ -14,6 +14,7 @@ import (
 	"douyin/kitex_gen/video"
 	"douyin/mw/localcache"
 	"douyin/mw/redis"
+	"douyin/mw/rocketMQ"
 	"github.com/allegro/bigcache/v3"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
@@ -72,7 +73,7 @@ func init() {
 	cache = localcache.Init(localcache.FavoriteVideo)
 
 	go startTimer(mapChan)
-	go consumer(mapChan)
+	go consumerFavoriteMap(mapChan)
 }
 
 // FavoriteServiceImpl implements the last service interface defined in the IDL.
@@ -88,17 +89,20 @@ func (s *FavoriteServiceImpl) FavoriteAction(ctx context.Context, request *favor
 	userId := uint(request.UserId)
 	videoId := uint(request.VideoId)
 	actionType := int(request.ActionType)
-
-	flushMutex.RLock()
-	defer flushMutex.RUnlock()
-	if favoriteData[userId] == nil {
-		favoriteData[userId] = make(map[uint]int)
-	}
-	mutex.Lock()
-	defer mutex.Unlock()
 	switch actionType {
 	case 1, 2:
-		favoriteData[userId][videoId] = actionType
+		err = rocketMQ.FavoriteMQInstance.ProduceFavoriteMsg(&model.FavoriteAction{
+			UserId:     userId,
+			VideoId:    videoId,
+			ActionType: actionType,
+		})
+		if err != nil {
+			return &favorite.FavoriteActionResponse{
+				StatusCode: common.CodeServerBusy,
+				StatusMsg:  common.MapErrMsg(common.CodeServerBusy),
+			}, nil
+		}
+
 		return &favorite.FavoriteActionResponse{
 			StatusCode: common.CodeSuccess,
 			StatusMsg:  common.MapErrMsg(common.CodeSuccess),
@@ -397,7 +401,7 @@ func startTimer(msgChan chan<- favoriteMap) {
 	}
 }
 
-func consumer(ch <-chan favoriteMap) {
+func consumerFavoriteMap(ch <-chan favoriteMap) {
 	for {
 		data := <-ch // 从通道接收数据
 		addFavoriteList := make([]model.Favorite, 0, len(data))

@@ -9,8 +9,8 @@ import (
 	comment "douyin/kitex_gen/comment"
 	"douyin/kitex_gen/user"
 	"douyin/kitex_gen/user/userservice"
-	"douyin/mw/kafka"
 	"douyin/mw/redis"
+	"douyin/mw/rocketMQ"
 	"douyin/service/comment/pack"
 	"errors"
 	"github.com/cloudwego/kitex/client"
@@ -81,7 +81,8 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 			CreatedAt: time.Now(),
 		}
 		// _, err = mysql.AddComment(&commentData)
-		err = kafka.CommentMQInstance.ProduceAddCommentMsg(&commentData)
+		err = rocketMQ.CommentMQInstance.ProduceAddCommentMsg(&commentData)
+		//err = kafka.CommentMQInstance.ProduceAddCommentMsg(&commentData)
 		if err != nil {
 			resp.StatusCode = common.CodeDBError
 			resp.StatusMsg = common.MapErrMsg(common.CodeDBError)
@@ -120,7 +121,7 @@ func (s *CommentServiceImpl) CommentAction(ctx context.Context, request *comment
 		}
 
 		// err = mysql.DeleteCommentById(uint(request.GetCommentId()))
-		err = kafka.CommentMQInstance.ProduceDelCommentMsg(uint(request.GetCommentId()))
+		err = rocketMQ.CommentMQInstance.ProduceDelCommentMsg(uint(request.GetCommentId()))
 		if err != nil {
 			zap.L().Error("DeleteCommentById error", zap.Error(err))
 			return &comment.CommentActionResponse{

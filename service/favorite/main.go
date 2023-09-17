@@ -7,8 +7,10 @@ import (
 	"douyin/dal/mysql"
 	favorite "douyin/kitex_gen/favorite/favoriteservice"
 	"douyin/logger"
-	"douyin/mw/kafka"
 	"douyin/mw/redis"
+	"douyin/mw/rocketMQ"
+	"fmt"
+	"github.com/apache/rocketmq-client-go/v2/consumer"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
@@ -48,12 +50,29 @@ func main() {
 		zap.L().Error("Init middleware failed, err:%v\n", zap.Error(err))
 		return
 	}
-	if err := kafka.Init(config.Conf); err != nil {
-		zap.L().Error("Init kafka failed, err:%v\n", zap.Error(err))
+	//if err := kafka.Init(config.Conf); err != nil {
+	//	zap.L().Error("Init kafka failed, err:%v\n", zap.Error(err))
+	//	return
+	//}
+	//// 初始化点赞模块的kafka
+	//kafka.InitFavoriteKafka()
+
+	if err := rocketMQ.Init(config.Conf); err != nil {
+		zap.L().Error("Init rocketMQ failed, err:%v\n", zap.Error(err))
 		return
 	}
-	// 初始化点赞模块的kafka
-	kafka.InitFavoriteKafka()
+	mq := rocketMQ.InitFavoriteMQ()
+	err = mq.Subscribe(rocketMQ.FavoriteMQInstance.Topic, consumer.MessageSelector{}, Consume)
+	if err != nil {
+		fmt.Println(err)
+		panic("启动favorite consumer 订阅失败")
+	}
+
+	err = mq.Start()
+	if err != nil {
+		fmt.Println(err)
+		panic("启动favorite consumer 失败")
+	}
 
 	// 初始化Bloom Filter
 	common.InitIsFavoriteFilter()

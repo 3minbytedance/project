@@ -43,3 +43,5 @@ tmp/
 service/**/output/
 .env
 /tls/
+
+config

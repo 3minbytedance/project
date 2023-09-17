@@ -6,6 +6,12 @@ type Favorite struct {
 	VideoId uint `gorm:"index;not null"`
 }
 
+type FavoriteAction struct {
+	UserId     uint
+	VideoId    uint
+	ActionType int
+}
+
 func (*Favorite) TableName() string {
 	return "favorite"
 }

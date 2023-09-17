@@ -36,7 +36,7 @@ local:
     db: admin
   rocketmq:
     address: "127.0.0.1"
-    port: 9093
+    port: 9876
   graphDB:
     address: "127.0.0.1"
     port: 9669
@@ -71,7 +71,7 @@ remote:
     db: admin
   rocketmq:
     address: "127.0.0.1"
-    port: 9093
+    port: 9876
   graphDB:
     address: "127.0.0.1"
     port: 9669

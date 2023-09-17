@@ -7,7 +7,6 @@ import (
 	"douyin/dal/mysql"
 	comment "douyin/kitex_gen/comment/commentservice"
 	"douyin/logger"
-	"douyin/mw/kafka"
 	"douyin/mw/redis"
 	"douyin/mw/rocketMQ"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
@@ -49,15 +48,14 @@ func main() {
 		zap.L().Error("Init redis failed, err:%v\n", zap.Error(err))
 		return
 	}
-	if err := kafka.Init(config.Conf); err != nil {
-		zap.L().Error("Init kafka failed, err:%v\n", zap.Error(err))
-		return
-	}
-	// 初始化comment模块的kafka
-	kafka.InitCommentKafka()
-
+	//if err := kafka.Init(config.Conf); err != nil {
+	//	zap.L().Error("Init kafka failed, err:%v\n", zap.Error(err))
+	//	return
+	//}
+	//// 初始化comment模块的kafka
+	//kafka.InitCommentKafka()
 	if err := rocketMQ.Init(config.Conf); err != nil {
-		zap.L().Error("Init kafka failed, err:%v\n", zap.Error(err))
+		zap.L().Error("Init rocketMQ failed, err:%v\n", zap.Error(err))
 		return
 	}
 	// 初始化comment模块的rocketMQ

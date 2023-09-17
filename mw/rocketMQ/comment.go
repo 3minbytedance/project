@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"github.com/apache/rocketmq-client-go/v2/consumer"
 	"github.com/apache/rocketmq-client-go/v2/primitive"
+	"github.com/apache/rocketmq-client-go/v2/rlog"
 	"log"
 )
 
@@ -19,6 +20,7 @@ var (
 )
 
 func InitCommentMQ() {
+	rlog.SetLogLevel("error")
 	CommentMQInstance = &CommentMQ{
 		MQ{
 			Topic:   "comments",
@@ -27,13 +29,13 @@ func InitCommentMQ() {
 	}
 
 	// 创建 Comment 业务的生产者和消费者实例
-	CommentMQInstance.Producer = rocketMQManager.NewProducer(CommentMQInstance.GroupId)
+	CommentMQInstance.Producer = rocketMQManager.NewProducer(CommentMQInstance.GroupId, CommentMQInstance.Topic)
 	err := CommentMQInstance.Producer.Start()
 	if err != nil {
 		panic("启动comment producer 失败")
 	}
 
-	CommentMQInstance.Consumer = rocketMQManager.NewConsumer(CommentMQInstance.Topic, CommentMQInstance.GroupId)
+	CommentMQInstance.Consumer = rocketMQManager.NewConsumer(CommentMQInstance.GroupId)
 
 	err = CommentMQInstance.Consumer.Subscribe(CommentMQInstance.Topic, consumer.MessageSelector{}, Consume)
 	if err != nil {
@@ -49,19 +51,11 @@ func InitCommentMQ() {
 // Consume 消费添加或者删除评论的消息
 func Consume(ctx context.Context, msgs ...*primitive.MessageExt) (consumer.ConsumeResult, error) {
 	for i := range msgs {
-		msg := msgs[i].Body
-
-		var result json.RawMessage
-		err := json.Unmarshal(msg, &result)
-		if err != nil {
-			log.Println("[CommentMQ]解析消息失败:", err)
-			continue
-		}
-
+		result := msgs[i].Body
 		// 解析消息, 消息类型可能为model.Comment, 也可能为CommentId, 如果是前者, 则添加评论, 如果是后者, 则删除评论
 		// 解析为model.Comment, 则向数据库中添加评论
 		message := new(model.Comment)
-		if err = json.Unmarshal(result, message); err == nil {
+		if err := json.Unmarshal(result, message); err == nil {
 			_, err = mysql.AddComment(message)
 			if err != nil {
 				log.Println("[CommentMQ]向mysql中添加评论失败:", err)
@@ -72,7 +66,7 @@ func Consume(ctx context.Context, msgs ...*primitive.MessageExt) (consumer.Consu
 
 		// 解析为整型, 即CommentId, 则从数据库中删除评论
 		commentId := new(uint)
-		if err = json.Unmarshal(result, commentId); err == nil {
+		if err := json.Unmarshal(result, commentId); err == nil {
 			err = mysql.DeleteCommentById(*commentId)
 			if err != nil {
 				log.Println("[CommentMQ]从mysql中删除评论失败:", err)
