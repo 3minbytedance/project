@@ -2,13 +2,13 @@ package redis
 
 import (
 	"douyin/dal/model"
-	"github.com/cloudwego/hertz/pkg/common/json"
 	red "github.com/redis/go-redis/v9"
+	"github.com/vmihailenco/msgpack"
 )
 
 func AddVideos(videos []model.Video) {
 	for _, video := range videos {
-		marshal, _ := json.Marshal(&video)
+		marshal, _ := msgpack.Marshal(&video)
 		Rdb.ZAdd(Ctx, VideoList, red.Z{
 			Score: float64(video.CreatedAt), Member: marshal,
 		})
@@ -16,7 +16,7 @@ func AddVideos(videos []model.Video) {
 }
 
 func AddVideo(video *model.Video) {
-	marshal, _ := json.Marshal(video)
+	marshal, _ := msgpack.Marshal(video)
 	Rdb.ZAdd(Ctx, VideoList, red.Z{
 		Score: float64(video.CreatedAt), Member: marshal,
 	})

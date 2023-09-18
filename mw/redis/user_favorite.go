@@ -181,7 +181,7 @@ func ActionLike(userId, videoId, authorId uint) error {
 	baseSliceUser := []string{UserKey, strconv.Itoa(int(authorId))}
 	userKey := strings.Join(baseSliceUser, Delimiter)
 
-	_, err := Rdb.TxPipelined(Ctx, func(pipe redis.Pipeliner) error {
+	_, err := Rdb.Pipelined(Ctx, func(pipe redis.Pipeliner) error {
 		pipe.HIncrBy(Ctx, videoKey, VideoFavoritedCountField, 1)
 		pipe.HIncrBy(Ctx, userKey, TotalFavoriteField, 1)
 		pipe.HIncrBy(Ctx, favoriteCountKey, FavoriteCountFiled, 1)
@@ -203,7 +203,8 @@ func ActionCancelLike(userId, videoId, authorId uint) error {
 	baseSliceFavoriteCount := []string{UserKey, strconv.Itoa(int(userId))}
 	favoriteCountKey := strings.Join(baseSliceFavoriteCount, Delimiter)
 
-	_, err := Rdb.TxPipelined(Ctx, func(pipe redis.Pipeliner) error {
+
+	_, err := Rdb.Pipelined(Ctx, func(pipe redis.Pipeliner) error {
 		pipe.HIncrBy(Ctx, videoKey, VideoFavoritedCountField, -1)
 		pipe.HIncrBy(Ctx, userKey, TotalFavoriteField, -1)
 		pipe.HIncrBy(Ctx, favoriteCountKey, FavoriteCountFiled, -1)

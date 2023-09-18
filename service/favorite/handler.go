@@ -73,7 +73,7 @@ func init() {
 	cache = localcache.Init(localcache.FavoriteVideo)
 
 	go startTimer(mapChan)
-	go consumerFavoriteMap(mapChan)
+	go favoriteMapConsumer(mapChan)
 }
 
 // FavoriteServiceImpl implements the last service interface defined in the IDL.
@@ -401,7 +401,7 @@ func startTimer(msgChan chan<- favoriteMap) {
 	}
 }
 
-func consumerFavoriteMap(ch <-chan favoriteMap) {
+func favoriteMapConsumer(ch <-chan favoriteMap) {
 	for {
 		data := <-ch // 从通道接收数据
 		addFavoriteList := make([]model.Favorite, 0, len(data))

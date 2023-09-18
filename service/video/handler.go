@@ -17,12 +17,12 @@ import (
 	"douyin/mw/localcache"
 	"douyin/mw/redis"
 	"github.com/allegro/bigcache/v3"
-	"github.com/cloudwego/hertz/pkg/common/json"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/google/uuid"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	etcd "github.com/kitex-contrib/registry-etcd"
+	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 	"log"
 	"os"
@@ -99,7 +99,7 @@ func (s *VideoServiceImpl) VideoFeed(ctx context.Context, request *video.VideoFe
 	}()
 	var videoModel model.Video
 	for _, v := range videos {
-		err = json.Unmarshal([]byte(v), &videoModel)
+		err = msgpack.Unmarshal([]byte(v), &videoModel)
 		if err != nil {
 			continue
 		}
