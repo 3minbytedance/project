@@ -1,5 +1,5 @@
 # 第六届字节跳动青训营 后端 极简版抖音项目
-项目荣获第六届青训营二等奖，感谢队友的支持
+项目荣获第六届青训营二等奖，感谢队友的支持<br>
 本项目是使用Go语言开发，基于Hertz + Kitex +  MySQL + MongoDB + Redis + Kafka + Gorm + Zap + Etcd +OSS等技术实现的极简版抖音APP后端项目，该项目部署在华为云服务器上，实现了基础功能以及互动和社交方向的全部功能。<br>
 项目团队：起名起了3min<br>
 项目文档：https://vish8y9znlg.feishu.cn/docx/XffIdI4sso6oGNx2yWEc4DV4nrh  <br>
