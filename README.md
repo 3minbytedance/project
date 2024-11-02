@@ -1,3 +1,7 @@
+Hello everyone, the project will undergo a refactoring in November. The main goals of the refactoring include the introduction of Redis Sentinel, traceability, observability, Docker, a recommendation system implemented with Spark and Flink, Feed streams, and im system, as well as restructuring the directory and interfaces.If you have any questions or good ideas, please contact me via QQ 1914163770.
+
+大家好，该项目将会在11月进行重构，主要重构的目标包括引入Redis Sentinel、链路追踪、可观测性、Docker、Spark及Flink实现的推荐系统、Feed流、im系统等，并对目录及接口进行重构。如果你有任何的疑问或者好的想法，请联系QQ 1914163770 
+
 # 第六届字节跳动青训营 后端 极简版抖音项目
 项目荣获第六届青训营二等奖，感谢队友的支持<br>
 本项目是使用Go语言开发，基于Hertz + Kitex +  MySQL + MongoDB + Redis + Kafka + Gorm + Zap + Etcd +OSS等技术实现的极简版抖音APP后端项目，该项目部署在华为云服务器上，实现了基础功能以及互动和社交方向的全部功能。<br>
@@ -18,19 +22,6 @@ develop分支为最初的gin单体原型设计<br>
 安装MongoDB 4.4 及以上版本<br>
 
 并在config/app.yaml 中修改配置<br>
-
-**由于项目启用了https**<br>
-需要在service-api-main.go里，将main函数换成别的名字，然后将下面的mainWithOutTls()函数改为main()函数，就是走的http请求<br>
-
-最后 cd 到项目根目录<br>
-sh ./build_all_services.sh  
-
-sh ./start_all_services.sh  
-
-如果执行sh ./build_all_services.sh  提示：
-'\r': command not found <br>
-这是由于goLand在windows环境下将换行符LF转为了CRLF换行 <br> 需要选中项目根目录，然后修改换行符
-![image](https://github.com/3minbytedance/project/assets/42531412/88fd695e-422f-469e-9477-0ca0e35e2d38)
 
 
 
